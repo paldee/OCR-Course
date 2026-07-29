@@ -1,0 +1,48 @@
+# ชุดค่าปิดที่ requirements อ้างถึง — ค่าที่อยู่นอกชุดนี้ต้องถูกปฏิเสธพร้อม review_issue
+
+course_category = ["หมวดวิชาศึกษาทั่วไป", "หมวดวิชาเฉพาะ", "หมวดวิชาเลือกเสรี"]
+course_type = ["บังคับ", "เลือก", "สหกิจศึกษา", "โครงงาน", "ฝึกงาน"]
+extraction_method = ["text_layer", "ocr_tesseract", "ocr_typhoon", "ocr_adjudicated", "table_cell", "derived"]
+provenance_source = ["document_text", "filename"]
+edition_status = ["old", "current"]
+degree_level = ["bachelor", "master", "doctoral"]
+compute_path = ["fast", "standard", "deep"]
+question_level = ["L1", "L2", "L3", "L4"]
+metric_status = ["measured", "estimate"]
+reference_source = ["teacher_ground_truth", "gold_set"]
+page_status = ["page_pending", "page_complete", "page_error"]
+
+# ชนิดของ review_issue ที่ระบบสร้างได้ (design §6 E1-E50)
+review_issue_kind = [
+  "dataset_scope_mismatch",
+  "duplicate_content",
+  "metadata_unresolved",
+  "metadata_conflict",
+  "thai_reorder_unresolved",
+  "glyph_count_mismatch",
+  "low_content_page",
+  "ocr_budget_exhausted",
+  "memory_limit_exceeded",
+  "table_context_unresolved",
+  "table_shape_mismatch",
+  "credits_parse_error",
+  "prerequisite_parse_error",
+  "field_unresolved",
+  "prerequisite_cycle",
+  "index_build_incomplete",
+  "metric_sample_insufficient",
+]
+
+# เหตุผลการหยุดของ Gain_Cost_Halter และ Evidence_Planner
+halt_reason = [
+  "oscillation",
+  "nan_guard",
+  "gain_below_cost",
+  "max_hops_reached",
+  "no_new_evidence",
+  "time_budget_exceeded",
+]
+
+[category_synonym]                   # R11.9
+"หมวดวิชาเสรี" = "หมวดวิชาเลือกเสรี"
+"หมวดวิชาเลือกเสรี" = "หมวดวิชาเลือกเสรี"

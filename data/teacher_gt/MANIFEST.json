@@ -1,0 +1,56 @@
+{
+  "file_count": 10,
+  "files": [
+    {
+      "relative_path": "AIT/AIT_academic_plan.json",
+      "sha256": "a9bd5dc7054ccc6f0838317414c30212ce90dff4f21bbb86c420bb76a7593d53",
+      "size_bytes": 27310
+    },
+    {
+      "relative_path": "BIT/BIT_academic_plan_coop.json",
+      "sha256": "a0621b9f3e9f5de27aa89672277f08d09a4fbd92e812a55d2c5cf27ee1ce354a",
+      "size_bytes": 30590
+    },
+    {
+      "relative_path": "BIT/BIT_academic_plan_no_coop.json",
+      "sha256": "d17760f7f7ba8ec884fd0a708d5e6dc7b29a77d1299039fdf326c3617a99eb0e",
+      "size_bytes": 30513
+    },
+    {
+      "relative_path": "DSBA/DSBA_academic_plan_coop.json",
+      "sha256": "63be90f266cda12c289e7eafee8432e5aa07c460824d6ecb6279969d28c4b8dc",
+      "size_bytes": 44171
+    },
+    {
+      "relative_path": "DSBA/DSBA_academic_plan_no_coop.json",
+      "sha256": "025477261eb3959e7548cbca310e0ab2073bd6d3769364a76a208eefd1002c83",
+      "size_bytes": 44460
+    },
+    {
+      "relative_path": "example_ground_truth.json",
+      "sha256": "2abbd57846f3541dc81673673a51eb2e56d580a7cb519e7e7487177a4146049a",
+      "size_bytes": 201
+    },
+    {
+      "relative_path": "general_education_ground_truth.json",
+      "sha256": "1b01660662ddcfca55ce0694089596b6bc7c358efd39022543909b34db82aa76",
+      "size_bytes": 107319
+    },
+    {
+      "relative_path": "IT/IT_academic_plan_coop.json",
+      "sha256": "fd19c5a5800b5f7ef4efc27d13f684925cd7f85c106dbb81bab85ae0cf6ee6ea",
+      "size_bytes": 52311
+    },
+    {
+      "relative_path": "IT/IT_academic_plan_no_coop.json",
+      "sha256": "688d8cf242611791845ffcd8c78c94d4e14ef53a76acc086329e8cc64cda13b2",
+      "size_bytes": 53863
+    },
+    {
+      "relative_path": "rules_ground_truth.json",
+      "sha256": "59947bff9a74a875f8a2e806e4f3dc41d7bd28b4f1c4625e614102385b84b8f4",
+      "size_bytes": 15031
+    }
+  ],
+  "source_note": "สำเนาจาก Lab_Week3/ocr_system/data/ground_truth (คัดลอกเข้าโปรเจกต์ 2026-07-28) — ปฏิบัติเป็น read-only"
+}

@@ -1,0 +1,88 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "katrag"
+version = "0.1.0"
+description = "KatRAG-lite: text-first curriculum OCR + provenance-first RAG, offline on a single machine"
+requires-python = ">=3.11,<3.12"
+license = { text = "MIT" }
+
+# ── Phase 0-8 dependencies (ทำงานได้ด้วยของที่ติดตั้งอยู่แล้วบนเครื่องเป้าหมาย) ──
+# license ของทุกรายการระบุไว้ใน [tool.katrag.dependency_licenses] ตาม R20.2
+dependencies = [
+  "pymupdf==1.24.10",
+  "numpy==1.26.4",
+  "opencv-python-headless==4.10.0.84",
+  "pillow==10.4.0",
+  "fonttools==4.53.1",
+  "pythainlp==5.0.4",
+  "psutil==7.0.0",
+]
+
+[project.optional-dependencies]
+# ── ติดตั้งเมื่อเริ่มงานที่ 9 (OCR cascade) เท่านั้น ──
+# PaddleOCR ถอดออก — เวอร์ชันที่รองรับภาษาไทย (3.x) ดาวน์โหลด weight เองตอน runtime
+# ขัดกับ offline policy (ดู third_party/typhoon-ocr-NOTICE.md และ design §4.9)
+ocr = [
+  "pytesseract==0.3.13",
+  "torch==2.5.1",
+  "torchvision==0.20.1",
+  "transformers==4.57.6",
+  "accelerate==1.2.1",
+  "bitsandbytes==0.50.0",
+  "qwen-vl-utils==0.0.11",
+]
+# ── ติดตั้งเมื่อเริ่มงานที่ 15 (dense index) ──
+index = [
+  "onnxruntime==1.19.2",
+  "tokenizers==0.20.0",
+]
+# ── ติดตั้งเมื่อเริ่มงานที่ 20 (API + UI) ──
+serve = [
+  "fastapi==0.115.0",
+  "uvicorn==0.30.6",
+  "pydantic==2.9.2",
+]
+dev = [
+  "pytest==8.3.3",
+  "hypothesis==6.112.1",
+]
+
+[project.scripts]
+katrag = "katrag.cli.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["katrag*"]
+
+[tool.setuptools.package-data]
+katrag = ["store/schema.sql"]
+
+# ── R20.2: dependency manifest ต้องระบุชื่อ license ของทุกรายการ ──
+[tool.katrag.dependency_licenses]
+pymupdf = "AGPL-3.0-or-later (open-source, ใช้ฟรี)"
+numpy = "BSD-3-Clause"
+"opencv-python-headless" = "Apache-2.0"
+pillow = "MIT-CMU"
+fonttools = "MIT"
+pythainlp = "Apache-2.0"
+psutil = "BSD-3-Clause"
+pytesseract = "Apache-2.0"
+torch = "BSD-3-Clause"
+torchvision = "BSD-3-Clause"
+transformers = "Apache-2.0"
+accelerate = "Apache-2.0"
+bitsandbytes = "MIT"
+"qwen-vl-utils" = "Apache-2.0"
+onnxruntime = "MIT"
+tokenizers = "Apache-2.0"
+fastapi = "MIT"
+uvicorn = "BSD-3-Clause"
+pydantic = "MIT"
+pytest = "MIT"
+hypothesis = "MPL-2.0"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

@@ -1,0 +1,178 @@
+{
+  "documents": [
+    {
+      "chars": 213459,
+      "failures": 0,
+      "lines": 4124,
+      "pages": 346,
+      "pages_mismatch": 0,
+      "pages_unresolved": 0,
+      "pages_violation": 0,
+      "pua_glyphs": 4,
+      "relative_path": "Bachelors_Degree/AIT2566_current.pdf"
+    },
+    {
+      "chars": 241962,
+      "failures": 0,
+      "lines": 6607,
+      "pages": 242,
+      "pages_mismatch": 0,
+      "pages_unresolved": 0,
+      "pages_violation": 0,
+      "pua_glyphs": 5,
+      "relative_path": "Bachelors_Degree/BIT2560_old.pdf"
+    },
+    {
+      "chars": 286853,
+      "failures": 0,
+      "lines": 6102,
+      "pages": 317,
+      "pages_mismatch": 0,
+      "pages_unresolved": 0,
+      "pages_violation": 0,
+      "pua_glyphs": 4665,
+      "relative_path": "Bachelors_Degree/BIT2565_current.pdf"
+    },
+    {
+      "chars": 265764,
+      "failures": 0,
+      "lines": 6818,
+      "pages": 258,
+      "pages_mismatch": 0,
+      "pages_unresolved": 0,
+      "pages_violation": 0,
+      "pua_glyphs": 6,
+      "relative_path": "Bachelors_Degree/DSBA2560_old.pdf"
+    },
+    {
+      "chars": 319062,
+      "failures": 0,
+      "lines": 6780,
+      "pages": 403,
+      "pages_mismatch": 0,
+      "pages_unresolved": 0,
+      "pages_violation": 0,
+      "pua_glyphs": 7122,
+      "relative_path": "Bachelors_Degree/DSBA2565_current.pdf"
+    },
+    {
+      "chars": 303611,
+      "failures": 0,
+      "lines": 5693,
+      "pages": 327,
+      "pages_mismatch": 0,
+      "pages_unresolved": 0,
+      "pages_violation": 0,
+      "pua_glyphs": 5994,
+      "relative_path": "Bachelors_Degree/IT2560_old.pdf"
+    },
+    {
+      "chars": 335637,
+      "failures": 0,
+      "lines": 6238,
+      "pages": 429,
+      "pages_mismatch": 0,
+      "pages_unresolved": 0,
+      "pages_violation": 0,
+      "pua_glyphs": 6363,
+      "relative_path": "Bachelors_Degree/IT2565_current.pdf"
+    },
+    {
+      "chars": 255604,
+      "failures": 0,
+      "lines": 5132,
+      "pages": 252,
+      "pages_mismatch": 0,
+      "pages_unresolved": 0,
+      "pages_violation": 0,
+      "pua_glyphs": 15,
+      "relative_path": "Doctorals_Degree/PH_D_AITBA2569_current.pdf"
+    },
+    {
+      "chars": 160257,
+      "failures": 0,
+      "lines": 3291,
+      "pages": 156,
+      "pages_mismatch": 0,
+      "pages_unresolved": 0,
+      "pages_violation": 0,
+      "pua_glyphs": 15,
+      "relative_path": "Doctorals_Degree/PH_D_IT2561_old.pdf"
+    },
+    {
+      "chars": 256004,
+      "failures": 0,
+      "lines": 4513,
+      "pages": 199,
+      "pages_mismatch": 0,
+      "pages_unresolved": 0,
+      "pages_violation": 0,
+      "pua_glyphs": 28,
+      "relative_path": "Doctorals_Degree/PH_D_IT2566_current.pdf"
+    },
+    {
+      "chars": 159503,
+      "failures": 0,
+      "lines": 2814,
+      "pages": 147,
+      "pages_mismatch": 0,
+      "pages_unresolved": 0,
+      "pages_violation": 0,
+      "pua_glyphs": 6,
+      "relative_path": "Masters_Degree/M_AITBA2564_old.pdf"
+    },
+    {
+      "chars": 255604,
+      "failures": 0,
+      "lines": 5132,
+      "pages": 252,
+      "pages_mismatch": 0,
+      "pages_unresolved": 0,
+      "pages_violation": 0,
+      "pua_glyphs": 15,
+      "relative_path": "Masters_Degree/M_AITBA2569_current.pdf"
+    },
+    {
+      "chars": 196671,
+      "failures": 0,
+      "lines": 4049,
+      "pages": 182,
+      "pages_mismatch": 0,
+      "pages_unresolved": 0,
+      "pages_violation": 0,
+      "pua_glyphs": 0,
+      "relative_path": "Masters_Degree/M_IT2563_old.pdf"
+    },
+    {
+      "chars": 190803,
+      "failures": 0,
+      "lines": 3818,
+      "pages": 179,
+      "pages_mismatch": 0,
+      "pages_unresolved": 0,
+      "pages_violation": 0,
+      "pua_glyphs": 4166,
+      "relative_path": "Masters_Degree/M_IT2568_current.pdf"
+    }
+  ],
+  "elapsed_seconds": 330.8,
+  "pages_per_second": 11.15,
+  "pua_mapping_size": 13,
+  "totals": {
+    "chars": 3440794,
+    "documents": 14,
+    "lines": 71111,
+    "marker_spaces_dropped": 7,
+    "page_failures": 0,
+    "pages": 3689,
+    "pages_low_text": 974,
+    "pages_marker_space_violation": 0,
+    "pages_multiset_mismatch": 0,
+    "pages_reorder_changed_text": 3317,
+    "pages_unmapped_pua": 0,
+    "pages_unresolved_marks": 0,
+    "pages_with_pua": 1036,
+    "pages_zero_char": 0,
+    "pua_glyphs_mapped": 28404
+  }
+}

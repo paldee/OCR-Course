@@ -1,0 +1,138 @@
+# KatRAG-lite configuration — ทุกค่าที่ requirements ระบุว่า "อ่านจากไฟล์ตั้งค่า" อยู่ในไฟล์นี้
+# โหลดเป็น KatragConfig (frozen) ครั้งเดียวต่อ process
+
+[halt]                      # ใช้ร่วมกันสองที่: OCR escalation (R5.2-5.4) และ evidence hops (R14.5-14.8)
+tau = 1.0                   # halt เมื่อ gain < cost * tau
+l_min = 1                   # จำนวนรอบขั้นต่ำก่อนอนุญาตให้ halt
+oscillation_patience = 2    # สลับทิศทางครบ 2 ครั้ง -> halt reason = oscillation
+
+[ocr]
+max_stages_per_region = 2
+per_page_time_budget_seconds = 120.0   # denominator ของ gain-cost; ปรับจาก 20 ให้สะท้อน Typhoon latency จริง
+crop_cache_max_entries_per_document = 2000
+stage_order = ["tesseract5", "typhoon_ocr1_5_2b"]
+adjudicate_iou_threshold = 0.50
+confidence_tie_epsilon = 0.01
+
+# --- per-engine timeout (R5.6 revised) ---
+# hard wall-clock deadline ต่อ region ต่อ engine (ไม่รวม model startup)
+# ใช้แทน region_timeout_seconds เดิมที่เป็นค่าเดียว ซึ่งใช้ไม่ได้จริงกับ Typhoon
+[ocr.stage_timeout]
+tesseract5 = 15.0                     # 10s + margin สำหรับสอง subprocess (string→data)
+typhoon_ocr1_5_2b = 300.0             # p95 วัดได้ ~231s; 300s ให้ margin 30%
+
+# --- escalation budget ---
+# จำกัดเวลารวมของ stage 2 (Typhoon) ต่อ ingestion run เพื่อไม่ให้ runtime หลายสิบชั่วโมง
+[ocr.escalation]
+max_typhoon_seconds_per_run = 14400.0  # 4 ชั่วโมง (~114 regions ที่ 126s เฉลี่ย)
+max_consecutive_typhoon_failures = 3   # circuit breaker: timeout/OOM ติดต่อกัน → ข้าม stage 2 ทั้ง run
+min_stage1_quality_for_skip = 0.85     # ถ้า Tesseract คุณภาพ >= 0.85 ไม่ต้อง escalate
+
+[ocr.typhoon]
+model_id = "scb10x/typhoon-ocr1.5-2b"
+max_new_tokens = 2000
+# repetition_penalty=1.3 + no_repeat_ngram_size=6 (ค่าตั้งต้นแรกที่ลองใช้) ทำให้รหัสวิชา/
+# หน่วยกิตผิด เพราะเลขที่ซ้ำกันจริงในภาพ (เช่น "9064100" ตามด้วยเลขท้ายอีกตัว) ถูกลงโทษเหมือน
+# เป็นการวนซ้ำที่ผิดปกติ ทดสอบ ablation แล้วพบว่า repetition_penalty=1.1 โดยไม่ใช้
+# no_repeat_ngram_size ให้ผลลัพธ์รหัสวิชา/หน่วยกิตถูกต้องเท่ากับไม่ใส่ penalty เลย และยังคง
+# เป็นตัวหน่วงการวนซ้ำที่มีประโยชน์บนหน้าที่มีข้อความน้อย (ดู docs/results/task_09_ocr_cascade.md)
+repetition_penalty = 1.1
+no_repeat_ngram_size = 0        # 0 = ปิด (ไม่บล็อก n-gram ซ้ำ เพราะเลขซ้ำกันจริงในเอกสารได้)
+image_max_dimension_px = 1800
+known_institution_name = "สถาบันเทคโนโลยีพระจอมเกล้าเจ้าคุณทหารลาดกระบัง"
+require_cuda = true            # ไม่มี GPU -> ข้าม stage นี้เสมอ (R5.1.1, R20.7)
+
+[preprocess]                # เงื่อนไขเปิดใช้ (R5.9)
+skew_degrees_threshold = 1.0
+min_dpi = 300
+contrast_score_threshold = 0.30
+
+[page_quality]              # น้ำหนักของ page_quality_score (R4.1)
+weight_extracted_char_count = 0.45
+weight_out_of_charset_ratio = 0.20
+weight_image_area_ratio = 0.20
+weight_domain_lexicon_match_count = 0.15
+low_text_char_threshold = 120
+ocr_candidate_budget_pages = 979
+char_count_reference = 1200          # ตัวหารสำหรับ saturate extracted_char_count
+lexicon_match_reference = 12         # ตัวหารสำหรับ saturate domain_lexicon_match_count
+
+[route.page]                # R4.7
+fast_max_image_area_ratio = 0.30
+deep_min_image_area_ratio = 0.60
+
+[thai]
+zero_width_max_points = 0.5
+baseline_tolerance_ratio = 0.20      # 20% ของ font size
+horizontal_window_ratio = 1.50       # 1.5 x font size
+line_baseline_tolerance_ratio = 0.30 # R3.6
+
+[retrieval]
+lexical_top_k = 100
+dense_top_k = 100
+fusion_output_max = 50
+fusion_lexical_weight = 0.5
+fusion_dense_weight = 0.5
+fusion_rrf_k = 60
+dense_p95_latency_budget_seconds = 3.0
+phrase_boost_multiplier = 1.35       # ช่วงที่ยอมรับ 1.00-3.00 (R13.5)
+rerank_depth = 20                    # ช่วงที่ยอมรับ 20-40 (R13.6)
+maxsim_enabled = false               # R13.8 -> status = "pending_ablation"
+maxsim_status = "pending_ablation"
+
+[evidence]
+max_hops = 3                         # ช่วงที่ยอมรับ 1-5 (R14.3)
+max_nodes_per_request = 60
+max_nodes_per_hop = 10
+evidence_time_budget_seconds = 10.0
+
+[answer]
+answer_time_budget_seconds = 60      # ช่วงที่ยอมรับ 10-180 (R17.1)
+max_evidence_units = 60
+model_path = "models/qwen3-4b-instruct-q4_k_m.gguf"
+request_timeout_seconds = 120        # R19.9
+max_versions_per_request = 2         # R16.3
+
+[router.question]
+max_question_chars = 500             # R16.1/R16.6
+api_max_question_chars = 2000        # R19.1/R19.3
+retriever_max_question_chars = 1000  # R13.10
+min_confidence = 0.50                # R16.4
+classification_budget_ms = 200
+structured_path_budget_ms = 1000     # R16.2/R9.4
+max_route_escalations = 1            # R16.7
+
+[memory]
+limit_bytes = 6_442_450_944          # 6 GB (R6.5)
+max_resident_page_images = 2
+rss_drift_tolerance = 0.05
+rss_baseline_page_index = 50         # วัด baseline หลังหน้าที่ 50 (R6.3)
+
+[evaluation]
+min_samples_for_measured = 30        # R18.4/R18.8
+page_cer_threshold = 0.05
+table_cell_f1_threshold = 0.90
+field_macro_f1_threshold = 0.91
+recall_at_10_threshold = 0.90
+citation_precision_threshold = 0.95
+citation_recall_threshold = 0.91
+unsupported_claim_rate_threshold = 0.05
+version_selection_accuracy_threshold = 0.98
+
+[dataset]
+root = "Information_Technology_Course"
+expected_document_count = 14         # R1.2 (measured fact)
+expected_page_total = 3689           # R1.2 (measured fact)
+
+[paths]
+sqlite = "artifacts/katrag.sqlite3"
+dataset_manifest = "artifacts/dataset_manifest.json"
+evaluation_report = "artifacts/evaluation_report.json"
+gt_normalized_dir = "artifacts/gt_normalized"
+teacher_gt_dir = "data/teacher_gt"          # สำเนาในโปรเจกต์ (read-only) + MANIFEST.json ยืนยัน sha256
+gold_set_dir = "artifacts/gold_set"
+
+[api]
+host = "127.0.0.1"                   # R19.2 loopback only
+port = 8000
+max_documents_per_response = 500     # R19.1

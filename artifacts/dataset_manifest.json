@@ -1,0 +1,1169 @@
+{
+  "canonical_document_count": 13,
+  "dataset_root": "Information_Technology_Course",
+  "document_count": 14,
+  "documents": [
+    {
+      "canonical_document_id": "71905b5244a14b94",
+      "curriculum_version": {
+        "curriculum_year": 2566,
+        "edition_status": "current",
+        "program": "AIT"
+      },
+      "degree_level": "bachelor",
+      "document_id": "71905b5244a14b94",
+      "is_canonical": true,
+      "metadata_source": {
+        "curriculum_year": {
+          "bbox": [
+            218.80999755859375,
+            371.02398681640625,
+            381.0390625,
+            395.1799621582031
+          ],
+          "evidence_text": "(หลักสูตรใหม่ พ.ศ. 2566)",
+          "page": 1,
+          "source": "document_text",
+          "value": 2566
+        },
+        "degree_level": {
+          "bbox": [
+            191.4499969482422,
+            321.343994140625,
+            408.8629455566406,
+            370.3399658203125
+          ],
+          "evidence_text": "หลักสูตรวิทยาศาสตรบัณฑิต \nสาขาวิชาเทคโนโลยีปัญญาประดิษฐ์",
+          "page": 1,
+          "source": "document_text",
+          "value": "bachelor"
+        },
+        "edition_status": {
+          "bbox": null,
+          "evidence_text": "",
+          "page": null,
+          "source": "filename",
+          "value": "current"
+        },
+        "program": {
+          "bbox": [
+            191.4499969482422,
+            321.343994140625,
+            408.8629455566406,
+            370.3399658203125
+          ],
+          "evidence_text": "หลักสูตรวิทยาศาสตรบัณฑิต \nสาขาวิชาเทคโนโลยีปัญญาประดิษฐ์",
+          "page": 1,
+          "source": "document_text",
+          "value": "AIT"
+        }
+      },
+      "page_count": 346,
+      "relations": [],
+      "relative_path": "Bachelors_Degree/AIT2566_current.pdf",
+      "review_issues": [
+        {
+          "detail": {
+            "fallback": "current",
+            "field": "edition_status",
+            "note": "คลังนี้ระบุฉบับด้วยชื่อไฟล์ ไม่มีข้อความในเล่มที่ระบุตรง ๆ",
+            "relative_path": "Bachelors_Degree/AIT2566_current.pdf"
+          },
+          "issue_id": 1,
+          "issue_type": "metadata_unresolved",
+          "page_number": null,
+          "subject_ref": null
+        },
+        {
+          "detail": {
+            "budget": 979,
+            "candidates_so_far": 979
+          },
+          "issue_id": 21,
+          "issue_type": "ocr_budget_exhausted",
+          "page_number": 74,
+          "subject_ref": null
+        }
+      ],
+      "sha256": "268065523712db993eec9699b106cc84c283898cd720b70ed56fe73afe80561f",
+      "size_bytes": 236667633
+    },
+    {
+      "canonical_document_id": "1ffe70b5db234caa",
+      "curriculum_version": {
+        "curriculum_year": 2560,
+        "edition_status": "old",
+        "program": "BIT"
+      },
+      "degree_level": "bachelor",
+      "document_id": "1ffe70b5db234caa",
+      "is_canonical": true,
+      "metadata_source": {
+        "curriculum_year": {
+          "bbox": [
+            119.39530944824219,
+            291.9974670410156,
+            475.8169860839844,
+            363.9143981933594
+          ],
+          "evidence_text": "หลักสูตรหลักสูตรวิทยาศาสตรบัณฑิต\nสาขาวิชาเทคโนโลยีสารสนเทศทางธุรกิจ (หลักสูตรนานาชาติ)\n(หลักสูตรใหม่ พ.ศ. 2560)",
+          "page": 1,
+          "source": "document_text",
+          "value": 2560
+        },
+        "degree_level": {
+          "bbox": [
+            119.39530944824219,
+            291.9974670410156,
+            475.8169860839844,
+            363.9143981933594
+          ],
+          "evidence_text": "หลักสูตรหลักสูตรวิทยาศาสตรบัณฑิต\nสาขาวิชาเทคโนโลยีสารสนเทศทางธุรกิจ (หลักสูตรนานาชาติ)\n(หลักสูตรใหม่ พ.ศ. 2560)",
+          "page": 1,
+          "source": "document_text",
+          "value": "bachelor"
+        },
+        "edition_status": {
+          "bbox": null,
+          "evidence_text": "",
+          "page": null,
+          "source": "filename",
+          "value": "old"
+        },
+        "program": {
+          "bbox": [
+            119.39530944824219,
+            291.9974670410156,
+            475.8169860839844,
+            363.9143981933594
+          ],
+          "evidence_text": "หลักสูตรหลักสูตรวิทยาศาสตรบัณฑิต\nสาขาวิชาเทคโนโลยีสารสนเทศทางธุรกิจ (หลักสูตรนานาชาติ)\n(หลักสูตรใหม่ พ.ศ. 2560)",
+          "page": 1,
+          "source": "document_text",
+          "value": "BIT"
+        }
+      },
+      "page_count": 242,
+      "relations": [],
+      "relative_path": "Bachelors_Degree/BIT2560_old.pdf",
+      "review_issues": [
+        {
+          "detail": {
+            "fallback": "old",
+            "field": "edition_status",
+            "note": "คลังนี้ระบุฉบับด้วยชื่อไฟล์ ไม่มีข้อความในเล่มที่ระบุตรง ๆ",
+            "relative_path": "Bachelors_Degree/BIT2560_old.pdf"
+          },
+          "issue_id": 2,
+          "issue_type": "metadata_unresolved",
+          "page_number": null,
+          "subject_ref": null
+        }
+      ],
+      "sha256": "49fbe2843fddfb175fd597023c06b633f1ee95d9f6c39cbc3bb51aca7999b385",
+      "size_bytes": 131488606
+    },
+    {
+      "canonical_document_id": "75085b1dd7523d89",
+      "curriculum_version": {
+        "curriculum_year": 2565,
+        "edition_status": "current",
+        "program": "BIT"
+      },
+      "degree_level": "bachelor",
+      "document_id": "75085b1dd7523d89",
+      "is_canonical": true,
+      "metadata_source": {
+        "curriculum_year": {
+          "bbox": [
+            214.1300048828125,
+            403.80401611328125,
+            402.95294189453125,
+            427.9599914550781
+          ],
+          "evidence_text": "(หลักสูตรปรับปรุง พ.ศ. 2565)",
+          "page": 1,
+          "source": "document_text",
+          "value": 2565
+        },
+        "degree_level": {
+          "bbox": [
+            221.4499969482422,
+            326.5040283203125,
+            395.6329650878906,
+            350.6600036621094
+          ],
+          "evidence_text": "หลักสูตรวิทยาศาสตรบัณฑิต",
+          "page": 1,
+          "source": "document_text",
+          "value": "bachelor"
+        },
+        "edition_status": {
+          "bbox": null,
+          "evidence_text": "",
+          "page": null,
+          "source": "filename",
+          "value": "current"
+        },
+        "program": {
+          "bbox": [
+            122.66000366210938,
+            365.16400146484375,
+            494.3029479980469,
+            389.3199768066406
+          ],
+          "evidence_text": "สาขาวิชาเทคโนโลยีสารสนเทศทางธุรกิจ (หลักสูตรนานาชาติ)",
+          "page": 1,
+          "source": "document_text",
+          "value": "BIT"
+        }
+      },
+      "page_count": 317,
+      "relations": [],
+      "relative_path": "Bachelors_Degree/BIT2565_current.pdf",
+      "review_issues": [
+        {
+          "detail": {
+            "fallback": "current",
+            "field": "edition_status",
+            "note": "คลังนี้ระบุฉบับด้วยชื่อไฟล์ ไม่มีข้อความในเล่มที่ระบุตรง ๆ",
+            "relative_path": "Bachelors_Degree/BIT2565_current.pdf"
+          },
+          "issue_id": 3,
+          "issue_type": "metadata_unresolved",
+          "page_number": null,
+          "subject_ref": null
+        }
+      ],
+      "sha256": "f7f8fba36276f772c757762a1e48879af8b54c3fe8ab3325e8f96996268891bc",
+      "size_bytes": 198031060
+    },
+    {
+      "canonical_document_id": "344608973458106b",
+      "curriculum_version": {
+        "curriculum_year": 2560,
+        "edition_status": "old",
+        "program": "DSBA"
+      },
+      "degree_level": "bachelor",
+      "document_id": "344608973458106b",
+      "is_canonical": true,
+      "metadata_source": {
+        "curriculum_year": {
+          "bbox": [
+            218.92196655273438,
+            327.86712646484375,
+            377.0607604980469,
+            351.4228820800781
+          ],
+          "evidence_text": "(หลักสูตรใหม่ พ.ศ. 2560)",
+          "page": 1,
+          "source": "document_text",
+          "value": 2560
+        },
+        "degree_level": {
+          "bbox": [
+            213.37600708007812,
+            252.87310791015625,
+            382.6239013671875,
+            276.4284973144531
+          ],
+          "evidence_text": "หลักสูตรวิทยาศาสตรบัณฑิต",
+          "page": 1,
+          "source": "document_text",
+          "value": "bachelor"
+        },
+        "edition_status": {
+          "bbox": null,
+          "evidence_text": "",
+          "page": null,
+          "source": "filename",
+          "value": "old"
+        },
+        "program": {
+          "bbox": [
+            147.29098510742188,
+            290.3701171875,
+            448.75201416015625,
+            313.9255065917969
+          ],
+          "evidence_text": "สาขาวิชาวิทยาการข้อมูลและการวิเคราะห์เชิงธุรกิจ",
+          "page": 1,
+          "source": "document_text",
+          "value": "DSBA"
+        }
+      },
+      "page_count": 258,
+      "relations": [],
+      "relative_path": "Bachelors_Degree/DSBA2560_old.pdf",
+      "review_issues": [
+        {
+          "detail": {
+            "fallback": "old",
+            "field": "edition_status",
+            "note": "คลังนี้ระบุฉบับด้วยชื่อไฟล์ ไม่มีข้อความในเล่มที่ระบุตรง ๆ",
+            "relative_path": "Bachelors_Degree/DSBA2560_old.pdf"
+          },
+          "issue_id": 4,
+          "issue_type": "metadata_unresolved",
+          "page_number": null,
+          "subject_ref": null
+        }
+      ],
+      "sha256": "6f812942774c6298a0aacc8a82b8bada0d93429ee1dfab1b96f1232600f2de13",
+      "size_bytes": 142583017
+    },
+    {
+      "canonical_document_id": "a39d6db17ccc5cf4",
+      "curriculum_version": {
+        "curriculum_year": 2565,
+        "edition_status": "current",
+        "program": "DSBA"
+      },
+      "degree_level": "bachelor",
+      "document_id": "a39d6db17ccc5cf4",
+      "is_canonical": true,
+      "metadata_source": {
+        "curriculum_year": {
+          "bbox": [
+            176.8269805908203,
+            291.97509765625,
+            473.15399169921875,
+            368.32318115234375
+          ],
+          "evidence_text": "หลักสูตรวิทยาศาสตรบัณฑิต\nสาขาวิชาวิทยาการขอมูลและการวิเคราะหเชิงธุรกิจ\n(หลักสูตรปรับปรุง พ.ศ. 2565)",
+          "page": 1,
+          "source": "document_text",
+          "value": 2565
+        },
+        "degree_level": {
+          "bbox": [
+            176.8269805908203,
+            291.97509765625,
+            473.15399169921875,
+            368.32318115234375
+          ],
+          "evidence_text": "หลักสูตรวิทยาศาสตรบัณฑิต\nสาขาวิชาวิทยาการขอมูลและการวิเคราะหเชิงธุรกิจ\n(หลักสูตรปรับปรุง พ.ศ. 2565)",
+          "page": 1,
+          "source": "document_text",
+          "value": "bachelor"
+        },
+        "edition_status": {
+          "bbox": null,
+          "evidence_text": "",
+          "page": null,
+          "source": "filename",
+          "value": "current"
+        },
+        "program": {
+          "bbox": [
+            176.8269805908203,
+            291.97509765625,
+            473.15399169921875,
+            368.32318115234375
+          ],
+          "evidence_text": "หลักสูตรวิทยาศาสตรบัณฑิต\nสาขาวิชาวิทยาการขอมูลและการวิเคราะหเชิงธุรกิจ\n(หลักสูตรปรับปรุง พ.ศ. 2565)",
+          "page": 1,
+          "source": "document_text",
+          "value": "DSBA"
+        }
+      },
+      "page_count": 403,
+      "relations": [],
+      "relative_path": "Bachelors_Degree/DSBA2565_current.pdf",
+      "review_issues": [
+        {
+          "detail": {
+            "fallback": "current",
+            "field": "edition_status",
+            "note": "คลังนี้ระบุฉบับด้วยชื่อไฟล์ ไม่มีข้อความในเล่มที่ระบุตรง ๆ",
+            "relative_path": "Bachelors_Degree/DSBA2565_current.pdf"
+          },
+          "issue_id": 5,
+          "issue_type": "metadata_unresolved",
+          "page_number": null,
+          "subject_ref": null
+        }
+      ],
+      "sha256": "01ead4c636b04ce072064e5789332b89b678d12b9863f52a72d35a9d15b500a1",
+      "size_bytes": 54264534
+    },
+    {
+      "canonical_document_id": "09c745bf0cd1fefe",
+      "curriculum_version": {
+        "curriculum_year": 2560,
+        "edition_status": "old",
+        "program": "IT"
+      },
+      "degree_level": "bachelor",
+      "document_id": "09c745bf0cd1fefe",
+      "is_canonical": true,
+      "metadata_source": {
+        "curriculum_year": {
+          "bbox": [
+            199.89169311523438,
+            243.6180419921875,
+            419.86224365234375,
+            315.4773864746094
+          ],
+          "evidence_text": "หลักสูตรหลักสูตรวิทยาศาสตรบัณฑิต \nสาขาวิชาเทคโนโลยีสารสนเทศ \n(หลักสูตรปรับปรุง  พ.ศ. 2560)",
+          "page": 1,
+          "source": "document_text",
+          "value": 2560
+        },
+        "degree_level": {
+          "bbox": [
+            199.89169311523438,
+            243.6180419921875,
+            419.86224365234375,
+            315.4773864746094
+          ],
+          "evidence_text": "หลักสูตรหลักสูตรวิทยาศาสตรบัณฑิต \nสาขาวิชาเทคโนโลยีสารสนเทศ \n(หลักสูตรปรับปรุง  พ.ศ. 2560)",
+          "page": 1,
+          "source": "document_text",
+          "value": "bachelor"
+        },
+        "edition_status": {
+          "bbox": null,
+          "evidence_text": "",
+          "page": null,
+          "source": "filename",
+          "value": "old"
+        },
+        "program": {
+          "bbox": [
+            199.89169311523438,
+            243.6180419921875,
+            419.86224365234375,
+            315.4773864746094
+          ],
+          "evidence_text": "หลักสูตรหลักสูตรวิทยาศาสตรบัณฑิต \nสาขาวิชาเทคโนโลยีสารสนเทศ \n(หลักสูตรปรับปรุง  พ.ศ. 2560)",
+          "page": 1,
+          "source": "document_text",
+          "value": "IT"
+        }
+      },
+      "page_count": 327,
+      "relations": [],
+      "relative_path": "Bachelors_Degree/IT2560_old.pdf",
+      "review_issues": [
+        {
+          "detail": {
+            "fallback": "old",
+            "field": "edition_status",
+            "note": "คลังนี้ระบุฉบับด้วยชื่อไฟล์ ไม่มีข้อความในเล่มที่ระบุตรง ๆ",
+            "relative_path": "Bachelors_Degree/IT2560_old.pdf"
+          },
+          "issue_id": 6,
+          "issue_type": "metadata_unresolved",
+          "page_number": null,
+          "subject_ref": null
+        }
+      ],
+      "sha256": "eded877e329f1c1ede974e9a708c337f18b9443c44c158b3478d0e74dcec556d",
+      "size_bytes": 203535073
+    },
+    {
+      "canonical_document_id": "5dec80d93328c9fa",
+      "curriculum_version": {
+        "curriculum_year": 2565,
+        "edition_status": "current",
+        "program": "IT"
+      },
+      "degree_level": "bachelor",
+      "document_id": "5dec80d93328c9fa",
+      "is_canonical": true,
+      "metadata_source": {
+        "curriculum_year": {
+          "bbox": [
+            234.11170959472656,
+            413.9465637207031,
+            427.8428039550781,
+            442.5165100097656
+          ],
+          "evidence_text": "(หลักสูตรปรับปรุง  พ.ศ. 2565)",
+          "page": 1,
+          "source": "document_text",
+          "value": 2565
+        },
+        "degree_level": {
+          "bbox": [
+            243.83999633789062,
+            327.6657409667969,
+            418.0047607421875,
+            356.2356872558594
+          ],
+          "evidence_text": "หลักสูตรวิทยาศาสตรบัณฑิต",
+          "page": 1,
+          "source": "document_text",
+          "value": "bachelor"
+        },
+        "edition_status": {
+          "bbox": null,
+          "evidence_text": "",
+          "page": null,
+          "source": "filename",
+          "value": "current"
+        },
+        "program": {
+          "bbox": [
+            236.76889038085938,
+            370.8610534667969,
+            425.07586669921875,
+            399.4309997558594
+          ],
+          "evidence_text": "สาขาวิชาเทคโนโลยีสารสนเทศ",
+          "page": 1,
+          "source": "document_text",
+          "value": "IT"
+        }
+      },
+      "page_count": 429,
+      "relations": [],
+      "relative_path": "Bachelors_Degree/IT2565_current.pdf",
+      "review_issues": [
+        {
+          "detail": {
+            "fallback": "current",
+            "field": "edition_status",
+            "note": "คลังนี้ระบุฉบับด้วยชื่อไฟล์ ไม่มีข้อความในเล่มที่ระบุตรง ๆ",
+            "relative_path": "Bachelors_Degree/IT2565_current.pdf"
+          },
+          "issue_id": 7,
+          "issue_type": "metadata_unresolved",
+          "page_number": null,
+          "subject_ref": null
+        }
+      ],
+      "sha256": "aca97dc8b57308b30355e74e384c042d27d005310c6b4a9b72ecf79514543afa",
+      "size_bytes": 257458903
+    },
+    {
+      "canonical_document_id": "bef8aad4da2cad3d",
+      "curriculum_version": {
+        "curriculum_year": 2569,
+        "edition_status": "current",
+        "program": "AITBA"
+      },
+      "degree_level": "master",
+      "document_id": "bef8aad4da2cad3d",
+      "is_canonical": true,
+      "metadata_source": {
+        "curriculum_year": {
+          "bbox": [
+            205.61000061035156,
+            392.98394775390625,
+            394.2133483886719,
+            417.13995361328125
+          ],
+          "evidence_text": "(หลักสูตรปรับปรุง พ.ศ. 2569)",
+          "page": 1,
+          "source": "document_text",
+          "value": 2569
+        },
+        "degree_level": {
+          "bbox": [
+            131.3000030517578,
+            338.80999755859375,
+            469.3240051269531,
+            392.3299865722656
+          ],
+          "evidence_text": "หลักสูตรวิทยาศาสตรมหาบัณฑิต \nสาขาวิชาปัญญาประดิษฐ์เพื่อการวิเคราะห์เชิงธุรกิจ",
+          "page": 1,
+          "source": "document_text",
+          "value": "master"
+        },
+        "edition_status": {
+          "bbox": null,
+          "evidence_text": "",
+          "page": null,
+          "source": "filename",
+          "value": "current"
+        },
+        "program": {
+          "bbox": [
+            131.3000030517578,
+            338.80999755859375,
+            469.3240051269531,
+            392.3299865722656
+          ],
+          "evidence_text": "หลักสูตรวิทยาศาสตรมหาบัณฑิต \nสาขาวิชาปัญญาประดิษฐ์เพื่อการวิเคราะห์เชิงธุรกิจ",
+          "page": 1,
+          "source": "document_text",
+          "value": "AITBA"
+        }
+      },
+      "page_count": 252,
+      "relations": [
+        {
+          "note": "sha256 ของเนื้อหาเท่ากัน",
+          "relation_type": "duplicate_content",
+          "to_document_id": "430d1625db23e79b"
+        }
+      ],
+      "relative_path": "Doctorals_Degree/PH_D_AITBA2569_current.pdf",
+      "review_issues": [
+        {
+          "detail": {
+            "bbox": [
+              131.3000030517578,
+              338.80999755859375,
+              469.3240051269531,
+              392.3299865722656
+            ],
+            "field": "degree_level",
+            "from_document_text": "master",
+            "from_filename": "doctoral",
+            "page": 1,
+            "relative_path": "Doctorals_Degree/PH_D_AITBA2569_current.pdf"
+          },
+          "issue_id": 8,
+          "issue_type": "metadata_conflict",
+          "page_number": 1,
+          "subject_ref": null
+        },
+        {
+          "detail": {
+            "fallback": "current",
+            "field": "edition_status",
+            "note": "คลังนี้ระบุฉบับด้วยชื่อไฟล์ ไม่มีข้อความในเล่มที่ระบุตรง ๆ",
+            "relative_path": "Doctorals_Degree/PH_D_AITBA2569_current.pdf"
+          },
+          "issue_id": 9,
+          "issue_type": "metadata_unresolved",
+          "page_number": null,
+          "subject_ref": null
+        },
+        {
+          "detail": {
+            "canonical_document_id": "bef8aad4da2cad3d",
+            "canonical_relative_path": "Doctorals_Degree/PH_D_AITBA2569_current.pdf",
+            "members": [
+              {
+                "degree_level_resolved": "master",
+                "document_id": "bef8aad4da2cad3d",
+                "relative_path": "Doctorals_Degree/PH_D_AITBA2569_current.pdf"
+              },
+              {
+                "degree_level_resolved": "master",
+                "document_id": "430d1625db23e79b",
+                "relative_path": "Masters_Degree/M_AITBA2569_current.pdf"
+              }
+            ],
+            "note": "เนื้อหาเหมือนกันแต่วางในโฟลเดอร์ต่างกัน ประมวลผลเนื้อหาครั้งเดียวจาก canonical",
+            "sha256": "17e982fc74c2c2bc4d9181c0615e6a90c23fff9700ef3652beb37d17f0f9e24b"
+          },
+          "issue_id": 17,
+          "issue_type": "duplicate_content",
+          "page_number": null,
+          "subject_ref": null
+        },
+        {
+          "detail": {
+            "extracted_char_count": 107,
+            "threshold": 120
+          },
+          "issue_id": 18,
+          "issue_type": "low_content_page",
+          "page_number": 94,
+          "subject_ref": null
+        },
+        {
+          "detail": {
+            "extracted_char_count": 119,
+            "threshold": 120
+          },
+          "issue_id": 22,
+          "issue_type": "low_content_page",
+          "page_number": 94,
+          "subject_ref": null
+        }
+      ],
+      "sha256": "17e982fc74c2c2bc4d9181c0615e6a90c23fff9700ef3652beb37d17f0f9e24b",
+      "size_bytes": 12285167
+    },
+    {
+      "canonical_document_id": "4d03ccad7edd646c",
+      "curriculum_version": {
+        "curriculum_year": 2561,
+        "edition_status": "old",
+        "program": "IT"
+      },
+      "degree_level": "doctoral",
+      "document_id": "4d03ccad7edd646c",
+      "is_canonical": true,
+      "metadata_source": {
+        "curriculum_year": {
+          "bbox": [
+            219.52999877929688,
+            313.18402099609375,
+            392.49078369140625,
+            337.3399963378906
+          ],
+          "evidence_text": "หลักสูตรปรับปรุง พ.ศ. 2561",
+          "page": 1,
+          "source": "document_text",
+          "value": 2561
+        },
+        "degree_level": {
+          "bbox": [
+            150.86000061035156,
+            263.5040283203125,
+            461.01727294921875,
+            312.5
+          ],
+          "evidence_text": "หลักสูตรปรัชญาดุษฎีบัณฑิต\nสาขาวิชาเทคโนโลยีสารสนเทศ (หลักสูตรนานาชาติ)",
+          "page": 1,
+          "source": "document_text",
+          "value": "doctoral"
+        },
+        "edition_status": {
+          "bbox": null,
+          "evidence_text": "",
+          "page": null,
+          "source": "filename",
+          "value": "old"
+        },
+        "program": {
+          "bbox": [
+            150.86000061035156,
+            263.5040283203125,
+            461.01727294921875,
+            312.5
+          ],
+          "evidence_text": "หลักสูตรปรัชญาดุษฎีบัณฑิต\nสาขาวิชาเทคโนโลยีสารสนเทศ (หลักสูตรนานาชาติ)",
+          "page": 1,
+          "source": "document_text",
+          "value": "IT"
+        }
+      },
+      "page_count": 156,
+      "relations": [],
+      "relative_path": "Doctorals_Degree/PH_D_IT2561_old.pdf",
+      "review_issues": [
+        {
+          "detail": {
+            "fallback": "old",
+            "field": "edition_status",
+            "note": "คลังนี้ระบุฉบับด้วยชื่อไฟล์ ไม่มีข้อความในเล่มที่ระบุตรง ๆ",
+            "relative_path": "Doctorals_Degree/PH_D_IT2561_old.pdf"
+          },
+          "issue_id": 10,
+          "issue_type": "metadata_unresolved",
+          "page_number": null,
+          "subject_ref": null
+        }
+      ],
+      "sha256": "0bf4d61dd6d8b059a15a7edce125a2d89f459396fb3f70b0f038d56549a967b5",
+      "size_bytes": 95182884
+    },
+    {
+      "canonical_document_id": "184978cecf5b14e7",
+      "curriculum_version": {
+        "curriculum_year": 2566,
+        "edition_status": "current",
+        "program": "IT"
+      },
+      "degree_level": "doctoral",
+      "document_id": "184978cecf5b14e7",
+      "is_canonical": true,
+      "metadata_source": {
+        "curriculum_year": {
+          "bbox": null,
+          "evidence_text": "",
+          "page": null,
+          "source": "filename",
+          "value": 2566
+        },
+        "degree_level": {
+          "bbox": [
+            161.0399932861328,
+            294.6239929199219,
+            439.6321716308594,
+            357.2879943847656
+          ],
+          "evidence_text": "Doctor of Philosophy Program \nProgram in Information Technology",
+          "page": 1,
+          "source": "document_text",
+          "value": "doctoral"
+        },
+        "edition_status": {
+          "bbox": null,
+          "evidence_text": "",
+          "page": null,
+          "source": "filename",
+          "value": "current"
+        },
+        "program": {
+          "bbox": [
+            123.60042572021484,
+            383.08843994140625,
+            436.6585693359375,
+            403.2255859375
+          ],
+          "evidence_text": "Title (Thai) หลักสูตรปรัชญาดุษฎีบัณฑิต สาขาวิชาเทคโนโลยีสารสนเทศ",
+          "page": 5,
+          "source": "document_text",
+          "value": "IT"
+        }
+      },
+      "page_count": 199,
+      "relations": [],
+      "relative_path": "Doctorals_Degree/PH_D_IT2566_current.pdf",
+      "review_issues": [
+        {
+          "detail": {
+            "fallback": 2566,
+            "field": "curriculum_year",
+            "relative_path": "Doctorals_Degree/PH_D_IT2566_current.pdf"
+          },
+          "issue_id": 11,
+          "issue_type": "metadata_unresolved",
+          "page_number": null,
+          "subject_ref": null
+        },
+        {
+          "detail": {
+            "fallback": "current",
+            "field": "edition_status",
+            "note": "คลังนี้ระบุฉบับด้วยชื่อไฟล์ ไม่มีข้อความในเล่มที่ระบุตรง ๆ",
+            "relative_path": "Doctorals_Degree/PH_D_IT2566_current.pdf"
+          },
+          "issue_id": 12,
+          "issue_type": "metadata_unresolved",
+          "page_number": null,
+          "subject_ref": null
+        }
+      ],
+      "sha256": "14f92723afc98782dbc7b712ed51ff7d747077aa4e184ba4934abc32ca29b9ae",
+      "size_bytes": 105203695
+    },
+    {
+      "canonical_document_id": "a2bb37ed5f089453",
+      "curriculum_version": {
+        "curriculum_year": 2564,
+        "edition_status": "old",
+        "program": "AITBA"
+      },
+      "degree_level": "master",
+      "document_id": "a2bb37ed5f089453",
+      "is_canonical": true,
+      "metadata_source": {
+        "curriculum_year": {
+          "bbox": [
+            218.80999755859375,
+            371.02398681640625,
+            381.0390625,
+            395.1799621582031
+          ],
+          "evidence_text": "(หลักสูตรใหม่ พ.ศ. 2564)",
+          "page": 1,
+          "source": "document_text",
+          "value": 2564
+        },
+        "degree_level": {
+          "bbox": [
+            145.22000122070312,
+            321.343994140625,
+            455.1529541015625,
+            370.3399658203125
+          ],
+          "evidence_text": "หลักสูตรวิทยาศาสตรมหาบัณฑิต \nสาขาวิชาปัญญาประดิษฐ์เพื่อการวิเคราะห์เชิงธุรกิจ",
+          "page": 1,
+          "source": "document_text",
+          "value": "master"
+        },
+        "edition_status": {
+          "bbox": null,
+          "evidence_text": "",
+          "page": null,
+          "source": "filename",
+          "value": "old"
+        },
+        "program": {
+          "bbox": [
+            145.22000122070312,
+            321.343994140625,
+            455.1529541015625,
+            370.3399658203125
+          ],
+          "evidence_text": "หลักสูตรวิทยาศาสตรมหาบัณฑิต \nสาขาวิชาปัญญาประดิษฐ์เพื่อการวิเคราะห์เชิงธุรกิจ",
+          "page": 1,
+          "source": "document_text",
+          "value": "AITBA"
+        }
+      },
+      "page_count": 147,
+      "relations": [],
+      "relative_path": "Masters_Degree/M_AITBA2564_old.pdf",
+      "review_issues": [
+        {
+          "detail": {
+            "fallback": "old",
+            "field": "edition_status",
+            "note": "คลังนี้ระบุฉบับด้วยชื่อไฟล์ ไม่มีข้อความในเล่มที่ระบุตรง ๆ",
+            "relative_path": "Masters_Degree/M_AITBA2564_old.pdf"
+          },
+          "issue_id": 13,
+          "issue_type": "metadata_unresolved",
+          "page_number": null,
+          "subject_ref": null
+        }
+      ],
+      "sha256": "396130c8bd726cbd5687aba3f7470d8b6046203d516e6c80598ec6101e31a71a",
+      "size_bytes": 88175761
+    },
+    {
+      "canonical_document_id": "bef8aad4da2cad3d",
+      "curriculum_version": {
+        "curriculum_year": 2569,
+        "edition_status": "current",
+        "program": "AITBA"
+      },
+      "degree_level": "master",
+      "document_id": "430d1625db23e79b",
+      "is_canonical": false,
+      "metadata_source": {
+        "curriculum_year": {
+          "bbox": [
+            205.61000061035156,
+            392.98394775390625,
+            394.2133483886719,
+            417.13995361328125
+          ],
+          "evidence_text": "(หลักสูตรปรับปรุง พ.ศ. 2569)",
+          "page": 1,
+          "source": "document_text",
+          "value": 2569
+        },
+        "degree_level": {
+          "bbox": [
+            131.3000030517578,
+            338.80999755859375,
+            469.3240051269531,
+            392.3299865722656
+          ],
+          "evidence_text": "หลักสูตรวิทยาศาสตรมหาบัณฑิต \nสาขาวิชาปัญญาประดิษฐ์เพื่อการวิเคราะห์เชิงธุรกิจ",
+          "page": 1,
+          "source": "document_text",
+          "value": "master"
+        },
+        "edition_status": {
+          "bbox": null,
+          "evidence_text": "",
+          "page": null,
+          "source": "filename",
+          "value": "current"
+        },
+        "program": {
+          "bbox": [
+            131.3000030517578,
+            338.80999755859375,
+            469.3240051269531,
+            392.3299865722656
+          ],
+          "evidence_text": "หลักสูตรวิทยาศาสตรมหาบัณฑิต \nสาขาวิชาปัญญาประดิษฐ์เพื่อการวิเคราะห์เชิงธุรกิจ",
+          "page": 1,
+          "source": "document_text",
+          "value": "AITBA"
+        }
+      },
+      "page_count": 252,
+      "relations": [
+        {
+          "note": "sha256 ของเนื้อหาเท่ากัน",
+          "relation_type": "duplicate_content",
+          "to_document_id": "bef8aad4da2cad3d"
+        }
+      ],
+      "relative_path": "Masters_Degree/M_AITBA2569_current.pdf",
+      "review_issues": [
+        {
+          "detail": {
+            "fallback": "current",
+            "field": "edition_status",
+            "note": "คลังนี้ระบุฉบับด้วยชื่อไฟล์ ไม่มีข้อความในเล่มที่ระบุตรง ๆ",
+            "relative_path": "Masters_Degree/M_AITBA2569_current.pdf"
+          },
+          "issue_id": 14,
+          "issue_type": "metadata_unresolved",
+          "page_number": null,
+          "subject_ref": null
+        },
+        {
+          "detail": {
+            "extracted_char_count": 107,
+            "threshold": 120
+          },
+          "issue_id": 19,
+          "issue_type": "low_content_page",
+          "page_number": 94,
+          "subject_ref": null
+        },
+        {
+          "detail": {
+            "budget": 979,
+            "candidates_so_far": 979
+          },
+          "issue_id": 20,
+          "issue_type": "ocr_budget_exhausted",
+          "page_number": 230,
+          "subject_ref": null
+        }
+      ],
+      "sha256": "17e982fc74c2c2bc4d9181c0615e6a90c23fff9700ef3652beb37d17f0f9e24b",
+      "size_bytes": 12285167
+    },
+    {
+      "canonical_document_id": "0bb1dc8496421928",
+      "curriculum_version": {
+        "curriculum_year": 2563,
+        "edition_status": "old",
+        "program": "IT"
+      },
+      "degree_level": "master",
+      "document_id": "0bb1dc8496421928",
+      "is_canonical": true,
+      "metadata_source": {
+        "curriculum_year": {
+          "bbox": [
+            212.75999450683594,
+            346.08270263671875,
+            413.1574401855469,
+            474.2234191894531
+          ],
+          "evidence_text": "หลักสูตรวิทยาศาสตรมหาบัณฑิต \nสาขาวิชาเทคโนโลยีสารสนเทศ \n(หลักสูตรปรับปรุง  พ.ศ. 2563)",
+          "page": 1,
+          "source": "document_text",
+          "value": 2563
+        },
+        "degree_level": {
+          "bbox": [
+            212.75999450683594,
+            346.08270263671875,
+            413.1574401855469,
+            474.2234191894531
+          ],
+          "evidence_text": "หลักสูตรวิทยาศาสตรมหาบัณฑิต \nสาขาวิชาเทคโนโลยีสารสนเทศ \n(หลักสูตรปรับปรุง  พ.ศ. 2563)",
+          "page": 1,
+          "source": "document_text",
+          "value": "master"
+        },
+        "edition_status": {
+          "bbox": null,
+          "evidence_text": "",
+          "page": null,
+          "source": "filename",
+          "value": "old"
+        },
+        "program": {
+          "bbox": [
+            212.75999450683594,
+            346.08270263671875,
+            413.1574401855469,
+            474.2234191894531
+          ],
+          "evidence_text": "หลักสูตรวิทยาศาสตรมหาบัณฑิต \nสาขาวิชาเทคโนโลยีสารสนเทศ \n(หลักสูตรปรับปรุง  พ.ศ. 2563)",
+          "page": 1,
+          "source": "document_text",
+          "value": "IT"
+        }
+      },
+      "page_count": 182,
+      "relations": [],
+      "relative_path": "Masters_Degree/M_IT2563_old.pdf",
+      "review_issues": [
+        {
+          "detail": {
+            "fallback": "old",
+            "field": "edition_status",
+            "note": "คลังนี้ระบุฉบับด้วยชื่อไฟล์ ไม่มีข้อความในเล่มที่ระบุตรง ๆ",
+            "relative_path": "Masters_Degree/M_IT2563_old.pdf"
+          },
+          "issue_id": 15,
+          "issue_type": "metadata_unresolved",
+          "page_number": null,
+          "subject_ref": null
+        }
+      ],
+      "sha256": "48a489d27898caae1a25b46894b5a0db6053a06217f00f026664e2d03d30cf7d",
+      "size_bytes": 11618894
+    },
+    {
+      "canonical_document_id": "272a77249680d878",
+      "curriculum_version": {
+        "curriculum_year": 2568,
+        "edition_status": "current",
+        "program": "IT"
+      },
+      "degree_level": "master",
+      "document_id": "272a77249680d878",
+      "is_canonical": true,
+      "metadata_source": {
+        "curriculum_year": {
+          "bbox": [
+            231.81996154785156,
+            313.2101745605469,
+            393.4826965332031,
+            339.2822265625
+          ],
+          "evidence_text": "หลักสูตรปรับปรุง พ.ศ. 2568",
+          "page": 1,
+          "source": "document_text",
+          "value": 2568
+        },
+        "degree_level": {
+          "bbox": [
+            221.6396026611328,
+            267.9598388671875,
+            403.76318359375,
+            294.0318908691406
+          ],
+          "evidence_text": "หลักสูตรวิทยาศาสตรมหาบัณฑิต",
+          "page": 1,
+          "source": "document_text",
+          "value": "master"
+        },
+        "edition_status": {
+          "bbox": null,
+          "evidence_text": "",
+          "page": null,
+          "source": "filename",
+          "value": "current"
+        },
+        "program": {
+          "bbox": [
+            227.15065002441406,
+            290.6451416015625,
+            398.2321472167969,
+            316.7171936035156
+          ],
+          "evidence_text": "สาขาวิชาเทคโนโลยีสารสนเทศ",
+          "page": 1,
+          "source": "document_text",
+          "value": "IT"
+        }
+      },
+      "page_count": 179,
+      "relations": [],
+      "relative_path": "Masters_Degree/M_IT2568_current.pdf",
+      "review_issues": [
+        {
+          "detail": {
+            "fallback": "current",
+            "field": "edition_status",
+            "note": "คลังนี้ระบุฉบับด้วยชื่อไฟล์ ไม่มีข้อความในเล่มที่ระบุตรง ๆ",
+            "relative_path": "Masters_Degree/M_IT2568_current.pdf"
+          },
+          "issue_id": 16,
+          "issue_type": "metadata_unresolved",
+          "page_number": null,
+          "subject_ref": null
+        }
+      ],
+      "sha256": "2e8278975905aa57fc6d7b68113011b11d765305f15674201c92be858ee879f4",
+      "size_bytes": 127274387
+    }
+  ],
+  "page_total": 3689
+}

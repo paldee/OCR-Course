@@ -1,0 +1,40 @@
+# ── Python ──
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.hypothesis/
+.venv/
+venv/
+
+# ── IDE ──
+.vscode/
+.idea/
+
+# ── Secrets ──
+.env
+
+# ── Artifacts (สร้างขึ้นใหม่ได้จาก ingest/index) ──
+artifacts/*.sqlite3
+artifacts/*.sqlite3-wal
+artifacts/*.sqlite3-shm
+artifacts/gt_normalized/
+artifacts/indexes/
+
+# ── PDF ข้อมูลต้นฉบับ (1.6 GB — ผู้ใช้จัดเก็บเอง) ──
+Information_Technology_Course/
+Information_Technology_Course.zip
+
+# ── Model weights (ดาวน์โหลดเองตาม README) ──
+models/
+
+# ── Temp/probe scripts ──
+_probe_*
+_diag_*
+_migrate_*
+_clear_*
+_test_*
+_dbg_*
+_ctx_*
+_explore_*
+*.out.txt

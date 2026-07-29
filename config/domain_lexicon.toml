@@ -1,0 +1,69 @@
+# domain lexicon สำหรับ phrase boost (R13.5) และการนับ domain_lexicon_match_count (R4.1)
+# การเทียบทำแบบตรงทุกอักขระหลัง normalize ช่องว่างซ้อนและลำดับ combining mark
+
+[charset]
+# ชุดอักขระที่ประกาศไว้สำหรับคำนวณ out_of_charset_ratio (R4.1)
+thai_range = ["\u0E00", "\u0E7F"]
+latin_ranges = [["A", "Z"], ["a", "z"]]
+digit_range = ["0", "9"]
+punctuation = " \t\n\r.,;:!?()[]{}<>/\\-–—_'\"“”‘’%&*+=@#$^~|`"
+
+[patterns]
+course_code = '\b\d{8}\b'
+credits = '\d+\s*\(\s*\d+\s*-\s*\d+\s*-\s*\d+\s*\)'
+academic_year_be = '\b(?:25|26)\d{2}\b'
+
+[terms]
+course_code_marker = ["รหัสวิชา", "course code"]
+credit_term = ["หน่วยกิต", "credit", "credits"]
+requirement_term = [
+  "วิชาบังคับ",
+  "วิชาเลือก",
+  "หมวดวิชา",
+  "หมวดวิชาศึกษาทั่วไป",
+  "หมวดวิชาเฉพาะ",
+  "หมวดวิชาเลือกเสรี",
+  "เกณฑ์การสำเร็จการศึกษา",
+  "เกณฑ์เกียรตินิยม",
+  "เกณฑ์พ้นสภาพนักศึกษา",
+  "ภาคทัณฑ์",
+]
+prereq_term = ["วิชาก่อน", "ต้องเรียนก่อน", "prerequisite", "ไม่มี"]
+plan_term = [
+  "แผนการศึกษา",
+  "ปีที่",
+  "ภาคการศึกษาที่",
+  "ภาคการศึกษาต้น",
+  "ภาคการศึกษาปลาย",
+  "ภาคฤดูร้อน",
+  "สหกิจศึกษา",
+  "coop",
+  "co-operative education",
+]
+version_term = ["หลักสูตร", "ฉบับปรับปรุง", "พ.ศ.", "curriculum"]
+program_term = [
+  "เทคโนโลยีสารสนเทศ",
+  "วิทยาการข้อมูลและการวิเคราะห์เชิงธุรกิจ",
+  "เทคโนโลยีปัญญาประดิษฐ์",
+  "เทคโนโลยีสารสนเทศทางธุรกิจ",
+  "ปัญญาประดิษฐ์เพื่อการวิเคราะห์เชิงธุรกิจ",
+]
+degree_term = [
+  "วิทยาศาสตรบัณฑิต",
+  "วิทยาศาสตรมหาบัณฑิต",
+  "ปรัชญาดุษฎีบัณฑิต",
+  "ดุษฎีบัณฑิต",
+  "Doctor of Philosophy",
+]
+
+[boost]
+# ตัวคูณต่อชนิด (ต้องอยู่ในช่วง 1.00-3.00 ตาม R13.5)
+course_code = 1.60
+credit_term = 1.20
+requirement_term = 1.25
+prereq_term = 1.25
+plan_term = 1.20
+version_term = 1.15
+program_term = 1.30
+degree_term = 1.15
+max_total_multiplier = 3.00

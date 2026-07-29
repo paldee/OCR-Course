@@ -1,0 +1,71 @@
+# Closed engine list (R20.2) — ห้ามเรียก engine อื่นนอกรายการนี้
+# ช่อง weight_sha256 ถูกเติมตอนติดตั้งจริง และ preflight จะเทียบค่านี้ (R20.6, R20.8)
+# ค่าว่างหมายถึง "ยังไม่ติดตั้ง" ซึ่ง preflight จะรายงานเป็น artifact ที่ขาด
+
+[[engine]]
+name = "pymupdf"
+role = "pdf_text_and_render"
+license = "AGPL-3.0-or-later"
+paid = false
+local_process = true
+version = "1.24.10"
+weight_files = []
+
+# PaddleOCR ถอดออกจาก closed list — paddleocr==2.8.1 (เวอร์ชันที่ pin ไว้เดิม) ไม่รองรับ
+# ภาษาไทยเลย (ทดสอบจริง: PaddleOCR(lang='th') โยน AssertionError) ส่วน PP-OCRv5 ที่มีโมเดล
+# ไทยต้องใช้ paddleocr>=3.0 ซึ่งดาวน์โหลด weight เองตอน runtime ขัดกับ offline policy
+# (design §4.9)
+
+[[engine]]
+name = "tesseract5"
+role = "ocr_stage_1"
+license = "Apache-2.0"
+paid = false
+local_process = true
+version = "5"
+lang = "tha+eng"
+# Tesseract เป็น system binary ที่ติดตั้งแยกจาก Python venv (ไม่ใช่ pip package) — traineddata
+# อยู่ในไดเรกทอรีติดตั้งของ Tesseract เอง ไม่ใช่ใต้ `project/models/` เหมือน engine อื่น
+# preflight ตรวจไฟล์นี้แยกด้วย `tesseract_status()` (ค้นหา tessdata/*.traineddata ข้าง
+# binary) ไม่ใช่ผ่าน weight_files ทั่วไป เพราะ path ขึ้นกับตำแหน่งติดตั้งของผู้ใช้แต่ละเครื่อง
+weight_files = []
+
+[[engine]]
+name = "typhoon_ocr1_5_2b"
+role = "ocr_stage_2"
+license = "Apache-2.0 + OpenTyphoon Terms and Conditions (https://opentyphoon.ai/tac) — ไม่มีค่าใช้จ่าย"
+paid = false
+local_process = true
+version = "typhoon-ocr1.5-2b"
+base_model = "Qwen/Qwen3-VL-2B-Instruct"
+gpu_required = true            # GPU-gated stage (R5.1.1, R20.7) — ไม่มี CUDA -> ข้าม stage นี้
+quantization = "4bit-nf4"
+weight_files = [
+  { path = "D:/hf_cache/hub/models--scb10x--typhoon-ocr1.5-2b/snapshots/*/model.safetensors", weight_sha256 = "fa5c1c15547503e7bd3bf70b671046d4293b5eebbba30423d7db64652d88cd39" },
+]
+
+[[engine]]
+name = "bge_m3"
+role = "embedding"
+license = "MIT"
+paid = false
+local_process = true
+runtime = "onnxruntime-cpu"
+weight_files = [
+  { path = "models/bge-m3/model.onnx", weight_sha256 = "" },
+  { path = "models/bge-m3/tokenizer.json", weight_sha256 = "" },
+]
+
+[[engine]]
+name = "llama_cpp_qwen3_4b"
+role = "answer_generation"
+license = "MIT (llama.cpp) + Apache-2.0 (Qwen3 weights)"
+paid = false
+local_process = true
+weight_files = [
+  { path = "models/qwen3-4b-instruct-q4_k_m.gguf", weight_sha256 = "" },
+]
+
+[preflight]
+fail_fast_seconds = 10.0             # R20.8
+allow_download = false               # R20.8 ห้ามดาวน์โหลดเด็ดขาด

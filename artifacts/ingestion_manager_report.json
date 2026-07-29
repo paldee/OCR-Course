@@ -1,0 +1,38 @@
+{
+  "documents_registered": 14,
+  "elapsed_seconds": 296.69,
+  "ocr_candidate_pages": 979,
+  "pages_by_compute_path": {
+    "deep": 1218,
+    "fast": 1150,
+    "standard": 1321
+  },
+  "pages_completed": 3689,
+  "pages_per_second": 12.43,
+  "peak_page_slots_in_use": 1,
+  "peak_resident_bytes": 485699584,
+  "resume_rerun_elapsed_seconds": 0.15,
+  "resume_rerun_pages_completed": 3689,
+  "status": "success",
+  "table_counts": {
+    "chunk": 0,
+    "chunk_embedding": 0,
+    "course": 0,
+    "course_field_provenance": 0,
+    "curriculum_version": 13,
+    "document": 14,
+    "document_relation": 2,
+    "error_record": 0,
+    "gold_set": 0,
+    "ocr_stage_result": 0,
+    "page": 3689,
+    "page_metrics": 3689,
+    "plan_slot": 0,
+    "provenance": 0,
+    "query_trace": 0,
+    "region": 0,
+    "review_issue": 20,
+    "rule": 0,
+    "table_cell": 0
+  }
+}

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KatRAG — Curriculum Q&amp;A</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="header">
+        <h1>KatRAG</h1>
+        <p class="subtitle">ระบบถาม-ตอบหลักสูตร IT KMITL</p>
+    </header>
+
+    <main class="container">
+        <!-- Question input -->
+        <section class="ask-section">
+            <form id="ask-form" aria-label="ฟอร์มถามคำถาม">
+                <label for="question-input" class="sr-only">คำถาม</label>
+                <textarea
+                    id="question-input"
+                    placeholder="พิมพ์คำถามเกี่ยวกับหลักสูตร... (1-2000 อักขระ)"
+                    maxlength="2000"
+                    rows="3"
+                    required
+                    aria-describedby="char-count"
+                ></textarea>
+                <div class="input-footer">
+                    <span id="char-count" class="char-count">0 / 2000</span>
+                    <button type="submit" id="ask-btn">ถาม</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Loading indicator -->
+        <div id="loading" class="loading hidden" aria-live="polite" aria-busy="true">
+            <div class="spinner"></div>
+            <span>กำลังค้นหาคำตอบ...</span>
+        </div>
+
+        <!-- Error display -->
+        <div id="error-display" class="error hidden" role="alert"></div>
+
+        <!-- Answer section -->
+        <section id="answer-section" class="answer-section hidden" aria-label="คำตอบ">
+            <div class="answer-header">
+                <h2>คำตอบ</h2>
+                <div class="meta">
+                    <span id="version-badge" class="badge version-badge"></span>
+                    <span id="time-badge" class="badge time-badge"></span>
+                </div>
+            </div>
+            <div id="answer-text" class="answer-text"></div>
+
+            <!-- Validation status -->
+            <div id="validation-status" class="validation-status">
+                <span id="removed-count" class="status-item removed"></span>
+                <span id="unsupported-count" class="status-item unsupported"></span>
+            </div>
+
+            <!-- Citations list -->
+            <div id="citations-section" class="citations-section">
+                <h3>อ้างอิง</h3>
+                <ul id="citations-list" class="citations-list"></ul>
+            </div>
+        </section>
+
+        <!-- Page viewer overlay -->
+        <div id="page-viewer" class="page-viewer hidden" role="dialog" aria-label="ดูหน้าเอกสาร">
+            <div class="page-viewer-backdrop"></div>
+            <div class="page-viewer-content">
+                <button id="close-viewer" class="close-btn" aria-label="ปิด">&times;</button>
+                <h3 id="viewer-title"></h3>
+                <div id="viewer-canvas-wrapper" class="canvas-wrapper">
+                    <canvas id="viewer-canvas"></canvas>
+                </div>
+                <div id="viewer-info" class="viewer-info"></div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>KatRAG-lite v0.1.0 — loopback only (127.0.0.1:8000)</p>
+    </footer>
+
+    <script src="main.js"></script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "budget": 979,
+  "by_compute_path": {
+    "deep": 1218,
+    "fast": 1150,
+    "standard": 1321
+  },
+  "candidate_by_compute_path": {
+    "deep": 744,
+    "fast": 4,
+    "standard": 231
+  },
+  "elapsed_seconds": 317.21,
+  "low_content_page": 2,
+  "ocr_budget_exhausted": 1,
+  "ocr_candidates": 979,
+  "pages": 3689,
+  "pages_per_second": 11.63,
+  "score_max": 1.0,
+  "score_min": 0.250625
+}
