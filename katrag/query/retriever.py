@@ -125,7 +125,10 @@ def _tokenize(question: str) -> list[str]:
 
 
 def extract_keywords(question: str, program: str | None) -> list[str]:
-    """แยก content keywords: ตัดคำไทย, ตัด stopword, program code, และคำสั้นเกินไป."""
+    """แยก content keywords: ตัดคำไทย, ตัด stopword, program code, และคำสั้นเกินไป.
+
+    รวม synonym expansion สำหรับกลุ่มคำที่ใช้เป็นชื่อหมวดวิชาในหลักสูตร
+    """
     raw = _tokenize(question)
     keywords: list[str] = []
     prog_upper = (program or "").upper()
@@ -141,6 +144,21 @@ def extract_keywords(question: str, program: str | None) -> list[str]:
             continue
         seen.add(tok)
         keywords.append(tok)
+
+    # ── Synonym expansion ──
+    # คำว่า "เขียนโปรแกรม/coding/programming" ใช้ค้นวิชาทั้งหมดที่เกี่ยวกับ programming
+    # ตรวจจาก combination ของ keywords (เช่น "เขียน"+"โปรแกรม" หรือ "โปรแกรม" เดี่ยว)
+    raw_joined = "".join(raw).lower()
+    programming_signals = ["เขียนโปรแกรม", "โปรแกรมมิ่ง", "programming", "coding"]
+    has_programming = any(s in raw_joined for s in programming_signals) or (
+        "เขียน" in seen and "โปรแกรม" in seen
+    )
+    if has_programming:
+        # ลบ "เขียน" ออก (มันไม่ช่วย match) เพิ่ม "โปรแกรม" ให้มีอยู่แน่ ๆ
+        keywords = [k for k in keywords if k != "เขียน"]
+        if "โปรแกรม" not in [k for k in keywords]:
+            keywords.insert(0, "โปรแกรม")
+
     return keywords
 
 
