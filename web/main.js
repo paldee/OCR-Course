@@ -145,16 +145,10 @@ async function openPageViewer(citationId) {
     viewerTitle.textContent = `กำลังโหลด ${citationId}...`;
     viewerInfo.textContent = "";
 
-    // Clear canvas
-    const ctx = viewerCanvas.getContext("2d");
-    viewerCanvas.width = 400;
-    viewerCanvas.height = 300;
-    ctx.fillStyle = "#f1f5f9";
-    ctx.fillRect(0, 0, 400, 300);
-    ctx.fillStyle = "#64748b";
-    ctx.font = "14px sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText("กำลังโหลด...", 200, 150);
+    // Hide canvas, reset text viewer
+    viewerCanvas.style.display = "none";
+    const existingText = document.getElementById("viewer-text-content");
+    if (existingText) existingText.style.display = "none";
 
     try {
         const response = await fetch(`${API_BASE}/pages/${encodeURIComponent(citationId)}`);
@@ -171,74 +165,26 @@ async function openPageViewer(citationId) {
     } catch (err) {
         viewerTitle.textContent = "เกิดข้อผิดพลาด";
         viewerInfo.textContent = err.message;
-        ctx.clearRect(0, 0, viewerCanvas.width, viewerCanvas.height);
-        ctx.fillStyle = "#fef2f2";
-        ctx.fillRect(0, 0, viewerCanvas.width, viewerCanvas.height);
-        ctx.fillStyle = "#dc2626";
-        ctx.font = "14px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText(err.message, 200, 150);
     }
 }
 
 function renderPageWithBbox(data) {
     viewerTitle.textContent = `${data.citation_id} — ${data.heading}`;
-    viewerInfo.textContent = `เอกสาร: ${data.document_id} | หน้า: ${data.page} | ขนาด: ${data.page_width.toFixed(0)}×${data.page_height.toFixed(0)} pt`;
+    viewerInfo.textContent = `เอกสาร: ${data.document_id} | หน้า: ${data.page}`;
 
-    // Scale page to fit viewer (max 600px wide)
-    const maxWidth = 600;
-    const pageW = data.page_width || 612;  // default letter size
-    const pageH = data.page_height || 792;
-    const scale = Math.min(maxWidth / pageW, 1.0);
-    const canvasW = Math.round(pageW * scale);
-    const canvasH = Math.round(pageH * scale);
+    // แสดงเนื้อหาข้อความแทน canvas จำลอง — ใช้ประโยชน์ได้จริง
+    viewerCanvas.style.display = "none";
 
-    viewerCanvas.width = canvasW;
-    viewerCanvas.height = canvasH;
-
-    const ctx = viewerCanvas.getContext("2d");
-
-    // Draw page background
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvasW, canvasH);
-
-    // Draw page border
-    ctx.strokeStyle = "#e2e8f0";
-    ctx.lineWidth = 1;
-    ctx.strokeRect(0, 0, canvasW, canvasH);
-
-    // Draw some placeholder content lines
-    ctx.fillStyle = "#e2e8f0";
-    for (let y = 40; y < canvasH - 40; y += 18) {
-        const lineWidth = 50 + Math.random() * (canvasW - 120);
-        ctx.fillRect(30 * scale, y, lineWidth * scale, 8);
+    // สร้าง/อัป text content element
+    let textEl = document.getElementById("viewer-text-content");
+    if (!textEl) {
+        textEl = document.createElement("div");
+        textEl.id = "viewer-text-content";
+        textEl.style.cssText = "white-space:pre-wrap;font-size:14px;line-height:1.6;padding:16px;max-height:400px;overflow-y:auto;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin-top:8px;";
+        viewerCanvas.parentNode.insertBefore(textEl, viewerCanvas.nextSibling);
     }
-
-    // Draw bbox overlay if present
-    if (data.bbox) {
-        const bbox = data.bbox;
-        const x = bbox.x0 * scale;
-        const y = bbox.y0 * scale;
-        const w = (bbox.x1 - bbox.x0) * scale;
-        const h = (bbox.y1 - bbox.y0) * scale;
-
-        // Semi-transparent highlight
-        ctx.fillStyle = "rgba(37, 99, 235, 0.12)";
-        ctx.fillRect(x, y, w, h);
-
-        // Border
-        ctx.strokeStyle = "#2563eb";
-        ctx.lineWidth = 2;
-        ctx.setLineDash([4, 2]);
-        ctx.strokeRect(x, y, w, h);
-        ctx.setLineDash([]);
-
-        // Label
-        ctx.fillStyle = "#2563eb";
-        ctx.font = `bold ${11 * scale}px sans-serif`;
-        ctx.textAlign = "left";
-        ctx.fillText(data.citation_id, x + 4, y - 4);
-    }
+    textEl.style.display = "block";
+    textEl.textContent = data.chunk_text || `(ไม่มีเนื้อหาข้อความ — หน้า ${data.page})`;
 }
 
 // ── Close viewer ─────────────────────────────────────────────────────

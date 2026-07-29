@@ -224,6 +224,7 @@ def create_app(
                         "bbox": None,
                         "page_width": 0.0,
                         "page_height": 0.0,
+                        "chunk_text": hit.text[:1000],
                     }
                     if hit.program and hit.curriculum_year:
                         ver_label = f"{hit.program} {hit.curriculum_year} ({hit.edition_status})"
@@ -350,6 +351,7 @@ def create_app(
             bbox=bbox,
             page_width=citation_data.get("page_width", 0.0),
             page_height=citation_data.get("page_height", 0.0),
+            chunk_text=citation_data.get("chunk_text", ""),
         )
 
     # ── GET /traces/{request_id} (R19.1, R19.8) ──────────────────────

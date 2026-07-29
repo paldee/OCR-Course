@@ -105,6 +105,7 @@ class PageResponse(BaseModel):
     )
     page_width: float = Field(default=0.0, description="ความกว้างหน้า (pt)")
     page_height: float = Field(default=0.0, description="ความสูงหน้า (pt)")
+    chunk_text: str = Field(default="", description="เนื้อหาข้อความของ chunk ที่อ้างอิง")
 
 
 class TraceResponse(BaseModel):
