@@ -209,6 +209,10 @@ def search(
     asks_courses = year_level is not None and any(
         w in question for w in ["เรียน", "วิชา", "รายวิชา", "อะไร"]
     )
+    # คำถามเรื่อง "วิชา" โดยทั่วไป (ไม่จำเป็นต้องระบุปี) — ใช้ให้ bonus chunk ที่มีรหัสวิชาหลายตัว
+    asks_about_subjects = any(
+        w in question for w in ["วิชา", "รายวิชา", "เรียน"]
+    )
     norm_keywords = [(kw, normalize(kw)) for kw in keywords]
     norm_hints = [normalize(h) for h in STUDY_PLAN_HINTS]
 
@@ -241,6 +245,12 @@ def search(
             # ตรงชั้นปีในตาราง เช่น "ปีที่ 1 ภาคการศึกษาที่ 1"
             if year_level is not None and f"ปีที่ {year_level} ภาคการศึกษา" in text:
                 score += 3.0
+        # bonus: chunk ที่มีรหัสวิชาหลายตัว = comprehensive course listing
+        # ให้คะแนนเมื่อคำถามถามเรื่องวิชา (ไม่ว่าระบุปีหรือไม่)
+        if asks_about_subjects and score > 0:
+            n_codes = len(_COURSE_CODE_RE.findall(text))
+            if n_codes >= 3:
+                score += min(n_codes * 0.3, 3.0)  # bonus สูงสุด 3.0
         # ไม่มี keyword เลยแต่อยู่ใน version scope → ให้คะแนนน้อย ๆ
         if score == 0.0 and version_ids and not keywords:
             score = 0.1
