@@ -208,12 +208,23 @@ def create_app(
                     ver = f"{hit.program} {hit.curriculum_year}".strip()
                     snippet = hit.text[:500].strip()
                     context_parts.append(f"[{i}] ({heading} — {ver}, หน้า {hit.page_number}):\n{snippet}")
+                    cite_id = f"cite-{i:03d}"
                     citations.append(CitationItem(
-                        citation_id=f"cite-{i:03d}",
+                        citation_id=cite_id,
                         document_id=str(hit.chunk_id),
                         page=hit.page_number,
                         heading=heading,
                     ))
+                    # เก็บลง store เพื่อให้ GET /pages/{citation_id} ใช้งานได้
+                    app.state.citations_store[cite_id] = {
+                        "citation_id": cite_id,
+                        "document_id": str(hit.chunk_id),
+                        "page": hit.page_number,
+                        "heading": heading,
+                        "bbox": None,
+                        "page_width": 0.0,
+                        "page_height": 0.0,
+                    }
                     if hit.program and hit.curriculum_year:
                         ver_label = f"{hit.program} {hit.curriculum_year} ({hit.edition_status})"
                         if ver_label not in versions_resolved:
