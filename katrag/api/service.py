@@ -178,11 +178,9 @@ def create_app(
                 ],
             )
 
-        # ── Real pipeline: lexical retriever → Typhoon LLM answer ──
+        # ── Real pipeline: Hybrid (lexical+dense) retriever → Typhoon LLM ──
         import sqlite3
         import pathlib
-
-        from katrag.query.retriever import search as retrieve
 
         db_path = pathlib.Path(__file__).resolve().parent.parent.parent / "artifacts" / "katrag.sqlite3"
         answer_text = ""
@@ -191,7 +189,40 @@ def create_app(
 
         try:
             conn = sqlite3.connect(str(db_path))
-            hits = retrieve(conn, question, limit=8)
+
+            # ลองใช้ hybrid search (lexical + dense RRF)
+            try:
+                from katrag.query.semantic_retriever import hybrid_search
+                from katrag.index.dense_search import DenseSearchIndex
+
+                # โหลด dense index (singleton pattern — แคชไว้ใน app.state)
+                if not hasattr(app.state, "dense_index") or app.state.dense_index is None:
+                    dense_idx = DenseSearchIndex(db_path)
+                    loaded = dense_idx.load()
+                    if loaded > 0:
+                        app.state.dense_index = dense_idx
+                    else:
+                        app.state.dense_index = None
+
+                if app.state.dense_index is not None:
+                    raw_hits = hybrid_search(conn, app.state.dense_index, question, limit=10)
+                    # แปลง HybridHit → format เดียวกับ RetrievedChunk
+                    from types import SimpleNamespace
+                    hits = [SimpleNamespace(
+                        chunk_id=h.chunk_id, page_number=h.page_number,
+                        heading=h.heading, text=h.text, program=h.program,
+                        curriculum_year=h.curriculum_year, edition_status=h.edition_status,
+                        score=h.fused_score
+                    ) for h in raw_hits]
+                else:
+                    # Fallback: lexical only
+                    from katrag.query.retriever import search as retrieve
+                    hits = retrieve(conn, question, limit=8)
+            except Exception:
+                # Any error → fallback to lexical
+                from katrag.query.retriever import search as retrieve
+                hits = retrieve(conn, question, limit=8)
+
             conn.close()
 
             if not hits:
