@@ -39,8 +39,8 @@ class HybridHit:
 
 # RRF parameters
 RRF_K = 60
-LEXICAL_WEIGHT = 0.4
-DENSE_WEIGHT = 0.6
+LEXICAL_WEIGHT = 0.5
+DENSE_WEIGHT = 0.5
 
 
 def hybrid_search(
@@ -102,6 +102,9 @@ def hybrid_search(
             score += LEXICAL_WEIGHT / (RRF_K + lex_rank)
         if dns_rank is not None:
             score += DENSE_WEIGHT / (RRF_K + dns_rank)
+        # Bonus: chunk ที่ทั้ง lexical + dense เห็นตรง → ย่อม relevant มาก
+        if lex_rank is not None and dns_rank is not None:
+            score *= 1.3
 
         # Get metadata from whichever source has it
         if cid in lex_data:
