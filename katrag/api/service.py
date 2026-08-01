@@ -178,6 +178,11 @@ def create_app(
                 ],
             )
 
+        # prepend program จาก dropdown (server-side — robust กว่าฝั่ง JS)
+        selected_program = (body.program or "").strip().upper()
+        if selected_program and selected_program not in question.upper():
+            question = f"หลักสูตร {selected_program}: {question}"
+
         # ── Real pipeline: Hybrid (lexical+dense) retriever → Typhoon LLM ──
         import sqlite3
         import pathlib
@@ -316,7 +321,9 @@ def create_app(
                         f"== คำถาม ==\n{question}\n\n"
                         "== คำตอบ ==\n"
                     )
-                    answer_text = llm.generate(prompt, max_tokens=1024)
+                    # แผนการเรียน/รายวิชาเยอะ → ต้องการ token มากขึ้นกันคำตอบขาด
+                    max_tok = 3000 if structured_context else 1024
+                    answer_text = llm.generate(prompt, max_tokens=max_tok)
 
                     # Postprocess: dedup + backfill
                     from katrag.query.completeness import postprocess_answer

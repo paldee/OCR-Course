@@ -122,14 +122,18 @@ def try_structured_answer(conn: sqlite3.Connection, question: str) -> Structured
         ).fetchall()
 
         if rows:
-            lines = [f"รายวิชาของหลักสูตร {version_label} "
-                     f"ปีที่ {year_level}" + (f" ภาคการศึกษาที่ {semester}" if semester else "") + ":"]
-            for r in rows:
-                en = f" ({r['name_en']})" if r["name_en"] else ""
-                sem_info = f" [ปีที่ {r['year']} ภาคการศึกษาที่ {r['semester']}]"
-                lines.append(f"- {r['code']} {r['name_th']}{en} — {r['credits_raw']}{sem_info}")
+            from itertools import groupby
+            lines = [f"รายวิชาของหลักสูตร {version_label} ปีที่ {year_level} "
+                     "(จัดกลุ่มตามภาคการศึกษา):"]
+            for sem_no, group in groupby(rows, key=lambda r: r["semester"]):
+                courses = list(group)
+                sem_credits = sum(_parse_credit(cc["credits_raw"]) for cc in courses)
+                lines.append(f"\n▶ ภาคการศึกษาที่ {sem_no} ({len(courses)} วิชา {sem_credits} หน่วยกิต):")
+                for cc in courses:
+                    en = f" ({cc['name_en']})" if cc["name_en"] else ""
+                    lines.append(f"  - {cc['code']} {cc['name_th']}{en} — {cc['credits_raw']}")
             total = sum(_parse_credit(r["credits_raw"]) for r in rows)
-            lines.append(f"รวม {len(rows)} วิชา {total} หน่วยกิต")
+            lines.append(f"\nรวมปีที่ {year_level}: {len(rows)} วิชา {total} หน่วยกิต")
             return StructuredResult(True, "\n".join(lines), version_label, "year_sem")
 
     # ── กรณี: ถามรายวิชาทั้งหมดของหลักสูตร ──
@@ -193,18 +197,17 @@ def try_prerequisite(conn: sqlite3.Connection, question: str) -> StructuredResul
         ).fetchall()
         version_ids = [r[0] for r in rows]
 
-    # ค้นวิชาที่ชื่อ (ไทย/อังกฤษ) มี keyword + มี prerequisite
-    where_scope = ""
+    # สร้างเงื่อนไข OR ของ keyword — params ต้องเรียงตามลำดับ placeholder ใน SQL
+    kw_clauses = " OR ".join(["name_th LIKE ? OR name_en LIKE ?" for _ in keywords])
     params: list = []
-    if version_ids:
+    for kw in keywords:  # keyword placeholders มาก่อนใน WHERE (...)
+        params.extend([f"%{kw}%", f"%{kw}%"])
+
+    where_scope = ""
+    if version_ids:  # version placeholders มาหลัง
         ph = ",".join("?" for _ in version_ids)
         where_scope = f" AND version_id IN ({ph})"
         params.extend(version_ids)
-
-    # สร้างเงื่อนไข OR ของ keyword
-    kw_clauses = " OR ".join(["name_th LIKE ? OR name_en LIKE ?" for _ in keywords])
-    for kw in keywords:
-        params.extend([f"%{kw}%", f"%{kw}%"])
 
     rows = conn.execute(
         f"SELECT code, name_th, name_en, prerequisite_json, prerequisite_raw, version_id "
@@ -214,6 +217,11 @@ def try_prerequisite(conn: sqlite3.Connection, question: str) -> StructuredResul
 
     if not rows:
         return StructuredResult(False, "", "", "none")
+
+    # ถ้ามีวิชาที่มี prereq → เอาเฉพาะที่มี prereq (กันชื่อซ้ำที่ไม่มีข้อมูล)
+    rows_with_prereq = [r for r in rows if json.loads(r["prerequisite_json"] or "[]")]
+    if rows_with_prereq:
+        rows = rows_with_prereq
 
     lines = []
     for r in rows:

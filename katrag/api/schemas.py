@@ -26,6 +26,11 @@ class AskRequest(BaseModel):
         max_length=2000,
         description="คำถามภาษาไทย/อังกฤษ ความยาว 1-2000 อักขระ",
     )
+    program: str = Field(
+        default="",
+        max_length=10,
+        description="หลักสูตรที่เลือกจาก dropdown (DSBA/IT/AIT/BIT/AITBA) — ถ้ามีจะ prepend เข้าคำถาม",
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════

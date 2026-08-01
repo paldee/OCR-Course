@@ -45,15 +45,12 @@ questionInput.addEventListener("input", () => {
 form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    let question = questionInput.value.trim();
+    const question = questionInput.value.trim();
     if (!question) return;
 
-    // Prepend selected program (ถ้าคำถามยังไม่ได้ระบุสาขา)
+    // ส่ง program เป็น field แยก (backend prepend เอง — robust)
     const programSelect = document.getElementById("program-select");
     const selectedProgram = programSelect ? programSelect.value : "";
-    if (selectedProgram && !question.toUpperCase().includes(selectedProgram)) {
-        question = `หลักสูตร ${selectedProgram}: ${question}`;
-    }
 
     // Reset UI
     hideElement(errorDisplay);
@@ -65,7 +62,7 @@ form.addEventListener("submit", async (e) => {
         const response = await fetch(`${API_BASE}/ask`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ question }),
+            body: JSON.stringify({ question, program: selectedProgram }),
         });
 
         if (!response.ok) {
