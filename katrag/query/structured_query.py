@@ -113,8 +113,11 @@ _TOPIC_SYNONYM = {
     "coding": ["โปรแกรม", "programming"],
     "programming": ["โปรแกรม", "programming"],
     "ฐานข้อมูล": ["ฐานข้อมูล", "database"],
-    "เอไอ": ["ปัญญาประดิษฐ์", "AI", "INTELLIGENCE"],
-    "ปัญญาประดิษฐ์": ["ปัญญาประดิษฐ์", "INTELLIGENCE"],
+    # ใช้ "ARTIFICIAL" ไม่ใช่ "INTELLIGENCE" เพราะ INTELLIGENCE ไปตรงกับ
+    # "DIGITAL INTELLIGENCE QUOTIENT" ซึ่งไม่ใช่วิชา AI
+    # (ชื่อในเอกสารสะกด INTELLIGIENCE ผิดบางที่ → ARTIFICIAL ครอบคลุมกว่า)
+    "เอไอ": ["ปัญญาประดิษฐ์", "ARTIFICIAL"],
+    "ปัญญาประดิษฐ์": ["ปัญญาประดิษฐ์", "ARTIFICIAL"],
     "เครือข่าย": ["เครือข่าย", "NETWORK"],
     "ความมั่นคง": ["ความมั่นคง", "SECURITY", "ไซเบอร์"],
     "คณิต": ["คณิต", "MATH", "แคลคูลัส", "CALCULUS"],
@@ -363,10 +366,21 @@ def try_prerequisite(conn: sqlite3.Connection, question: str) -> StructuredResul
 
     program = detect_program(question)
 
+    # ตัด 'หลักสูตร XXX:' ที่ prepend มา ไม่ให้กลายเป็น keyword ชื่อวิชา
+    q = re.sub(r"หลักสูตร\s+[A-Za-z]+\s*[:：]", " ", question)
+    if program:
+        q = re.sub(rf"(?i)\b{re.escape(program)}\b", " ", q)
+
     # ดึง keyword ชื่อวิชาจากคำถาม (คำไทยยาว ≥ 4 + อังกฤษ ≥ 4)
-    stop = {"ต้องผ่าน", "วิชา", "บังคับก่อน", "ต้องเรียน", "ก่อนถึงจะลง", "อะไร", "ใดบ้าง"}
-    tokens = re.findall(r"[ก-๙]{4,}|[A-Za-z]{4,}", question)
-    keywords = [t for t in tokens if t.lower() not in [s.lower() for s in stop]]
+    stop = {"ต้องผ่าน", "วิชา", "บังคับก่อน", "ต้องเรียน", "ก่อนถึงจะลง", "อะไร", "ใดบ้าง", "หลักสูตร"}
+    # คำที่บ่งชี้ว่าเป็น "ส่วนคำถาม" ไม่ใช่ชื่อวิชา (tokenizer ไทยรวมเป็นก้อนยาว)
+    q_markers = ("ต้อง", "ก่อน", "อะไร", "ใดบ้าง", "ได้บ้าง", "หรือไม่", "จะลง")
+    tokens = re.findall(r"[ก-๙]{4,}|[A-Za-z]{4,}", q)
+    keywords = [
+        t for t in tokens
+        if t.lower() not in {s.lower() for s in stop}
+        and not any(m in t for m in q_markers)
+    ]
     if not keywords:
         return StructuredResult(False, "", "", "none")
 
@@ -392,7 +406,8 @@ def try_prerequisite(conn: sqlite3.Connection, question: str) -> StructuredResul
         params.extend(version_ids)
 
     rows = conn.execute(
-        f"SELECT code, name_th, name_en, prerequisite_json, prerequisite_raw, version_id "
+        f"SELECT code, name_th, name_en, credits_raw, year, semester, "
+        f"prerequisite_json, prerequisite_raw, version_id "
         f"FROM course WHERE ({kw_clauses}){where_scope} ORDER BY (prerequisite_json != '[]') DESC LIMIT 5",
         params,
     ).fetchall()
@@ -405,24 +420,42 @@ def try_prerequisite(conn: sqlite3.Connection, question: str) -> StructuredResul
     if rows_with_prereq:
         rows = rows_with_prereq
 
+    def _plan(r) -> str:
+        if r["year"] and r["semester"]:
+            return f"ปีที่ {r['year']} ภาคการศึกษาที่ {r['semester']}"
+        if r["year"]:
+            return f"ปีที่ {r['year']}"
+        return "ไม่ระบุชั้นปี (วิชาเลือก)"
+
     lines = []
     for r in rows:
         prereqs = json.loads(r["prerequisite_json"] or "[]")
         en = f" ({r['name_en']})" if r["name_en"] else ""
+        head = f"วิชา {r['code']} {r['name_th']}{en} — {r['credits_raw']} | {_plan(r)}"
         if prereqs:
-            names = []
+            lines.append(head)
+            lines.append("  ต้องผ่านวิชาบังคับก่อน:")
             for pc in prereqs:
                 pr = conn.execute(
-                    "SELECT name_th, name_en FROM course WHERE code=? AND version_id=? LIMIT 1",
+                    "SELECT name_th, name_en, credits_raw, year, semester FROM course "
+                    "WHERE code=? AND version_id=? LIMIT 1",
                     (pc, r["version_id"]),
                 ).fetchone()
+                if pr is None:
+                    # prereq อาจเป็นวิชาแกนที่อยู่ในเวอร์ชันอื่น → หาแบบไม่ผูกเวอร์ชัน
+                    pr = conn.execute(
+                        "SELECT name_th, name_en, credits_raw, year, semester FROM course "
+                        "WHERE code=? LIMIT 1", (pc,),
+                    ).fetchone()
                 if pr:
-                    names.append(f"{pc} {pr['name_th']}" + (f" ({pr['name_en']})" if pr["name_en"] else ""))
+                    pen = f" ({pr['name_en']})" if pr["name_en"] else ""
+                    lines.append(
+                        f"    • {pc} {pr['name_th']}{pen} — {pr['credits_raw']} | {_plan(pr)}"
+                    )
                 else:
-                    names.append(pc)
-            lines.append(f"วิชา {r['code']} {r['name_th']}{en} ต้องผ่านวิชาบังคับก่อน: " + "; ".join(names))
+                    lines.append(f"    • {pc} (ไม่พบชื่อวิชาในฐานข้อมูล)")
         else:
-            lines.append(f"วิชา {r['code']} {r['name_th']}{en}: ไม่มีวิชาบังคับก่อน")
+            lines.append(head + "\n  ไม่มีวิชาบังคับก่อน (PREREQUISITE: None)")
 
     return StructuredResult(True, "\n".join(lines), "", "prerequisite")
 

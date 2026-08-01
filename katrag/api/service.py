@@ -42,6 +42,43 @@ from katrag.api.schemas import (
 # Application factory
 # ══════════════════════════════════════════════════════════════════════
 
+# ── Lazy singletons (course semantic index / LLM) ─────────────────────
+
+
+def _get_course_index(app: FastAPI, db_path: Any) -> Any:
+    """โหลด CourseSemanticIndex ครั้งเดียวแล้วแคชใน app.state (None ถ้าไม่มี embedding)."""
+    cached = getattr(app.state, "course_index", "unset")
+    if cached != "unset":
+        return cached
+    try:
+        from katrag.query.course_semantic import CourseSemanticIndex
+
+        idx = CourseSemanticIndex(db_path)
+        app.state.course_index = idx if idx.load() > 0 else None
+    except Exception:
+        app.state.course_index = None
+    return app.state.course_index
+
+
+def _get_llm(app: FastAPI) -> Any:
+    """โหลด Typhoon LLM client ครั้งเดียวแล้วแคช (None ถ้า config ไม่พร้อม)."""
+    cached = getattr(app.state, "llm", "unset")
+    if cached != "unset":
+        return cached
+    try:
+        import pathlib as _pl
+
+        from dotenv import load_dotenv
+
+        from katrag.query.typhoon_llm import TyphoonLLM
+
+        load_dotenv(_pl.Path(__file__).resolve().parent.parent.parent / ".env")
+        app.state.llm = TyphoonLLM()
+    except Exception:
+        app.state.llm = None
+    return app.state.llm
+
+
 # Default config values (used when config module is not available)
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8000
@@ -207,7 +244,6 @@ def create_app(
                     detect_plan_summary_intent,
                     try_prerequisite,
                     detect_prerequisite_intent,
-                    try_topic_courses,
                     detect_year as _sq_detect_year,
                 )
                 # ลำดับ: prerequisite → cross-version → plan summary → รายวิชาตามปี → หัวข้อวิชา
@@ -221,18 +257,41 @@ def create_app(
                     sr = try_plan_summary(conn, question)
                 else:
                     sr = try_structured_answer(conn, question)
-                    # ถ้าไม่เข้า (ไม่ระบุปี/ไม่ใช่ทั้งหมด) แต่เป็นคำถามหัวข้อวิชา → ค้นชื่อวิชา
-                    if not sr.matched and _sq_detect_year(question) is None:
-                        sr = try_topic_courses(conn, question)
                 structured_intent = ""
                 if sr.matched:
                     structured_context = sr.context
                     structured_intent = sr.intent
                     if sr.version_label and sr.version_label not in versions_resolved:
                         versions_resolved.append(sr.version_label)
+
+                # ── Semantic course topic search (bge-m3) ──
+                # คำถามหัวข้อวิชาที่ไม่ระบุชั้นปี → recall เชิงความหมาย → LLM คัดรหัสวิชา
+                # → เราจัดรูปคำตอบเอง (ครบชื่ออังกฤษ/หน่วยกิต/ชั้นปี ไม่ตกหล่น)
+                if not structured_context and _sq_detect_year(question) is None:
+                    from katrag.query.topic_semantic import (
+                        answer_topic,
+                        detect_program_code,
+                        is_topic_question,
+                    )
+
+                    _prog_code = detect_program_code(question)
+                    if is_topic_question(question, _prog_code):
+                        course_index = _get_course_index(app, db_path)
+                        if course_index is not None:
+                            tr = answer_topic(
+                                conn,
+                                course_index,
+                                question,
+                                _prog_code,
+                                llm=_get_llm(app),
+                            )
+                            if tr.matched:
+                                structured_context = tr.context
+                                structured_intent = tr.intent
+                                if tr.version_label not in versions_resolved:
+                                    versions_resolved.append(tr.version_label)
             except Exception:
-                structured_context = ""
-                structured_intent = ""
+                pass
 
             # ลองใช้ hybrid search (lexical + dense RRF)
             try:
@@ -312,7 +371,10 @@ def create_app(
 
                 # ── Short-circuit: คำถามรายวิชา/แผน ที่ตอบจากตาราง structured ครบแล้ว ──
                 # คืน context ตรง ๆ ไม่ให้ LLM reformat (กันตกหล่นวิชาเลือก/ตัดคำตอบ)
-                _direct_intents = {"year_sem", "all_courses", "plan_summary", "cross_version", "topic_courses"}
+                _direct_intents = {
+                    "year_sem", "all_courses", "plan_summary", "cross_version",
+                    "topic_courses", "topic_semantic", "prerequisite",
+                }
                 _use_direct = bool(structured_context) and structured_intent in _direct_intents
 
                 if _use_direct:
