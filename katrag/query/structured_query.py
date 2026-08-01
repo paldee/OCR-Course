@@ -73,13 +73,22 @@ def _resolve_version_id(conn: sqlite3.Connection, program: str, year_be: int | N
         ).fetchone()
         if row:
             return row["version_id"], f"{row['program']} {row['curriculum_year']} ({row['edition_status']})"
-    # default: current edition
-    row = conn.execute(
-        "SELECT version_id, program, curriculum_year, edition_status FROM curriculum_version WHERE program=? AND edition_status='current' ORDER BY curriculum_year DESC LIMIT 1",
+
+    # current edition — บาง program มีหลาย current (เช่น IT 2565/2566/2568)
+    # เลือกเวอร์ชันที่มีข้อมูลแผนการเรียน (course ที่มี year) มากที่สุด
+    # ถ้าเท่ากันเลือกปีล่าสุด
+    rows = conn.execute(
+        "SELECT cv.version_id, cv.program, cv.curriculum_year, cv.edition_status, "
+        "COUNT(CASE WHEN co.year IS NOT NULL THEN 1 END) AS n_plan "
+        "FROM curriculum_version cv LEFT JOIN course co ON co.version_id=cv.version_id "
+        "WHERE cv.program=? AND cv.edition_status='current' "
+        "GROUP BY cv.version_id ORDER BY n_plan DESC, cv.curriculum_year DESC",
         (program,),
-    ).fetchone()
-    if row:
-        return row["version_id"], f"{row['program']} {row['curriculum_year']} ({row['edition_status']})"
+    ).fetchall()
+    if rows:
+        best = rows[0]
+        # ถ้าเวอร์ชันที่ดีที่สุดไม่มีแผนเลย ก็ยังคืนตัวล่าสุด (fallback)
+        return best["version_id"], f"{best['program']} {best['curriculum_year']} ({best['edition_status']})"
     return None
 
 
@@ -128,12 +137,18 @@ def try_structured_answer(conn: sqlite3.Connection, question: str) -> Structured
             for sem_no, group in groupby(rows, key=lambda r: r["semester"]):
                 courses = list(group)
                 sem_credits = sum(_parse_credit(cc["credits_raw"]) for cc in courses)
-                lines.append(f"\n▶ ภาคการศึกษาที่ {sem_no} ({len(courses)} วิชา {sem_credits} หน่วยกิต):")
+                lines.append(f"\n▶ ภาคการศึกษาที่ {sem_no} — วิชาบังคับ ({len(courses)} วิชา {sem_credits} หน่วยกิต):")
                 for cc in courses:
                     en = f" ({cc['name_en']})" if cc["name_en"] else ""
                     lines.append(f"  - {cc['code']} {cc['name_th']}{en} — {cc['credits_raw']}")
+                # วิชาเลือกในเทอมนี้ (จากตารางแผน)
+                electives = extract_elective_slots(conn, version_id, year_level, sem_no)
+                if electives:
+                    lines.append(f"  วิชาเลือก (ต้องเลือกลง {len(electives)} รายการจากกลุ่มต่อไปนี้):")
+                    for e in electives:
+                        lines.append(f"    • {e}")
             total = sum(_parse_credit(r["credits_raw"]) for r in rows)
-            lines.append(f"\nรวมปีที่ {year_level}: {len(rows)} วิชา {total} หน่วยกิต")
+            lines.append(f"\nรวมปีที่ {year_level} (วิชาบังคับ): {len(rows)} วิชา {total} หน่วยกิต (ยังไม่รวมวิชาเลือก)")
             return StructuredResult(True, "\n".join(lines), version_label, "year_sem")
 
     # ── กรณี: ถามรายวิชาทั้งหมดของหลักสูตร ──
@@ -158,6 +173,40 @@ def try_structured_answer(conn: sqlite3.Connection, question: str) -> Structured
 def _parse_credit(credits_raw: str) -> int:
     m = re.match(r"(\d+)", credits_raw or "")
     return int(m.group(1)) if m else 0
+
+
+_ELECTIVE_SLOT_RE = re.compile(r"(?:\d{4}xxx\s*)?(วิชาเลือก[ก-๙\s]*?\d?)\s*\n?\s*(ELECTIVE[A-Z\s]*\d?)?", re.IGNORECASE)
+
+
+def extract_elective_slots(conn: sqlite3.Connection, version_id: int, year: int, semester: int) -> list[str]:
+    """ดึงช่องวิชาเลือก (elective slot) จากตารางแผนการศึกษาของปี/เทอมนั้น.
+
+    แผนมักเขียน 'xxxxxxx วิชาเลือกกลุ่ม... ELECTIVE IN ...' = ต้องเลือกลง 1 วิชา
+    """
+    conn.row_factory = sqlite3.Row
+    header = f"ปีที่ {year} ภาคการศึกษาที่ {semester}"
+    row = conn.execute(
+        "SELECT text FROM chunk WHERE version_id=? AND text LIKE ? ORDER BY page_number LIMIT 1",
+        (version_id, f"%{header}%"),
+    ).fetchone()
+    if not row:
+        return []
+    text = row["text"]
+    start = text.find(header)
+    # ตัดถึง header เทอมถัดไป (ถ้ามี) เพื่อจำกัดขอบเขต
+    nxt = re.search(r"ปีที่ \d ภาคการศึกษาที่ \d", text[start + len(header):])
+    segment = text[start: start + len(header) + (nxt.start() if nxt else 400)]
+
+    slots: list[str] = []
+    seen: set[str] = set()
+    for m in re.finditer(r"วิชาเลือก[ก-๙\s]{2,40}?\d?(?=\s|\n|$)", segment):
+        name = " ".join(m.group(0).split())
+        # ตัดชื่อยาวเกินที่รวมข้อความอื่น
+        name = name.split("หน่วยกิต")[0].strip()
+        if 5 < len(name) < 60 and name not in seen:
+            seen.add(name)
+            slots.append(name)
+    return slots
 
 
 def _norm_name(name: str) -> str:

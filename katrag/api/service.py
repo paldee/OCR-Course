@@ -197,6 +197,7 @@ def create_app(
 
             # ── Structured answer path: query course/plan_slot ตรง ๆ (แม่นกว่า chunk) ──
             structured_context = ""
+            structured_intent = ""
             try:
                 from katrag.query.structured_query import (
                     try_structured_answer,
@@ -218,12 +219,15 @@ def create_app(
                     sr = try_plan_summary(conn, question)
                 else:
                     sr = try_structured_answer(conn, question)
+                structured_intent = ""
                 if sr.matched:
                     structured_context = sr.context
+                    structured_intent = sr.intent
                     if sr.version_label and sr.version_label not in versions_resolved:
                         versions_resolved.append(sr.version_label)
             except Exception:
                 structured_context = ""
+                structured_intent = ""
 
             # ลองใช้ hybrid search (lexical + dense RRF)
             try:
@@ -301,40 +305,48 @@ def create_app(
 
                 context = "\n\n".join(context_parts)
 
-                # เรียก Typhoon LLM
-                try:
-                    from katrag.query.typhoon_llm import TyphoonLLM
-                    from dotenv import load_dotenv
-                    load_dotenv(pathlib.Path(__file__).resolve().parent.parent.parent / ".env")
-                    llm = TyphoonLLM()
+                # ── Short-circuit: คำถามรายวิชา/แผน ที่ตอบจากตาราง structured ครบแล้ว ──
+                # คืน context ตรง ๆ ไม่ให้ LLM reformat (กันตกหล่นวิชาเลือก/ตัดคำตอบ)
+                _direct_intents = {"year_sem", "all_courses", "plan_summary", "cross_version"}
+                _use_direct = bool(structured_context) and structured_intent in _direct_intents
 
-                    prompt = (
-                        "คุณเป็นผู้ช่วยตอบคำถามเกี่ยวกับหลักสูตรของ KMITL "
-                        "ใช้เฉพาะข้อมูลจากหลักฐานด้านล่างในการตอบ ตอบเป็นภาษาไทย ตรงประเด็นกับคำถาม\n"
-                        "แนวทางการตอบ:\n"
-                        "- ตอบเฉพาะสิ่งที่ถาม อย่าเพิ่มหมายเหตุหรือรายการที่ไม่ได้ถาม\n"
-                        "- เมื่อระบุรายวิชา ให้ใส่ทั้งชื่อภาษาไทยและชื่อภาษาอังกฤษ (ในวงเล็บ) จำนวนหน่วยกิต และชั้นปี/ภาคที่เรียนถ้ามีในหลักฐาน\n"
-                        "- ถ้าคำถามให้แจกแจงรายวิชา ให้ระบุครบทุกวิชาที่พบในหลักฐาน ไม่ซ้ำ\n"
-                        "- ระบุหมายเลขหลักฐาน [n] ที่ใช้อ้างอิง\n"
-                        "- ถ้าหลักฐานไม่มีข้อมูลเพียงพอ ให้บอกตามตรงว่าไม่พบข้อมูล\n\n"
-                        f"== หลักฐาน ==\n{context}\n\n"
-                        f"== คำถาม ==\n{question}\n\n"
-                        "== คำตอบ ==\n"
-                    )
-                    # แผนการเรียน/รายวิชาเยอะ → ต้องการ token มากขึ้นกันคำตอบขาด
-                    max_tok = 3000 if structured_context else 1024
-                    answer_text = llm.generate(prompt, max_tokens=max_tok)
+                if _use_direct:
+                    answer_text = structured_context
+                else:
+                    # เรียก Typhoon LLM
+                    try:
+                        from katrag.query.typhoon_llm import TyphoonLLM
+                        from dotenv import load_dotenv
+                        load_dotenv(pathlib.Path(__file__).resolve().parent.parent.parent / ".env")
+                        llm = TyphoonLLM()
 
-                    # Postprocess: dedup + backfill
-                    from katrag.query.completeness import postprocess_answer
-                    evidence_texts = [h.text for h in hits]
-                    answer_text = postprocess_answer(answer_text, evidence_texts, question)
-                except Exception as llm_exc:
-                    # LLM ล้มเหลว → ตอบจาก chunks ตรง ๆ (fallback)
-                    answer_text = (
-                        f"(ระบบสรุปคำตอบด้วย LLM ไม่พร้อมใช้งาน: {type(llm_exc).__name__}: {llm_exc})\n\n"
-                        f"ข้อมูลที่เกี่ยวข้องที่สุดจากฐานข้อมูล:\n\n{context}"
-                    )
+                        prompt = (
+                            "คุณเป็นผู้ช่วยตอบคำถามเกี่ยวกับหลักสูตรของ KMITL "
+                            "ใช้เฉพาะข้อมูลจากหลักฐานด้านล่างในการตอบ ตอบเป็นภาษาไทย ตรงประเด็นกับคำถาม\n"
+                            "แนวทางการตอบ:\n"
+                            "- ตอบเฉพาะสิ่งที่ถาม อย่าเพิ่มหมายเหตุหรือรายการที่ไม่ได้ถาม\n"
+                            "- เมื่อระบุรายวิชา ให้ใส่ทั้งชื่อภาษาไทยและชื่อภาษาอังกฤษ (ในวงเล็บ) จำนวนหน่วยกิต และชั้นปี/ภาคที่เรียนถ้ามีในหลักฐาน\n"
+                            "- ถ้าคำถามให้แจกแจงรายวิชา ให้ระบุครบทุกวิชาที่พบในหลักฐาน ไม่ซ้ำ\n"
+                            "- ระบุหมายเลขหลักฐาน [n] ที่ใช้อ้างอิง\n"
+                            "- ถ้าหลักฐานไม่มีข้อมูลเพียงพอ ให้บอกตามตรงว่าไม่พบข้อมูล\n\n"
+                            f"== หลักฐาน ==\n{context}\n\n"
+                            f"== คำถาม ==\n{question}\n\n"
+                            "== คำตอบ ==\n"
+                        )
+                        # แผนการเรียน/รายวิชาเยอะ → ต้องการ token มากขึ้นกันคำตอบขาด
+                        max_tok = 3000 if structured_context else 1024
+                        answer_text = llm.generate(prompt, max_tokens=max_tok)
+
+                        # Postprocess: dedup + backfill
+                        from katrag.query.completeness import postprocess_answer
+                        evidence_texts = [h.text for h in hits]
+                        answer_text = postprocess_answer(answer_text, evidence_texts, question)
+                    except Exception as llm_exc:
+                        # LLM ล้มเหลว → ตอบจาก chunks ตรง ๆ (fallback)
+                        answer_text = (
+                            f"(ระบบสรุปคำตอบด้วย LLM ไม่พร้อมใช้งาน: {type(llm_exc).__name__}: {llm_exc})\n\n"
+                            f"ข้อมูลที่เกี่ยวข้องที่สุดจากฐานข้อมูล:\n\n{context}"
+                        )
         except Exception as exc:
             answer_text = f"เกิดข้อผิดพลาด: {type(exc).__name__}: {exc}"
 
