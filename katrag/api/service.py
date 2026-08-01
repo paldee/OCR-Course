@@ -199,9 +199,15 @@ def create_app(
                     detect_cross_version_intent,
                     try_plan_summary,
                     detect_plan_summary_intent,
+                    try_prerequisite,
+                    detect_prerequisite_intent,
                 )
-                # ลำดับ: cross-version diff → plan summary → รายวิชาปกติ
-                if detect_cross_version_intent(question):
+                # ลำดับ: prerequisite → cross-version diff → plan summary → รายวิชาปกติ
+                if detect_prerequisite_intent(question):
+                    sr = try_prerequisite(conn, question)
+                    if not sr.matched:
+                        sr = try_structured_answer(conn, question)
+                elif detect_cross_version_intent(question):
                     sr = try_cross_version_diff(conn, question)
                 elif detect_plan_summary_intent(question):
                     sr = try_plan_summary(conn, question)

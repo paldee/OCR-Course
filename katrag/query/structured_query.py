@@ -163,6 +163,80 @@ def _norm_name(name: str) -> str:
     return n.lower()
 
 
+def detect_prerequisite_intent(question: str) -> bool:
+    """ตรวจว่าเป็นคำถามวิชาบังคับก่อน (prerequisite)."""
+    return any(w in question.lower() for w in ["บังคับก่อน", "ต้องผ่าน", "ต้องเรียนก่อน", "ลงก่อน", "prerequisite", "ก่อนถึงจะลง", "เรียนก่อน"])
+
+
+def try_prerequisite(conn: sqlite3.Connection, question: str) -> StructuredResult:
+    """ตอบว่าวิชาที่ถามต้องผ่านวิชาใดก่อน — จาก course.prerequisite_json."""
+    import json
+    conn.row_factory = sqlite3.Row
+    if not detect_prerequisite_intent(question):
+        return StructuredResult(False, "", "", "none")
+
+    program = detect_program(question)
+
+    # ดึง keyword ชื่อวิชาจากคำถาม (คำไทยยาว ≥ 4 + อังกฤษ ≥ 4)
+    stop = {"ต้องผ่าน", "วิชา", "บังคับก่อน", "ต้องเรียน", "ก่อนถึงจะลง", "อะไร", "ใดบ้าง"}
+    tokens = re.findall(r"[ก-๙]{4,}|[A-Za-z]{4,}", question)
+    keywords = [t for t in tokens if t.lower() not in [s.lower() for s in stop]]
+    if not keywords:
+        return StructuredResult(False, "", "", "none")
+
+    # หา version scope
+    version_ids: list[int] = []
+    if program:
+        rows = conn.execute(
+            "SELECT version_id FROM curriculum_version WHERE program=? AND edition_status='current'",
+            (program,),
+        ).fetchall()
+        version_ids = [r[0] for r in rows]
+
+    # ค้นวิชาที่ชื่อ (ไทย/อังกฤษ) มี keyword + มี prerequisite
+    where_scope = ""
+    params: list = []
+    if version_ids:
+        ph = ",".join("?" for _ in version_ids)
+        where_scope = f" AND version_id IN ({ph})"
+        params.extend(version_ids)
+
+    # สร้างเงื่อนไข OR ของ keyword
+    kw_clauses = " OR ".join(["name_th LIKE ? OR name_en LIKE ?" for _ in keywords])
+    for kw in keywords:
+        params.extend([f"%{kw}%", f"%{kw}%"])
+
+    rows = conn.execute(
+        f"SELECT code, name_th, name_en, prerequisite_json, prerequisite_raw, version_id "
+        f"FROM course WHERE ({kw_clauses}){where_scope} ORDER BY (prerequisite_json != '[]') DESC LIMIT 5",
+        params,
+    ).fetchall()
+
+    if not rows:
+        return StructuredResult(False, "", "", "none")
+
+    lines = []
+    for r in rows:
+        prereqs = json.loads(r["prerequisite_json"] or "[]")
+        en = f" ({r['name_en']})" if r["name_en"] else ""
+        if prereqs:
+            names = []
+            for pc in prereqs:
+                pr = conn.execute(
+                    "SELECT name_th, name_en FROM course WHERE code=? AND version_id=? LIMIT 1",
+                    (pc, r["version_id"]),
+                ).fetchone()
+                if pr:
+                    names.append(f"{pc} {pr['name_th']}" + (f" ({pr['name_en']})" if pr["name_en"] else ""))
+                else:
+                    names.append(pc)
+            lines.append(f"วิชา {r['code']} {r['name_th']}{en} ต้องผ่านวิชาบังคับก่อน: " + "; ".join(names))
+        else:
+            lines.append(f"วิชา {r['code']} {r['name_th']}{en}: ไม่มีวิชาบังคับก่อน")
+
+    return StructuredResult(True, "\n".join(lines), "", "prerequisite")
+
+
 def detect_plan_summary_intent(question: str) -> bool:
     """ตรวจว่าเป็นคำถามภาพรวมแผนการเรียน/จบเร็ว."""
     return any(w in question for w in ["แผนการเรียน", "แผนการศึกษา", "3.5 ปี", "3.5ปี", "จบเร็ว", "จบไว", "แต่ละเทอม", "ทุกเทอม", "โครงสร้างหลักสูตร"])
