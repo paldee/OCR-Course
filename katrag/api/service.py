@@ -207,8 +207,10 @@ def create_app(
                     detect_plan_summary_intent,
                     try_prerequisite,
                     detect_prerequisite_intent,
+                    try_topic_courses,
+                    detect_year as _sq_detect_year,
                 )
-                # ลำดับ: prerequisite → cross-version diff → plan summary → รายวิชาปกติ
+                # ลำดับ: prerequisite → cross-version → plan summary → รายวิชาตามปี → หัวข้อวิชา
                 if detect_prerequisite_intent(question):
                     sr = try_prerequisite(conn, question)
                     if not sr.matched:
@@ -219,6 +221,9 @@ def create_app(
                     sr = try_plan_summary(conn, question)
                 else:
                     sr = try_structured_answer(conn, question)
+                    # ถ้าไม่เข้า (ไม่ระบุปี/ไม่ใช่ทั้งหมด) แต่เป็นคำถามหัวข้อวิชา → ค้นชื่อวิชา
+                    if not sr.matched and _sq_detect_year(question) is None:
+                        sr = try_topic_courses(conn, question)
                 structured_intent = ""
                 if sr.matched:
                     structured_context = sr.context
@@ -307,7 +312,7 @@ def create_app(
 
                 # ── Short-circuit: คำถามรายวิชา/แผน ที่ตอบจากตาราง structured ครบแล้ว ──
                 # คืน context ตรง ๆ ไม่ให้ LLM reformat (กันตกหล่นวิชาเลือก/ตัดคำตอบ)
-                _direct_intents = {"year_sem", "all_courses", "plan_summary", "cross_version"}
+                _direct_intents = {"year_sem", "all_courses", "plan_summary", "cross_version", "topic_courses"}
                 _use_direct = bool(structured_context) and structured_intent in _direct_intents
 
                 if _use_direct:

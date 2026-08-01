@@ -92,6 +92,133 @@ def _resolve_version_id(conn: sqlite3.Connection, program: str, year_be: int | N
     return None
 
 
+try:
+    from pythainlp.tokenize import word_tokenize as _thai_tok
+    _HAS_TOK = True
+except Exception:  # pragma: no cover
+    _HAS_TOK = False
+
+# คำทั่วไปที่ไม่ใช่ "หัวข้อวิชา"
+_TOPIC_STOP = {
+    "วิชา", "เรียน", "มี", "กี่", "อะไร", "บ้าง", "หลักสูตร", "ของ", "ที่",
+    "เกี่ยวกับ", "เกี่ยวข้อง", "กับ", "รายวิชา", "ทั้งหมด", "ครับ", "คะ", "ค่ะ",
+    "ปี", "เทอม", "ภาค", "หน่วยกิต", "ต้อง", "ลง", "ไหน", "ด้าน", "สาขา",
+    # คำกว้างเกินไป — จับ synonym แทน (กัน false positive เช่น 'เขียน'→เขียนภาษาอังกฤษ)
+    "เขียน", "การ", "และ",
+}
+# synonym: คำถาม → คำที่ปรากฏในชื่อวิชา
+_TOPIC_SYNONYM = {
+    "เขียนโปรแกรม": ["โปรแกรม", "programming"],
+    "โปรแกรมมิ่ง": ["โปรแกรม", "programming"],
+    "coding": ["โปรแกรม", "programming"],
+    "programming": ["โปรแกรม", "programming"],
+    "ฐานข้อมูล": ["ฐานข้อมูล", "database"],
+    "เอไอ": ["ปัญญาประดิษฐ์", "AI", "INTELLIGENCE"],
+    "ปัญญาประดิษฐ์": ["ปัญญาประดิษฐ์", "INTELLIGENCE"],
+    "เครือข่าย": ["เครือข่าย", "NETWORK"],
+    "ความมั่นคง": ["ความมั่นคง", "SECURITY", "ไซเบอร์"],
+    "คณิต": ["คณิต", "MATH", "แคลคูลัส", "CALCULUS"],
+}
+
+
+def _extract_topic_keywords(question: str, program: str | None) -> list[str]:
+    """แยกคำหัวข้อวิชาจากคำถาม + ขยาย synonym."""
+    q = question
+    # ตัดส่วน 'หลักสูตร XXX:' ที่ prepend มา
+    q = re.sub(r"หลักสูตร\s+[A-Z]+\s*:", "", q)
+    tokens = _thai_tok(q, keep_whitespace=False) if _HAS_TOK else re.findall(r"[ก-๙]+|[A-Za-z]+", q)
+    prog_up = (program or "").upper()
+    kws: list[str] = []
+    for t in tokens:
+        t = t.strip()
+        if not t or t in _TOPIC_STOP or t.upper() == prog_up or len(t) < 2:
+            continue
+        kws.append(t)
+    # synonym expansion + ตรวจ compound ในคำถามดิบ
+    expanded: list[str] = []
+    ql = question.lower()
+    for syn, reps in _TOPIC_SYNONYM.items():
+        if syn in ql:
+            expanded.extend(reps)
+    for k in kws:
+        if k.lower() in _TOPIC_SYNONYM:
+            expanded.extend(_TOPIC_SYNONYM[k.lower()])
+        else:
+            expanded.append(k)
+    # unique คงลำดับ
+    return list(dict.fromkeys(expanded))
+
+
+def try_topic_courses(conn: sqlite3.Connection, question: str) -> StructuredResult:
+    """ตอบคำถาม 'วิชา<หัวข้อ> มีกี่วิชา/อะไรบ้าง' — ค้นชื่อวิชาในตาราง course.
+
+    - ถ้าระบุ program → ค้นเฉพาะหลักสูตรนั้น
+    - ถ้าไม่ระบุ (ทุกหลักสูตร) → ค้นทุก current version แล้วแยกตามหลักสูตร
+    """
+    conn.row_factory = sqlite3.Row
+    if "วิชา" not in question:
+        return StructuredResult(False, "", "", "none")
+
+    program = detect_program(question)
+    keywords = _extract_topic_keywords(question, program)
+    if not keywords:
+        return StructuredResult(False, "", "", "none")
+
+    # version scope
+    if program:
+        vers = conn.execute(
+            "SELECT version_id, program, curriculum_year FROM curriculum_version "
+            "WHERE program=? AND edition_status='current'", (program,),
+        ).fetchall()
+    else:
+        vers = conn.execute(
+            "SELECT version_id, program, curriculum_year FROM curriculum_version "
+            "WHERE edition_status='current'",
+        ).fetchall()
+    if not vers:
+        return StructuredResult(False, "", "", "none")
+
+    # เลือก version ที่มีข้อมูลมากสุดต่อ program (กัน IT ที่มีหลาย current)
+    best_per_prog: dict[str, sqlite3.Row] = {}
+    for v in vers:
+        n = conn.execute("SELECT COUNT(*) FROM course WHERE version_id=?", (v["version_id"],)).fetchone()[0]
+        cur = best_per_prog.get(v["program"])
+        if cur is None or n > cur["_n"]:
+            d = dict(v); d["_n"] = n
+            best_per_prog[v["program"]] = d  # type: ignore
+
+    kw_clause = " OR ".join(["name_th LIKE ? OR name_en LIKE ?" for _ in keywords])
+
+    blocks: list[str] = []
+    total_found = 0
+    for prog, v in sorted(best_per_prog.items()):
+        params: list = []
+        for kw in keywords:
+            params.extend([f"%{kw}%", f"%{kw}%"])
+        params.append(v["version_id"])
+        rows = conn.execute(
+            f"SELECT code, name_th, name_en, credits_raw FROM course "
+            f"WHERE ({kw_clause}) AND version_id=? ORDER BY code", params,
+        ).fetchall()
+        if not rows:
+            continue
+        total_found += len(rows)
+        header = f"หลักสูตร {prog} {v['curriculum_year']} — พบ {len(rows)} วิชา:"
+        lines = [header]
+        for r in rows:
+            en = f" ({r['name_en']})" if r["name_en"] else ""
+            lines.append(f"  - {r['code']} {r['name_th']}{en} — {r['credits_raw']}")
+        blocks.append("\n".join(lines))
+
+    if not blocks:
+        return StructuredResult(False, "", "", "none")
+
+    topic = " / ".join(keywords[:3])
+    ctx = f"วิชาที่เกี่ยวกับ '{topic}' (ค้นจากชื่อวิชาในหลักสูตร):\n\n" + "\n\n".join(blocks)
+    label = program or "ทุกหลักสูตร"
+    return StructuredResult(True, ctx, label, "topic_courses")
+
+
 def try_structured_answer(conn: sqlite3.Connection, question: str) -> StructuredResult:
     """ลองตอบจากตาราง structured. คืน matched=False ถ้าไม่เข้าเงื่อนไข."""
     conn.row_factory = sqlite3.Row
