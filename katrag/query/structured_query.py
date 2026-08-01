@@ -567,6 +567,12 @@ def _format_full_plan(
         for cc in courses:
             en = f" ({cc['name_en']})" if cc["name_en"] else ""
             lines.append(f"  - {cc['code']} {cc['name_th']}{en} — {cc['credits_raw']}")
+        # วิชาเลือกแขนง/เฉพาะด้าน ที่ต้องลงในเทอมนี้
+        elective_slots = extract_elective_slots(conn, version_id, yr, sem)
+        if elective_slots:
+            lines.append(f"  + วิชาเลือกแขนง/เฉพาะด้าน (ต้องเลือกลง {len(elective_slots)} รายการ):")
+            for slot in elective_slots:
+                lines.append(f"    • {slot}")
 
     # วิชาเลือก/เสรี ที่ไม่ผูกเทอม
     elective_count = conn.execute(
@@ -629,6 +635,12 @@ def _format_early_grad(
         for cc in courses:
             en = f" ({cc['name_en']})" if cc["name_en"] else ""
             lines.append(f"    - {cc['code']} {cc['name_th']}{en} — {cc['credits_raw']}")
+        # แสดงวิชาเลือก/แขนง ที่ต้องลงในเทอมนี้ (จากแผนในเอกสาร)
+        elective_slots = extract_elective_slots(conn, version_id, yr, sem)
+        if elective_slots:
+            lines.append(f"    + วิชาเลือกแขนง/เฉพาะด้าน (ต้องเลือกลง {len(elective_slots)} รายการ):")
+            for slot in elective_slots:
+                lines.append(f"      • {slot}")
 
     extra = last_credits + elective_credits_total
     lines.append("")
