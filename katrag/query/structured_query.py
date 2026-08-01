@@ -408,17 +408,55 @@ def try_prerequisite(conn: sqlite3.Connection, question: str) -> StructuredResul
     rows = conn.execute(
         f"SELECT code, name_th, name_en, credits_raw, year, semester, "
         f"prerequisite_json, prerequisite_raw, version_id "
-        f"FROM course WHERE ({kw_clauses}){where_scope} ORDER BY (prerequisite_json != '[]') DESC LIMIT 5",
+        f"FROM course WHERE ({kw_clauses}){where_scope} ORDER BY (prerequisite_json != '[]') DESC LIMIT 10",
         params,
     ).fetchall()
 
     if not rows:
         return StructuredResult(False, "", "", "none")
 
-    # ถ้ามีวิชาที่มี prereq → เอาเฉพาะที่มี prereq (กันชื่อซ้ำที่ไม่มีข้อมูล)
-    rows_with_prereq = [r for r in rows if json.loads(r["prerequisite_json"] or "[]")]
-    if rows_with_prereq:
-        rows = rows_with_prereq
+    # ── Relevance ranking: เรียงตามจำนวน keyword ที่ match ──
+    # วิชาที่ชื่อตรงกับ keyword มากที่สุด = น่าจะเป็นวิชาที่ถูกถามถึง
+    def _stem_match(kw: str, word: str) -> bool:
+        """Match ถ้า keyword กับคำในชื่อวิชามี prefix ร่วมกัน ≥ 5 ตัว (กัน warehouse/warehousing)."""
+        kl = kw.lower()
+        wl = word.lower()
+        if kl == wl:
+            return True
+        # ดู prefix ร่วม
+        minlen = min(len(kl), len(wl))
+        if minlen < 4:
+            return kl in wl or wl in kl
+        shared = 0
+        for i in range(minlen):
+            if kl[i] == wl[i]:
+                shared += 1
+            else:
+                break
+        return shared >= min(5, minlen)
+
+    def _kw_score(r) -> int:
+        blob = f"{r['name_th']} {r['name_en']}".lower()
+        words = re.findall(r"[ก-๙]+|[a-z]+", blob)
+        score = 0
+        for kw in keywords:
+            if any(_stem_match(kw, w) for w in words):
+                score += 1
+        return score
+
+    rows = sorted(rows, key=lambda r: (-_kw_score(r), -(1 if json.loads(r["prerequisite_json"] or "[]") else 0)))
+
+    # ถ้าตัวอันดับ 1 match keyword มากกว่าตัวที่ 2 ชัดเจน → ตอบแค่ตัวเดียว
+    # (เช่น "data warehouse" → DATA WAREHOUSING match 2 คำ, PROJECT IN DATA SCIENCE match 1 คำ)
+    if len(rows) > 1 and _kw_score(rows[0]) > _kw_score(rows[1]):
+        rows = [rows[0]]
+    else:
+        # ถ้า score เท่ากัน → เอาเฉพาะที่มี prereq + limit 3
+        rows_with_prereq = [r for r in rows if json.loads(r["prerequisite_json"] or "[]")]
+        if rows_with_prereq:
+            rows = rows_with_prereq[:3]
+        else:
+            rows = rows[:3]
 
     def _plan(r) -> str:
         if r["year"] and r["semester"]:
@@ -426,6 +464,9 @@ def try_prerequisite(conn: sqlite3.Connection, question: str) -> StructuredResul
         if r["year"]:
             return f"ปีที่ {r['year']}"
         return "ไม่ระบุชั้นปี (วิชาเลือก)"
+
+    # ── ตรวจว่าถามเรื่อง "ลงได้ไหมถ้ายังไม่ผ่าน" ──
+    ask_can_register = any(w in question for w in ["ลงได้ไหม", "ลงทะเบียนได้ไหม", "ลงได้หรือไม่", "ลงได้มั้ย"])
 
     lines = []
     for r in rows:
@@ -456,6 +497,15 @@ def try_prerequisite(conn: sqlite3.Connection, question: str) -> StructuredResul
                     lines.append(f"    • {pc} (ไม่พบชื่อวิชาในฐานข้อมูล)")
         else:
             lines.append(head + "\n  ไม่มีวิชาบังคับก่อน (PREREQUISITE: None)")
+
+    if ask_can_register:
+        lines.append("")
+        has_prereq = any(json.loads(r["prerequisite_json"] or "[]") for r in rows)
+        if has_prereq:
+            lines.append("คำตอบ: ไม่ได้ — ถ้ายังไม่ผ่านวิชาบังคับก่อน (prerequisite) จะลงทะเบียนวิชานี้ไม่ได้")
+            lines.append("ต้องเรียนวิชาบังคับก่อนให้ผ่านก่อนจึงจะลงทะเบียนได้")
+        else:
+            lines.append("คำตอบ: ได้ — วิชานี้ไม่มีวิชาบังคับก่อน สามารถลงทะเบียนได้เลย")
 
     return StructuredResult(True, "\n".join(lines), "", "prerequisite")
 
