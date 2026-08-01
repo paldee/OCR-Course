@@ -154,3 +154,57 @@ def try_structured_answer(conn: sqlite3.Connection, question: str) -> Structured
 def _parse_credit(credits_raw: str) -> int:
     m = re.match(r"(\d+)", credits_raw or "")
     return int(m.group(1)) if m else 0
+
+
+def _norm_name(name: str) -> str:
+    """normalize ชื่อวิชาสำหรับเทียบข้ามเวอร์ชัน (ตัด whitespace/วรรณยุกต์ที่ต่างเล็กน้อย)."""
+    n = re.sub(r"\s+", "", name or "")
+    # ตัดเลขลำดับท้าย เช่น "แคลคูลัส 1" -> "แคลคูลัส1" (คงไว้)
+    return n.lower()
+
+
+def detect_cross_version_intent(question: str) -> bool:
+    """ตรวจว่าเป็นคำถามเทียบหลักสูตรเก่า-ใหม่."""
+    has_compare = any(w in question for w in ["เก่า", "ใหม่", "เปรียบเทียบ", "ต่างกัน", "แตกต่าง", "หายไป", "เพิ่มเข้ามา", "ตัดออก"])
+    return has_compare
+
+
+def try_cross_version_diff(conn: sqlite3.Connection, question: str) -> StructuredResult:
+    """เทียบรายวิชาระหว่างหลักสูตรเก่ากับใหม่ (เทียบด้วยชื่อวิชา)."""
+    conn.row_factory = sqlite3.Row
+    program = detect_program(question)
+    if not program or not detect_cross_version_intent(question):
+        return StructuredResult(False, "", "", "none")
+
+    # ดึง version เก่า + ใหม่ ของ program
+    vers = conn.execute(
+        "SELECT version_id, curriculum_year, edition_status FROM curriculum_version WHERE program=? ORDER BY curriculum_year",
+        (program,),
+    ).fetchall()
+    old_v = next((v for v in vers if v["edition_status"] == "old"), None)
+    new_v = next((v for v in vers if v["edition_status"] == "current"), None)
+    if not old_v or not new_v:
+        return StructuredResult(False, "", "", "none")
+
+    def _courses(vid):
+        rows = conn.execute("SELECT code, name_th, name_en FROM course WHERE version_id=?", (vid,)).fetchall()
+        return {_norm_name(r["name_th"]): (r["code"], r["name_th"], r["name_en"]) for r in rows}
+
+    old_courses = _courses(old_v["version_id"])
+    new_courses = _courses(new_v["version_id"])
+
+    only_old = [v for k, v in old_courses.items() if k not in new_courses]
+    only_new = [v for k, v in new_courses.items() if k not in old_courses]
+
+    label = f"{program} {old_v['curriculum_year']} (เก่า) vs {new_v['curriculum_year']} (ใหม่)"
+    lines = [f"เปรียบเทียบหลักสูตร {label} (เทียบด้วยชื่อวิชา):"]
+    lines.append(f"\nวิชาที่มีในหลักสูตรเก่า ({old_v['curriculum_year']}) แต่ไม่มีในหลักสูตรใหม่ ({new_v['curriculum_year']}) — {len(only_old)} วิชา:")
+    for code, th, en in sorted(only_old, key=lambda x: x[1])[:40]:
+        en_s = f" ({en})" if en else ""
+        lines.append(f"- {th}{en_s} [รหัสเดิม {code}]")
+    lines.append(f"\nวิชาที่เพิ่มเข้ามาในหลักสูตรใหม่ ({new_v['curriculum_year']}) — {len(only_new)} วิชา:")
+    for code, th, en in sorted(only_new, key=lambda x: x[1])[:40]:
+        en_s = f" ({en})" if en else ""
+        lines.append(f"- {th}{en_s} [รหัส {code}]")
+
+    return StructuredResult(True, "\n".join(lines), label, "cross_version")

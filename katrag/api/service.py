@@ -193,8 +193,16 @@ def create_app(
             # ── Structured answer path: query course/plan_slot ตรง ๆ (แม่นกว่า chunk) ──
             structured_context = ""
             try:
-                from katrag.query.structured_query import try_structured_answer
-                sr = try_structured_answer(conn, question)
+                from katrag.query.structured_query import (
+                    try_structured_answer,
+                    try_cross_version_diff,
+                    detect_cross_version_intent,
+                )
+                # ตรวจ cross-version diff ก่อน (เทียบหลักสูตรเก่า-ใหม่)
+                if detect_cross_version_intent(question):
+                    sr = try_cross_version_diff(conn, question)
+                else:
+                    sr = try_structured_answer(conn, question)
                 if sr.matched:
                     structured_context = sr.context
                     if sr.version_label and sr.version_label not in versions_resolved:
