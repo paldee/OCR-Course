@@ -169,23 +169,20 @@ def populate(db_path: Path | str) -> dict[str, int]:
     conn.execute("DELETE FROM course")
 
     # ── Pre-pass: สร้าง map page_number → (year, semester) ต่อ version ──
-    # สแกนทุก chunk เพื่อหา "ปีที่ X ภาคการศึกษาที่ Y"
+    # กำหนด year/sem เฉพาะหน้าที่มี marker "ปีที่ X ภาคการศึกษาที่ Y" บนหน้านั้นเอง
+    # ไม่ carry-forward ข้ามหน้า เพราะหน้า course description ท้ายเล่มจะรับค่าผิด
+    # (แต่ละหน้าของแผนการศึกษามี header ปี/ภาค ของตัวเองอยู่แล้ว)
     page_year_sem: dict[tuple[int, int], tuple[int, int]] = {}  # (version_id, page) -> (year, sem)
     all_chunks = conn.execute("""
         SELECT text, page_number, version_id FROM chunk ORDER BY version_id, page_number
     """).fetchall()
-    last_ys: dict[int, tuple[int, int]] = {}  # version_id -> last seen (year, sem)
     for ch in all_chunks:
         text = ch["text"] or ""
         vid = ch["version_id"]
         pg = ch["page_number"]
         for m in _YEAR_SEM_RE.finditer(text):
             yr, sem = int(m.group(1)), int(m.group(2))
-            last_ys[vid] = (yr, sem)
             page_year_sem[(vid, pg)] = (yr, sem)
-        # ถ้าหน้านี้ยังไม่มี → ใช้ค่าล่าสุด (carry forward)
-        if (vid, pg) not in page_year_sem and vid in last_ys:
-            page_year_sem[(vid, pg)] = last_ys[vid]
 
     # ดึง chunks ที่มีรหัสวิชา
     rows = conn.execute("""
@@ -207,10 +204,10 @@ def populate(db_path: Path | str) -> dict[str, int]:
         page_number = row["page_number"]
         document_id = row["document_id"]
 
-        # ใช้ year/sem จาก pre-pass map
+        # ใช้ year/sem เฉพาะจาก marker บนหน้านั้นเอง (ไม่ carry-forward)
         ys = page_year_sem.get((version_id, page_number))
-        cy = ys[0] if ys else current_year_per_version.get(version_id)
-        cs = ys[1] if ys else current_sem_per_version.get(version_id)
+        cy = ys[0] if ys else None
+        cs = ys[1] if ys else None
 
         parsed = parse_courses_from_text(
             text,

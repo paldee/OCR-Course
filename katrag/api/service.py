@@ -197,10 +197,14 @@ def create_app(
                     try_structured_answer,
                     try_cross_version_diff,
                     detect_cross_version_intent,
+                    try_plan_summary,
+                    detect_plan_summary_intent,
                 )
-                # ตรวจ cross-version diff ก่อน (เทียบหลักสูตรเก่า-ใหม่)
+                # ลำดับ: cross-version diff → plan summary → รายวิชาปกติ
                 if detect_cross_version_intent(question):
                     sr = try_cross_version_diff(conn, question)
+                elif detect_plan_summary_intent(question):
+                    sr = try_plan_summary(conn, question)
                 else:
                     sr = try_structured_answer(conn, question)
                 if sr.matched:

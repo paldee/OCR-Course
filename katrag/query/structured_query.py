@@ -163,6 +163,56 @@ def _norm_name(name: str) -> str:
     return n.lower()
 
 
+def detect_plan_summary_intent(question: str) -> bool:
+    """ตรวจว่าเป็นคำถามภาพรวมแผนการเรียน/จบเร็ว."""
+    return any(w in question for w in ["แผนการเรียน", "แผนการศึกษา", "3.5 ปี", "3.5ปี", "จบเร็ว", "จบไว", "แต่ละเทอม", "ทุกเทอม", "โครงสร้างหลักสูตร"])
+
+
+def try_plan_summary(conn: sqlite3.Connection, question: str) -> StructuredResult:
+    """คืนสรุปแผนการเรียนต่อชั้นปี/ภาค (จำนวนวิชา+หน่วยกิต+รายวิชา)."""
+    conn.row_factory = sqlite3.Row
+    program = detect_program(question)
+    if not program or not detect_plan_summary_intent(question):
+        return StructuredResult(False, "", "", "none")
+
+    be_match = re.search(r"\b(25\d\d)\b", question)
+    year_be = int(be_match.group(1)) if be_match else None
+    resolved = _resolve_version_id(conn, program, year_be)
+    if not resolved:
+        return StructuredResult(False, "", "", "none")
+    version_id, version_label = resolved
+
+    rows = conn.execute(
+        "SELECT year, semester, code, name_th, name_en, credits_raw, credits_total "
+        "FROM course WHERE version_id=? AND year IS NOT NULL AND semester IS NOT NULL "
+        "ORDER BY year, semester, code",
+        (version_id,),
+    ).fetchall()
+    if not rows:
+        return StructuredResult(False, "", "", "none")
+
+    lines = [f"แผนการศึกษาของหลักสูตร {version_label} (จำแนกตามชั้นปี/ภาคการศึกษา):"]
+    from itertools import groupby
+    total_all = 0
+    for (yr, sem), group in groupby(rows, key=lambda r: (r["year"], r["semester"])):
+        courses = list(group)
+        sem_credits = sum(cc["credits_total"] or 0 for cc in courses)
+        total_all += sem_credits
+        lines.append(f"\nปีที่ {yr} ภาคการศึกษาที่ {sem} ({len(courses)} วิชา, {sem_credits} หน่วยกิต):")
+        for cc in courses:
+            en = f" ({cc['name_en']})" if cc["name_en"] else ""
+            lines.append(f"  - {cc['code']} {cc['name_th']}{en} — {cc['credits_raw']}")
+
+    # วิชาเลือก/เสรี ที่ไม่ผูกเทอม
+    elective_count = conn.execute(
+        "SELECT COUNT(*) FROM course WHERE version_id=? AND year IS NULL", (version_id,)
+    ).fetchone()[0]
+    lines.append(f"\nหมายเหตุ: มีวิชาเลือก/เลือกเสรีอีก {elective_count} วิชา ที่ไม่ผูกภาคเรียนตายตัว (เลือกลงได้ตามเงื่อนไข)")
+    lines.append(f"หน่วยกิตในแผนบังคับตามเทอม: {total_all} หน่วยกิต")
+
+    return StructuredResult(True, "\n".join(lines), version_label, "plan_summary")
+
+
 def detect_cross_version_intent(question: str) -> bool:
     """ตรวจว่าเป็นคำถามเทียบหลักสูตรเก่า-ใหม่."""
     has_compare = any(w in question for w in ["เก่า", "ใหม่", "เปรียบเทียบ", "ต่างกัน", "แตกต่าง", "หายไป", "เพิ่มเข้ามา", "ตัดออก"])
