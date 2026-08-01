@@ -284,6 +284,11 @@ def create_app(
                         "== คำตอบ ==\n"
                     )
                     answer_text = llm.generate(prompt, max_tokens=1024)
+
+                    # Postprocess: dedup + backfill
+                    from katrag.query.completeness import postprocess_answer
+                    evidence_texts = [h.text for h in hits]
+                    answer_text = postprocess_answer(answer_text, evidence_texts, question)
                 except Exception as llm_exc:
                     # LLM ล้มเหลว → ตอบจาก chunks ตรง ๆ (fallback)
                     answer_text = (
