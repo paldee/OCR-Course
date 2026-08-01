@@ -465,6 +465,11 @@ def detect_plan_summary_intent(question: str) -> bool:
     return any(w in question for w in ["แผนการเรียน", "แผนการศึกษา", "3.5 ปี", "3.5ปี", "จบเร็ว", "จบไว", "แต่ละเทอม", "ทุกเทอม", "โครงสร้างหลักสูตร"])
 
 
+def _detect_early_grad(question: str) -> bool:
+    """ตรวจว่าถาม 'จบ 3.5 ปี / จบเร็ว'."""
+    return any(w in question for w in ["3.5 ปี", "3.5ปี", "จบเร็ว", "จบไว", "จบใน 3.5", "สามปีครึ่ง", "3 ปีครึ่ง"])
+
+
 def try_plan_summary(conn: sqlite3.Connection, question: str) -> StructuredResult:
     """คืนสรุปแผนการเรียนต่อชั้นปี/ภาค (จำนวนวิชา+หน่วยกิต+รายวิชา)."""
     conn.row_factory = sqlite3.Row
@@ -488,6 +493,19 @@ def try_plan_summary(conn: sqlite3.Connection, question: str) -> StructuredResul
     if not rows:
         return StructuredResult(False, "", "", "none")
 
+    # ── ถ้าถาม "จบ 3.5 ปี" → ให้คำแนะนำเฉพาะ ──
+    if _detect_early_grad(question):
+        return _format_early_grad(conn, version_id, version_label, rows)
+
+    # ── แผนปกติ ──
+    return _format_full_plan(conn, version_id, version_label, rows)
+
+
+def _format_full_plan(
+    conn: sqlite3.Connection, version_id: int, version_label: str, rows: list
+) -> StructuredResult:
+    """แผนเรียนปกติทุกเทอม."""
+
     lines = [f"แผนการศึกษาของหลักสูตร {version_label} (จำแนกตามชั้นปี/ภาคการศึกษา):"]
     from itertools import groupby
     total_all = 0
@@ -506,6 +524,68 @@ def try_plan_summary(conn: sqlite3.Connection, question: str) -> StructuredResul
     ).fetchone()[0]
     lines.append(f"\nหมายเหตุ: มีวิชาเลือก/เลือกเสรีอีก {elective_count} วิชา ที่ไม่ผูกภาคเรียนตายตัว (เลือกลงได้ตามเงื่อนไข)")
     lines.append(f"หน่วยกิตในแผนบังคับตามเทอม: {total_all} หน่วยกิต")
+
+    return StructuredResult(True, "\n".join(lines), version_label, "plan_summary")
+
+
+def _format_early_grad(
+    conn: sqlite3.Connection, version_id: int, version_label: str, rows: list
+) -> StructuredResult:
+    """คำแนะนำจบ 3.5 ปี: ดึงวิชาปี 4 เทอม 2 มาลงก่อน."""
+    from itertools import groupby
+
+    # แยกวิชาปี 4 เทอม 2 — คือส่วนที่ต้อง "เลื่อนขึ้น" ไปลงเทอมก่อนหน้า
+    last_sem = [r for r in rows if r["year"] == 4 and r["semester"] == 2]
+    other = [r for r in rows if not (r["year"] == 4 and r["semester"] == 2)]
+
+    # วิชาเลือก/เสรี ที่ไม่ผูกเทอม
+    elective_rows = conn.execute(
+        "SELECT code, name_th, name_en, credits_raw, credits_total "
+        "FROM course WHERE version_id=? AND year IS NULL", (version_id,)
+    ).fetchall()
+
+    last_credits = sum((r["credits_total"] or 0) for r in last_sem)
+    elective_credits_total = sum((r["credits_total"] or 0) for r in elective_rows)
+
+    lines = [
+        f"แนวทางจบหลักสูตร {version_label} ภายใน 3.5 ปี",
+        "",
+        "หลักการ: จบปกติใช้ 4 ปี (8 ภาค) การจบ 3.5 ปี = จบในสิ้นปี 4 เทอม 1",
+        "วิธี: ดึงวิชาที่ปกติอยู่ปี 4 ภาคการศึกษาที่ 2 มาลงล่วงหน้าในเทอมก่อนหน้า",
+        "(ต้องตรวจสอบ prerequisite ว่าวิชานั้นเปิดลงล่วงหน้าได้)",
+        "",
+    ]
+
+    if last_sem:
+        lines.append(f"■ วิชาในปี 4 ภาคการศึกษาที่ 2 (ปกติ) ที่ต้องดึงมาลงก่อน ({len(last_sem)} วิชา, {last_credits} หน่วยกิต):")
+        for r in last_sem:
+            en = f" ({r['name_en']})" if r["name_en"] else ""
+            lines.append(f"  - {r['code']} {r['name_th']}{en} — {r['credits_raw']}")
+    else:
+        lines.append("■ ไม่พบวิชาบังคับในปี 4 ภาคการศึกษาที่ 2 ในแผน (อาจเป็นวิชาเลือกทั้งหมด)")
+
+    if elective_rows:
+        lines.append(f"\n■ วิชาเลือก/เลือกเสรี ที่ต้องลงให้ครบด้วย ({len(elective_rows)} วิชา, {elective_credits_total} หน่วยกิต):")
+        lines.append("  (วิชาเหล่านี้ไม่ผูกเทอมตายตัว ลงได้ตั้งแต่เทอมที่เปิดให้ลง)")
+
+    lines.append("")
+    lines.append("■ แผนบังคับทุกเทอม (ไม่รวมปี 4 เทอม 2):")
+    total_other = 0
+    for (yr, sem), group in groupby(other, key=lambda r: (r["year"], r["semester"])):
+        courses = list(group)
+        sem_credits = sum(cc["credits_total"] or 0 for cc in courses)
+        total_other += sem_credits
+        lines.append(f"\n  ปีที่ {yr} ภาคการศึกษาที่ {sem} ({len(courses)} วิชา, {sem_credits} หน่วยกิต):")
+        for cc in courses:
+            en = f" ({cc['name_en']})" if cc["name_en"] else ""
+            lines.append(f"    - {cc['code']} {cc['name_th']}{en} — {cc['credits_raw']}")
+
+    extra = last_credits + elective_credits_total
+    lines.append("")
+    lines.append(f"สรุป: ต้องดึงวิชาปี 4 เทอม 2 ({last_credits} หน่วยกิต) + วิชาเลือก/เลือกเสรี ({elective_credits_total} หน่วยกิต)")
+    lines.append(f"รวม {extra} หน่วยกิต มากระจายลงในเทอมก่อนหน้า")
+    lines.append("แนะนำเฉลี่ยเพิ่มเทอมละ 3-6 หน่วยกิต เพื่อไม่ให้หนักเกินไป")
+    lines.append("และต้องตรวจ prerequisite ว่าวิชาที่จะดึงขึ้นมาลงก่อนได้จริง")
 
     return StructuredResult(True, "\n".join(lines), version_label, "plan_summary")
 
