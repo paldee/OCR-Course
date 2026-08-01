@@ -72,6 +72,37 @@ body {
     border: 1px solid var(--border);
 }
 
+.program-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.program-selector label {
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+}
+
+#program-select {
+    flex: 1;
+    min-width: 200px;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+#program-select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
 #question-input {
     width: 100%;
     border: 1px solid var(--border);

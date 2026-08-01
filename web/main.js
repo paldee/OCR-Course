@@ -45,8 +45,15 @@ questionInput.addEventListener("input", () => {
 form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const question = questionInput.value.trim();
+    let question = questionInput.value.trim();
     if (!question) return;
+
+    // Prepend selected program (ถ้าคำถามยังไม่ได้ระบุสาขา)
+    const programSelect = document.getElementById("program-select");
+    const selectedProgram = programSelect ? programSelect.value : "";
+    if (selectedProgram && !question.toUpperCase().includes(selectedProgram)) {
+        question = `หลักสูตร ${selectedProgram}: ${question}`;
+    }
 
     // Reset UI
     hideElement(errorDisplay);
