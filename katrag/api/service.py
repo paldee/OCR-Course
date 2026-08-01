@@ -190,6 +190,18 @@ def create_app(
         try:
             conn = sqlite3.connect(str(db_path))
 
+            # ── Structured answer path: query course/plan_slot ตรง ๆ (แม่นกว่า chunk) ──
+            structured_context = ""
+            try:
+                from katrag.query.structured_query import try_structured_answer
+                sr = try_structured_answer(conn, question)
+                if sr.matched:
+                    structured_context = sr.context
+                    if sr.version_label and sr.version_label not in versions_resolved:
+                        versions_resolved.append(sr.version_label)
+            except Exception:
+                structured_context = ""
+
             # ลองใช้ hybrid search (lexical + dense RRF)
             try:
                 from katrag.query.semantic_retriever import hybrid_search
@@ -225,15 +237,17 @@ def create_app(
 
             conn.close()
 
-            if not hits:
+            if not hits and not structured_context:
                 answer_text = (
                     "ไม่พบข้อมูลที่เกี่ยวข้องกับคำถามนี้ในฐานข้อมูล\n\n"
                     "ลองระบุชื่อหลักสูตร (เช่น IT, DSBA, AIT, BIT) และปี พ.ศ. "
                     "หรือถามให้เจาะจงขึ้น เช่น 'หลักสูตร DSBA เรียนกี่หน่วยกิต'"
                 )
             else:
-                # สร้าง context จาก top chunks
+                # สร้าง context — เริ่มด้วย structured data (ถ้ามี) ในฐานะหลักฐานหลัก
                 context_parts = []
+                if structured_context:
+                    context_parts.append(f"[ข้อมูลจากฐานข้อมูลหลักสูตร — เชื่อถือได้ ครบถ้วน]:\n{structured_context}")
                 for i, hit in enumerate(hits, 1):
                     heading = hit.heading or "ไม่มีหัวข้อ"
                     ver = f"{hit.program} {hit.curriculum_year}".strip()
