@@ -274,7 +274,7 @@ def try_structured_answer(conn: sqlite3.Connection, question: str) -> Structured
                 # วิชาเลือกในเทอมนี้ (จากตารางแผน)
                 electives = extract_elective_slots(conn, version_id, year_level, sem_no)
                 if electives:
-                    lines.append(f"  วิชาเลือกตามกลุ่มความเชี่ยวชาญ/แขนง (เลือกลง {len(electives)} รายการ จากกลุ่มต่อไปนี้):")
+                    lines.append(f"  วิชาเลือกเฉพาะแขนง (เลือก 1 แขนง แล้วลงวิชาในแขนงนั้น) กลุ่มที่มี:")
                     for e in electives:
                         lines.append(f"    • {e}")
             total = sum(_parse_credit(r["credits_raw"]) for r in rows)
@@ -331,15 +331,17 @@ def extract_elective_slots(conn: sqlite3.Connection, version_id: int, year: int,
     start = text.find(header)
     # ตัดถึง header เทอมถัดไป (ถ้ามี) เพื่อจำกัดขอบเขต
     nxt = re.search(r"ปีที่ \d ภาคการศึกษาที่ \d", text[start + len(header):])
-    segment = text[start: start + len(header) + (nxt.start() if nxt else 400)]
+    segment = text[start: start + len(header) + (nxt.start() if nxt else 800)]
 
     slots: list[str] = []
     seen: set[str] = set()
-    for m in re.finditer(r"วิชาเลือก[ก-๙\s]{2,40}?\d?(?=\s|\n|$)", segment):
+    for m in re.finditer(r"วิชาเลือก[ก-๙\s]{2,60}?\d?(?=\s|\n|$)", segment):
         name = " ".join(m.group(0).split())
         # ตัดชื่อยาวเกินที่รวมข้อความอื่น
         name = name.split("หน่วยกิต")[0].strip()
-        if 5 < len(name) < 60 and name not in seen:
+        # ตัดเลข trailing (เช่น "วิชาเลือกกลุ่มวิทยาการข้อมูล 3" → ตัด " 3")
+        name = re.sub(r"\s+\d+$", "", name)
+        if 10 < len(name) < 60 and name not in seen:
             seen.add(name)
             slots.append(name)
     return slots
@@ -570,7 +572,7 @@ def _format_full_plan(
         # วิชาเลือกแขนง/เฉพาะด้าน ที่ต้องลงในเทอมนี้
         elective_slots = extract_elective_slots(conn, version_id, yr, sem)
         if elective_slots:
-            lines.append(f"  + วิชาเลือกแขนง/เฉพาะด้าน (ต้องเลือกลง {len(elective_slots)} รายการ):")
+            lines.append(f"  + วิชาเลือกเฉพาะแขนง (เลือก 1 แขนง แล้วลงวิชาในแขนงนั้น) กลุ่มที่มี:")
             for slot in elective_slots:
                 lines.append(f"    • {slot}")
 
@@ -635,10 +637,10 @@ def _format_early_grad(
         for cc in courses:
             en = f" ({cc['name_en']})" if cc["name_en"] else ""
             lines.append(f"    - {cc['code']} {cc['name_th']}{en} — {cc['credits_raw']}")
-        # แสดงวิชาเลือก/แขนง ที่ต้องลงในเทอมนี้ (จากแผนในเอกสาร)
+        # วิชาเลือกแขนง/เฉพาะด้าน ที่ต้องลงในเทอมนี้ (จากแผนในเอกสาร)
         elective_slots = extract_elective_slots(conn, version_id, yr, sem)
         if elective_slots:
-            lines.append(f"    + วิชาเลือกแขนง/เฉพาะด้าน (ต้องเลือกลง {len(elective_slots)} รายการ):")
+            lines.append(f"    + วิชาเลือกเฉพาะแขนง (เลือก 1 แขนง แล้วลงวิชาในแขนงนั้น) กลุ่มที่มี:")
             for slot in elective_slots:
                 lines.append(f"      • {slot}")
 
