@@ -144,29 +144,35 @@ def try_structured_answer(conn: sqlite3.Connection, question: str) -> Structured
                 # วิชาเลือกในเทอมนี้ (จากตารางแผน)
                 electives = extract_elective_slots(conn, version_id, year_level, sem_no)
                 if electives:
-                    lines.append(f"  วิชาเลือก (ต้องเลือกลง {len(electives)} รายการจากกลุ่มต่อไปนี้):")
+                    lines.append(f"  วิชาเลือกตามกลุ่มความเชี่ยวชาญ/แขนง (เลือกลง {len(electives)} รายการ จากกลุ่มต่อไปนี้):")
                     for e in electives:
                         lines.append(f"    • {e}")
             total = sum(_parse_credit(r["credits_raw"]) for r in rows)
             lines.append(f"\nรวมปีที่ {year_level} (วิชาบังคับ): {len(rows)} วิชา {total} หน่วยกิต (ยังไม่รวมวิชาเลือก)")
             return StructuredResult(True, "\n".join(lines), version_label, "year_sem")
 
-    # ── กรณี: ถามรายวิชาทั้งหมดของหลักสูตร ──
-    rows = conn.execute(
-        "SELECT code, name_th, name_en, credits_raw, year, semester "
-        "FROM course WHERE version_id=? ORDER BY year, semester, code LIMIT 200",
-        (version_id,),
-    ).fetchall()
-    if rows:
-        lines = [f"รายวิชาของหลักสูตร {version_label} (ทั้งหมด {len(rows)} วิชา):"]
-        for r in rows:
-            en = f" ({r['name_en']})" if r["name_en"] else ""
-            ys = ""
-            if r["year"] and r["semester"]:
-                ys = f" [ปีที่ {r['year']} ภาคการศึกษาที่ {r['semester']}]"
-            lines.append(f"- {r['code']} {r['name_th']}{en} — {r['credits_raw']}{ys}")
-        return StructuredResult(True, "\n".join(lines), version_label, "all_courses")
+    # ── กรณี: ถามรายวิชา "ทั้งหมด" ของหลักสูตร (ต้องระบุชัดว่าเอาทั้งหมด) ──
+    # ถ้าถามเจาะจงหัวข้อ (เช่น "วิชาเขียนโปรแกรม") ไม่เข้า branch นี้ → ให้ hybrid ค้นแทน
+    wants_all = any(w in question for w in [
+        "ทั้งหมด", "ทุกวิชา", "มีวิชาอะไรบ้าง", "รายวิชาทั้งหมด", "วิชาทั้งหมด", "โครงสร้างหลักสูตร"
+    ])
+    if wants_all:
+        rows = conn.execute(
+            "SELECT code, name_th, name_en, credits_raw, year, semester "
+            "FROM course WHERE version_id=? ORDER BY year, semester, code LIMIT 200",
+            (version_id,),
+        ).fetchall()
+        if rows:
+            lines = [f"รายวิชาของหลักสูตร {version_label} (ทั้งหมด {len(rows)} วิชา):"]
+            for r in rows:
+                en = f" ({r['name_en']})" if r["name_en"] else ""
+                ys = ""
+                if r["year"] and r["semester"]:
+                    ys = f" [ปีที่ {r['year']} ภาคการศึกษาที่ {r['semester']}]"
+                lines.append(f"- {r['code']} {r['name_th']}{en} — {r['credits_raw']}{ys}")
+            return StructuredResult(True, "\n".join(lines), version_label, "all_courses")
 
+    # คำถามเจาะจงหัวข้อ (ไม่ระบุปี ไม่เอาทั้งหมด) → ปล่อยให้ hybrid retrieval จัดการ
     return StructuredResult(False, "", "", "none")
 
 
