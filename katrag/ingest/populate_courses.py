@@ -320,22 +320,73 @@ def populate(db_path: Path | str) -> dict[str, int]:
                         (final_year, final_sem, course_id),
                     )
 
-            # Insert plan_slot ถ้ามี year/semester
+            # ── Insert plan_slot ถ้ามี year/semester ──
+            # schema บังคับ provenance_id NOT NULL — ถ้าไม่ส่งมา INSERT OR IGNORE
+            # จะข้ามเงียบทุกแถว (เคยทำให้ตารางว่างทั้งที่รายงานว่าใส่ 2,149 แถว)
+            # จึงใช้ provenance ของ course แถวนั้น และนับจาก rowcount จริง
+            # ใช้ค่าเดียวกับที่ลง course (จับ marker ตามตำแหน่งในหน้า)
+            # ห้ามใช้ current_year_per_version ซึ่งเป็น carry-forward ข้ามหน้า —
+            # วัดกับ GT แล้วพบว่ามันให้ y4s2 กับวิชาที่จริง ๆ อยู่ปี 1-2
+            # (marker ตัวสุดท้ายของเล่มรั่วมาใส่วิชาที่ไม่มี marker บนหน้าตัวเอง)
             course_id = seen_codes.get(key)
-            yr = course.year or current_year_per_version.get(version_id)
-            sem = course.semester or current_sem_per_version.get(version_id)
+            yr = final_year
+            sem = final_sem
 
             if course_id and yr and sem:
-                try:
-                    conn.execute(
+                prov_row = conn.execute(
+                    "SELECT provenance_id FROM course WHERE course_id=?", (course_id,)
+                ).fetchone()
+                prov_for_slot = prov_row["provenance_id"] if prov_row else None
+                if prov_for_slot is not None:
+                    cur_slot = conn.execute(
                         """INSERT OR IGNORE INTO plan_slot
-                           (version_id, course_id, year, semester, plan_variant)
-                           VALUES (?, ?, ?, ?, 'default')""",
-                        (course.version_id, course_id, yr, sem),
+                           (version_id, course_id, year, semester, plan_variant,
+                            provenance_id)
+                           VALUES (?, ?, ?, ?, 'default', ?)""",
+                        (course.version_id, course_id, yr, sem, prov_for_slot),
                     )
-                    plan_slots_inserted += 1
-                except sqlite3.IntegrityError:
-                    pass
+                    plan_slots_inserted += cur_slot.rowcount or 0
+
+    # ── Pass สุดท้าย: เติม year/semester ที่ยังว่าง จาก pre-pass map ──
+    # วิชาบางตัวถูก insert จากหน้าคำอธิบายรายวิชา (ไม่มี marker) แล้วหน้าตารางแผน
+    # ที่มี marker ไม่ถูก parse ซ้ำ เพราะตารางแผนบางแบบไม่มีหน่วยกิตรูป 3(3-0-6)
+    # ให้ _CREDITS_RE จับได้ → วิชานั้นจึงไม่เคยได้ชั้นปี
+    #
+    # code_year_sem จาก pre-pass ครอบทุกหน้าที่มี "รหัสวิชา + marker" อยู่แล้ว
+    # จึงใช้เติมได้ตรง ๆ ถ้าหลายหน้าให้ค่าไม่ตรงกัน เลือกค่าที่พบบ่อยที่สุด
+    from collections import Counter
+
+    votes: dict[tuple[int, str], Counter[tuple[int, int]]] = {}
+    for (vid_k, _pg, code_k), ys_val in code_year_sem.items():
+        votes.setdefault((vid_k, code_k), Counter())[ys_val] += 1
+
+    backfilled = 0
+    for (vid_k, code_k), counter in votes.items():
+        (best_y, best_s), _n = counter.most_common(1)[0]
+        cur_bf = conn.execute(
+            "UPDATE course SET year=?, semester=? "
+            "WHERE version_id=? AND code=? AND year IS NULL",
+            (best_y, best_s, vid_k, code_k),
+        )
+        backfilled += cur_bf.rowcount or 0
+
+        # plan_slot ต้องมาจาก "ตารางแผนการศึกษา" ซึ่งคือหน้าที่มี marker ปี/ภาค
+        # ไม่ใช่จาก parse_courses_from_text (ตารางแผนหลายเล่มไม่มีหน่วยกิตรูป
+        # 3(3-0-6) ให้ _CREDITS_RE จับ วิชาในแผนจึงหลุดไปเกือบทั้งหมด —
+        # เคยเหลือแค่ 329 แถวจากที่ควรมีราว 1.5 พัน)
+        row_bf = conn.execute(
+            "SELECT course_id, provenance_id FROM course "
+            "WHERE version_id=? AND code=?",
+            (vid_k, code_k),
+        ).fetchone()
+        if row_bf and row_bf["provenance_id"] is not None:
+            cur_slot = conn.execute(
+                """INSERT OR IGNORE INTO plan_slot
+                   (version_id, course_id, year, semester, plan_variant, provenance_id)
+                   VALUES (?, ?, ?, ?, 'default', ?)""",
+                (vid_k, row_bf["course_id"], best_y, best_s, row_bf["provenance_id"]),
+            )
+            plan_slots_inserted += cur_slot.rowcount or 0
 
     conn.commit()
     conn.close()
@@ -344,6 +395,7 @@ def populate(db_path: Path | str) -> dict[str, int]:
         "courses_inserted": courses_inserted,
         "plan_slots_inserted": plan_slots_inserted,
         "pages_scanned": len(rows),
+        "year_backfilled": backfilled,
     }
 
 
@@ -353,4 +405,5 @@ if __name__ == "__main__":
     result = populate(db)
     print(f"Done! Courses: {result['courses_inserted']}, "
           f"Plan slots: {result['plan_slots_inserted']}, "
-          f"Pages scanned: {result['pages_scanned']}")
+          f"Pages scanned: {result['pages_scanned']}, "
+          f"Year backfilled: {result['year_backfilled']}")

@@ -317,7 +317,7 @@
       "code_recall": 0.9697,
       "code_precision": 0.3048,
       "code_f1": 0.4638,
-      "field_macro_accuracy": 0.8947,
+      "field_macro_accuracy": 0.9447,
       "fields": {
         "name_th": {
           "matched": 87,
@@ -335,14 +335,14 @@
           "accuracy": 0.9896
         },
         "year": {
-          "matched": 36,
+          "matched": 41,
           "compared": 44,
-          "accuracy": 0.8182
+          "accuracy": 0.9318
         },
         "semester": {
-          "matched": 38,
+          "matched": 44,
           "compared": 44,
-          "accuracy": 0.8636
+          "accuracy": 1.0
         }
       },
       "category_recall": {
