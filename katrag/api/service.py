@@ -411,8 +411,12 @@ def create_app(
                             if "prerequisite" not in structured_intent:
                                 try:
                                     from katrag.query.structured_query import try_prerequisite
+
                                     conn2 = sqlite3.connect(str(db_path))
-                                    pr = try_prerequisite(conn2, question)
+                                    # require_intent=False: คำถามเชิงวิเคราะห์อย่าง
+                                    # "ลงวิชา X ตอนปีสองได้ไหม" ไม่มีคำว่า "ต้องผ่าน"
+                                    # แต่ยังต้องรู้ prerequisite เพื่อตอบให้ถูก
+                                    pr = try_prerequisite(conn2, question, require_intent=False)
                                     conn2.close()
                                     if pr.matched:
                                         context = f"{context}\n\n[ข้อมูลวิชาบังคับก่อน]:\n{pr.context}"

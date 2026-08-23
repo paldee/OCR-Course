@@ -43,8 +43,12 @@ _CODE_RE = re.compile(r"\b(\d{8})\b")
 # หน่วยกิต รูปแบบ 3(3-0-6) หรือ 3 (3-0-6) หรือ 3(2-2-5)
 _CREDITS_RE = re.compile(r"(\d)\s*\((\d)-(\d)-(\d+)\)")
 
-# ชื่อภาษาอังกฤษ (ตัวพิมพ์ใหญ่ ≥3 คำ)
+# ชื่อภาษาอังกฤษ (ตัวพิมพ์ใหญ่) — อนุญาตเลขลำดับท้ายชื่อ เช่น "CALCULUS 1"
+# แต่จะไม่ดูดเลขหน่วยกิตเข้ามา เพราะเราตัด block ที่ตำแหน่ง credits ก่อนแยกชื่อแล้ว
 _EN_NAME_RE = re.compile(r"([A-Z][A-Z\s\-&,()]+(?:[A-Z)]|\d))")
+
+# ชื่อไทย — ต้องรวมตัวเลขด้วย ("แคลคูลัส 1") ไม่งั้นเลขลำดับวิชาหาย
+_TH_NAME_RE = re.compile(r"([ก-๙][ก-๙\s\d\-/().]*)")
 
 # ปี/เทอม: "ปีที่ 1 ภาคการศึกษาที่ 1"
 _YEAR_SEM_RE = re.compile(r"ปีที่\s*(\d)\s*ภาคการศึกษาที่\s*(\d)")
@@ -109,24 +113,33 @@ def parse_courses_from_text(
         lab = int(credits_match.group(3))
         self_study = int(credits_match.group(4))
 
-        # ค้นชื่ออังกฤษ
-        en_matches = _EN_NAME_RE.findall(block)
+        # ── แยก "ส่วนชื่อวิชา" ออกมาก่อน = ข้อความระหว่างรหัสวิชากับ credits ──
+        # สำคัญ: ตัดที่ตำแหน่ง credits เพื่อไม่ให้เลขหน่วยกิตปนเข้าไปในชื่อ
+        # เช่น "06026202 พีชคณิตเชิงเส้น LINEAR ALGEBRA 3 (3-0-6)"
+        #      → name_segment = "พีชคณิตเชิงเส้น LINEAR ALGEBRA"
+        code_pos = block.find(code)
+        seg_start = code_pos + len(code)
+        seg_end = credits_match.start()
+        if seg_end <= seg_start:
+            # credits อยู่ก่อนชื่อ (layout แปลก) → ใช้ทุกอย่างหลังรหัส
+            name_segment = block[seg_start:].strip()
+        else:
+            name_segment = block[seg_start:seg_end].strip()
+
+        # ค้นชื่ออังกฤษจากส่วนชื่อเท่านั้น
+        en_matches = _EN_NAME_RE.findall(name_segment)
         name_en = ""
         for m in en_matches:
-            candidate = m.strip()
+            candidate = " ".join(m.split())  # squeeze whitespace
             if len(candidate) > 5 and candidate.upper() != code:
                 name_en = candidate
                 break
 
-        # ค้นชื่อไทย: ข้อความระหว่าง code กับชื่อ EN หรือ credits
-        code_pos = block.find(code)
-        after_code = block[code_pos + 8:].strip()
-        # ชื่อไทย = ข้อความไทยก่อน EN name หรือ credits
+        # ค้นชื่อไทย = ข้อความไทย (รวมเลขลำดับ) ที่นำหน้าในส่วนชื่อ
         name_th = ""
-        thai_match = re.match(r"([ก-๙\s\-/().]+)", after_code)
+        thai_match = _TH_NAME_RE.match(name_segment)
         if thai_match:
-            name_th = thai_match.group(1).strip()
-            # ตัดคำสั้นเกินไปออก
+            name_th = " ".join(thai_match.group(1).split())
             if len(name_th) < 3:
                 name_th = ""
 

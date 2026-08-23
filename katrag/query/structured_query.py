@@ -359,11 +359,19 @@ def detect_prerequisite_intent(question: str) -> bool:
     return any(w in question.lower() for w in ["บังคับก่อน", "ต้องผ่าน", "ต้องเรียนก่อน", "ลงก่อน", "prerequisite", "ก่อนถึงจะลง", "เรียนก่อน"])
 
 
-def try_prerequisite(conn: sqlite3.Connection, question: str) -> StructuredResult:
-    """ตอบว่าวิชาที่ถามต้องผ่านวิชาใดก่อน — จาก course.prerequisite_json."""
+def try_prerequisite(
+    conn: sqlite3.Connection, question: str, *, require_intent: bool = True
+) -> StructuredResult:
+    """ตอบว่าวิชาที่ถามต้องผ่านวิชาใดก่อน — จาก course.prerequisite_json.
+
+    Args:
+        require_intent: ถ้า False จะข้ามการตรวจคำบ่งชี้ (ใช้ตอนเสริม context
+            ให้คำถามเชิงวิเคราะห์ เช่น "ลงวิชา X ตอนปีสองได้ไหม" ซึ่งไม่มีคำว่า
+            "ต้องผ่าน" แต่ยังต้องรู้ prerequisite เพื่อตอบให้ถูก)
+    """
     import json
     conn.row_factory = sqlite3.Row
-    if not detect_prerequisite_intent(question):
+    if require_intent and not detect_prerequisite_intent(question):
         return StructuredResult(False, "", "", "none")
 
     program = detect_program(question)

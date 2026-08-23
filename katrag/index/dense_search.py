@@ -50,24 +50,41 @@ class DenseSearchIndex:
         return self._dim
 
     def load(self) -> int:
-        """โหลด embeddings จาก DB → memory. Return จำนวน vectors loaded."""
+        """โหลด embeddings จาก DB → memory. Return จำนวน vectors loaded.
+
+        ตาราง chunk_embedding อาจมีหลายมิติปนกัน (เช่น bge-m3 dim=1024 กับ
+        Gemini dim=3072 จากการ build ต่างรอบ) จึงต้องเลือก **มิติที่มีจำนวนมากที่สุด**
+        แล้วโหลดเฉพาะมิตินั้น ห้ามใช้ dim ของ row แรก เพราะลำดับ row ไม่การันตี
+        (บั๊กเดิม: row แรกเป็น dim=3072 ทำให้ vector dim=1024 ทั้งหมดถูกทิ้ง)
+        """
         conn = sqlite3.connect(self._db_path)
         conn.row_factory = sqlite3.Row
 
-        rows = conn.execute("""
+        dim_rows = conn.execute(
+            "SELECT dim, COUNT(*) n FROM chunk_embedding GROUP BY dim ORDER BY n DESC"
+        ).fetchall()
+        if not dim_rows:
+            conn.close()
+            return 0
+        self._dim = int(dim_rows[0]["dim"])
+
+        rows = conn.execute(
+            """
             SELECT ce.chunk_id, ce.dim, ce.vector,
                    c.text, c.heading, c.page_number,
                    cv.program, cv.curriculum_year, cv.edition_status
             FROM chunk_embedding ce
             JOIN chunk c ON c.chunk_id = ce.chunk_id
             JOIN curriculum_version cv ON cv.version_id = c.version_id
-        """).fetchall()
+            WHERE ce.dim = ?
+            """,
+            (self._dim,),
+        ).fetchall()
         conn.close()
 
         if not rows:
             return 0
 
-        self._dim = rows[0]["dim"]
         vectors: list[np.ndarray] = []
         self._chunk_ids = []
         self._chunk_meta = {}
@@ -91,6 +108,19 @@ class DenseSearchIndex:
         self._embeddings = np.stack(vectors, axis=0) if vectors else np.empty((0, self._dim))
         return len(self._chunk_ids)
 
+    def _encode_query(self, query_text: str) -> np.ndarray:
+        """encode query ด้วย encoder ที่ตรงกับมิติของ index."""
+        if self._dim == 1024:
+            from katrag.index import bge_encoder
+
+            return bge_encoder.encode_one(query_text)
+        if self._embedder is None:
+            from dotenv import load_dotenv
+
+            load_dotenv()
+            self._embedder = GeminiEmbedder()
+        return self._embedder.encode([query_text])[0]
+
     def search(
         self,
         query_text: str,
@@ -102,13 +132,15 @@ class DenseSearchIndex:
         if self._embeddings is None or self._embeddings.shape[0] == 0:
             return []
 
-        # Embed query
-        if self._embedder is None:
-            from dotenv import load_dotenv
-            load_dotenv()
-            self._embedder = GeminiEmbedder()
-
-        query_vec = self._embedder.encode([query_text])[0]  # already L2 normalized
+        # Embed query — ต้องใช้ encoder ที่ให้มิติตรงกับ vector ที่โหลดไว้
+        # dim 1024 = bge-m3 (local), dim 3072 = Gemini
+        # ถ้าใช้ผิดตัว cosine จะคำนวณไม่ได้/ผลเพี้ยน
+        query_vec = self._encode_query(query_text)
+        if query_vec.shape[0] != self._embeddings.shape[1]:
+            raise ValueError(
+                f"query dim {query_vec.shape[0]} ไม่ตรงกับ index dim "
+                f"{self._embeddings.shape[1]}"
+            )
 
         # Full scan cosine similarity (vectors already normalized)
         scores = self._embeddings @ query_vec  # (n,)

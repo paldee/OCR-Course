@@ -1,0 +1,367 @@
+{
+  "page_level": [
+    {
+      "document": "AIT2566_current.pdf",
+      "total_pages": 346,
+      "text_layer_pages": 122,
+      "ocr_pages": 224,
+      "method": "ผสม (text_layer + Tesseract 5)",
+      "mean_page_quality": 0.4824,
+      "mean_out_of_charset": 0.00128,
+      "ocr_mean_confidence": 0.9941
+    },
+    {
+      "document": "BIT2560_old.pdf",
+      "total_pages": 242,
+      "text_layer_pages": 242,
+      "ocr_pages": 0,
+      "method": "text_layer เท่านั้น",
+      "mean_page_quality": 0.6398,
+      "mean_out_of_charset": 0.00363,
+      "ocr_mean_confidence": null
+    },
+    {
+      "document": "BIT2565_current.pdf",
+      "total_pages": 317,
+      "text_layer_pages": 317,
+      "ocr_pages": 0,
+      "method": "text_layer เท่านั้น",
+      "mean_page_quality": 0.6119,
+      "mean_out_of_charset": 0.01094,
+      "ocr_mean_confidence": null
+    },
+    {
+      "document": "DSBA2560_old.pdf",
+      "total_pages": 258,
+      "text_layer_pages": 258,
+      "ocr_pages": 0,
+      "method": "text_layer เท่านั้น",
+      "mean_page_quality": 0.6619,
+      "mean_out_of_charset": 0.00275,
+      "ocr_mean_confidence": null
+    },
+    {
+      "document": "DSBA2565_current.pdf",
+      "total_pages": 403,
+      "text_layer_pages": 403,
+      "ocr_pages": 0,
+      "method": "text_layer เท่านั้น",
+      "mean_page_quality": 0.5797,
+      "mean_out_of_charset": 0.03112,
+      "ocr_mean_confidence": null
+    },
+    {
+      "document": "IT2560_old.pdf",
+      "total_pages": 327,
+      "text_layer_pages": 204,
+      "ocr_pages": 123,
+      "method": "ผสม (text_layer + Tesseract 5)",
+      "mean_page_quality": 0.6384,
+      "mean_out_of_charset": 0.01782,
+      "ocr_mean_confidence": 0.8502
+    },
+    {
+      "document": "IT2565_current.pdf",
+      "total_pages": 429,
+      "text_layer_pages": 200,
+      "ocr_pages": 229,
+      "method": "ผสม (text_layer + Tesseract 5)",
+      "mean_page_quality": 0.5423,
+      "mean_out_of_charset": 0.0127,
+      "ocr_mean_confidence": 0.9725
+    },
+    {
+      "document": "PH_D_AITBA2569_current.pdf",
+      "total_pages": 252,
+      "text_layer_pages": 153,
+      "ocr_pages": 99,
+      "method": "ผสม (text_layer + Tesseract 5)",
+      "mean_page_quality": 0.6913,
+      "mean_out_of_charset": 0.00042,
+      "ocr_mean_confidence": 0.9908
+    },
+    {
+      "document": "PH_D_IT2561_old.pdf",
+      "total_pages": 156,
+      "text_layer_pages": 107,
+      "ocr_pages": 49,
+      "method": "ผสม (text_layer + Tesseract 5)",
+      "mean_page_quality": 0.7051,
+      "mean_out_of_charset": 0.00391,
+      "ocr_mean_confidence": 1.0
+    },
+    {
+      "document": "PH_D_IT2566_current.pdf",
+      "total_pages": 199,
+      "text_layer_pages": 199,
+      "ocr_pages": 0,
+      "method": "text_layer เท่านั้น",
+      "mean_page_quality": 0.6538,
+      "mean_out_of_charset": 0.00235,
+      "ocr_mean_confidence": null
+    },
+    {
+      "document": "M_AITBA2564_old.pdf",
+      "total_pages": 147,
+      "text_layer_pages": 147,
+      "ocr_pages": 0,
+      "method": "text_layer เท่านั้น",
+      "mean_page_quality": 0.6309,
+      "mean_out_of_charset": 0.0024,
+      "ocr_mean_confidence": null
+    },
+    {
+      "document": "M_AITBA2569_current.pdf",
+      "total_pages": 252,
+      "text_layer_pages": 154,
+      "ocr_pages": 98,
+      "method": "ผสม (text_layer + Tesseract 5)",
+      "mean_page_quality": 0.6715,
+      "mean_out_of_charset": 0.00037,
+      "ocr_mean_confidence": 0.9907
+    },
+    {
+      "document": "M_IT2563_old.pdf",
+      "total_pages": 182,
+      "text_layer_pages": 113,
+      "ocr_pages": 69,
+      "method": "ผสม (text_layer + Tesseract 5)",
+      "mean_page_quality": 0.7015,
+      "mean_out_of_charset": 0.00383,
+      "ocr_mean_confidence": 0.9999
+    },
+    {
+      "document": "M_IT2568_current.pdf",
+      "total_pages": 179,
+      "text_layer_pages": 120,
+      "ocr_pages": 59,
+      "method": "ผสม (text_layer + Tesseract 5)",
+      "mean_page_quality": 0.6504,
+      "mean_out_of_charset": 0.01902,
+      "ocr_mean_confidence": 1.0
+    }
+  ],
+  "field_level": [
+    {
+      "program": "AIT",
+      "version": "AIT 2566 (current)",
+      "gt_total": 50,
+      "extracted_total": 366,
+      "matched_codes": 46,
+      "code_recall": 0.92,
+      "code_precision": 0.1257,
+      "code_f1": 0.2212,
+      "field_macro_accuracy": 0.9913,
+      "fields": {
+        "name_th": {
+          "matched": 45,
+          "compared": 46,
+          "accuracy": 0.9783
+        },
+        "name_en": {
+          "matched": 45,
+          "compared": 46,
+          "accuracy": 0.9783
+        },
+        "credits": {
+          "matched": 46,
+          "compared": 46,
+          "accuracy": 1.0
+        },
+        "year": {
+          "matched": 31,
+          "compared": 31,
+          "accuracy": 1.0
+        },
+        "semester": {
+          "matched": 31,
+          "compared": 31,
+          "accuracy": 1.0
+        }
+      },
+      "category_recall": {
+        "หมวดวิชาเฉพาะ": {
+          "found": 39,
+          "total": 42,
+          "recall": 0.9286
+        },
+        "หมวดวิชาศึกษาทั่วไป": {
+          "found": 7,
+          "total": 8,
+          "recall": 0.875
+        }
+      },
+      "missing_codes": [
+        "06016401",
+        "06046420",
+        "06046443หรือ06046444",
+        "90641008"
+      ]
+    },
+    {
+      "program": "BIT",
+      "version": "BIT 2565 (current)",
+      "gt_total": 56,
+      "extracted_total": 55,
+      "matched_codes": 55,
+      "code_recall": 0.9821,
+      "code_precision": 1.0,
+      "code_f1": 0.991,
+      "field_macro_accuracy": 0.9527,
+      "fields": {
+        "name_th": {
+          "matched": 51,
+          "compared": 55,
+          "accuracy": 0.9273
+        },
+        "name_en": {
+          "matched": 46,
+          "compared": 55,
+          "accuracy": 0.8364
+        },
+        "credits": {
+          "matched": 54,
+          "compared": 54,
+          "accuracy": 1.0
+        },
+        "year": {
+          "matched": 36,
+          "compared": 36,
+          "accuracy": 1.0
+        },
+        "semester": {
+          "matched": 36,
+          "compared": 36,
+          "accuracy": 1.0
+        }
+      },
+      "category_recall": {
+        "หมวดวิชาเฉพาะ": {
+          "found": 47,
+          "total": 48,
+          "recall": 0.9792
+        },
+        "หมวดวิชาศึกษาทั่วไป": {
+          "found": 8,
+          "total": 8,
+          "recall": 1.0
+        }
+      },
+      "missing_codes": [
+        "06036147หรือ06036148"
+      ]
+    },
+    {
+      "program": "DSBA",
+      "version": "DSBA 2565 (current)",
+      "gt_total": 80,
+      "extracted_total": 75,
+      "matched_codes": 75,
+      "code_recall": 0.9375,
+      "code_precision": 1.0,
+      "code_f1": 0.9677,
+      "field_macro_accuracy": 0.9787,
+      "fields": {
+        "name_th": {
+          "matched": 67,
+          "compared": 75,
+          "accuracy": 0.8933
+        },
+        "name_en": {
+          "matched": 75,
+          "compared": 75,
+          "accuracy": 1.0
+        },
+        "credits": {
+          "matched": 75,
+          "compared": 75,
+          "accuracy": 1.0
+        },
+        "year": {
+          "matched": 34,
+          "compared": 34,
+          "accuracy": 1.0
+        },
+        "semester": {
+          "matched": 34,
+          "compared": 34,
+          "accuracy": 1.0
+        }
+      },
+      "category_recall": {
+        "หมวดวิชาเฉพาะ": {
+          "found": 67,
+          "total": 72,
+          "recall": 0.9306
+        },
+        "หมวดวิชาศึกษาทั่วไป": {
+          "found": 8,
+          "total": 8,
+          "recall": 1.0
+        }
+      },
+      "missing_codes": [
+        "06016401",
+        "06026243",
+        "06026245",
+        "06026259",
+        "06026260"
+      ]
+    },
+    {
+      "program": "IT",
+      "version": "IT 2565 (current)",
+      "gt_total": 99,
+      "extracted_total": 315,
+      "matched_codes": 96,
+      "code_recall": 0.9697,
+      "code_precision": 0.3048,
+      "code_f1": 0.4638,
+      "field_macro_accuracy": 0.8583,
+      "fields": {
+        "name_th": {
+          "matched": 87,
+          "compared": 96,
+          "accuracy": 0.9062
+        },
+        "name_en": {
+          "matched": 86,
+          "compared": 96,
+          "accuracy": 0.8958
+        },
+        "credits": {
+          "matched": 95,
+          "compared": 96,
+          "accuracy": 0.9896
+        },
+        "year": {
+          "matched": 36,
+          "compared": 44,
+          "accuracy": 0.8182
+        },
+        "semester": {
+          "matched": 30,
+          "compared": 44,
+          "accuracy": 0.6818
+        }
+      },
+      "category_recall": {
+        "หมวดวิชาเฉพาะ": {
+          "found": 88,
+          "total": 91,
+          "recall": 0.967
+        },
+        "หมวดวิชาศึกษาทั่วไป": {
+          "found": 8,
+          "total": 8,
+          "recall": 1.0
+        }
+      },
+      "missing_codes": [
+        "06016454",
+        "06016481หรือ06016482",
+        "06066102"
+      ]
+    }
+  ]
+}

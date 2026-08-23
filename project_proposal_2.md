@@ -1,0 +1,216 @@
+# ใบเสนอโครงการ (Project Proposal)
+## โปรเจกต์ที่ 2: OCR เล่มหลักสูตร เพื่อตอบคำถามเกี่ยวกับการเรียน
+
+**วิชา** 06026240 Intelligent System Development  
+**กลุ่ม/Section** ___
+
+---
+
+## 1. ภาพรวมโปรเจกต์ (Overview)
+
+ทีมพัฒนาระบบ **KatRAG-lite** — ระบบ OCR เล่มหลักสูตร (มคอ.2) ของคณะเทคโนโลยีสารสนเทศ สจล. จำนวน 14 ไฟล์ (3,689 หน้า) ครอบคลุม 5 หลักสูตร (IT, DSBA, AIT, BIT, AITBA) แล้วนำเนื้อหาไปสร้างเป็นฐานความรู้ (RAG) ให้ LLM (Typhoon v2.5) ตอบคำถามนักศึกษาเกี่ยวกับโครงสร้างหลักสูตร วิชาบังคับ/เลือก เงื่อนไข prerequisite แผนการเรียน และให้คำแนะนำการลงทะเบียน พร้อมอ้างอิงหน้า/หัวข้อในเล่มหลักสูตร ระบบใช้ semantic search (bge-m3 embedding) ร่วมกับ structured query path เพื่อความแม่นยำสูง
+
+---
+
+## 2. ข้อมูลต้นฉบับ (เล่มหลักสูตร)
+
+### ระดับปริญญาตรี (Bachelors Degree)
+
+| ไฟล์ต้นฉบับ | จำนวนหน้า | ปีหลักสูตร/ฉบับ | ตำแหน่งเก็บไฟล์ (ใน repo) |
+|---|---|---|---|
+| AIT2566_current.pdf | 346 หน้า | AIT พ.ศ. 2566 (current) | `Information_Technology_Course/Bachelors_Degree/` |
+| BIT2560_old.pdf | 242 หน้า | BIT พ.ศ. 2560 (old) | `Information_Technology_Course/Bachelors_Degree/` |
+| BIT2565_current.pdf | 317 หน้า | BIT พ.ศ. 2565 (current) | `Information_Technology_Course/Bachelors_Degree/` |
+| DSBA2560_old.pdf | 258 หน้า | DSBA พ.ศ. 2560 (old) | `Information_Technology_Course/Bachelors_Degree/` |
+| DSBA2565_current.pdf | 403 หน้า | DSBA พ.ศ. 2565 (current) | `Information_Technology_Course/Bachelors_Degree/` |
+| IT2560_old.pdf | 327 หน้า | IT พ.ศ. 2560 (old) | `Information_Technology_Course/Bachelors_Degree/` |
+| IT2565_current.pdf | 429 หน้า | IT พ.ศ. 2565 (current) | `Information_Technology_Course/Bachelors_Degree/` |
+
+### ระดับปริญญาเอก (Doctorals Degree)
+
+| ไฟล์ต้นฉบับ | จำนวนหน้า | ปีหลักสูตร/ฉบับ | ตำแหน่งเก็บไฟล์ (ใน repo) |
+|---|---|---|---|
+| PH_D_AITBA2569_current.pdf | 252 หน้า | AITBA พ.ศ. 2569 (current) | `Information_Technology_Course/Doctorals_Degree/` |
+| PH_D_IT2561_old.pdf | 156 หน้า | IT พ.ศ. 2561 (old) | `Information_Technology_Course/Doctorals_Degree/` |
+| PH_D_IT2566_current.pdf | 199 หน้า | IT พ.ศ. 2566 (current) | `Information_Technology_Course/Doctorals_Degree/` |
+
+### ระดับปริญญาโท (Masters Degree)
+
+| ไฟล์ต้นฉบับ | จำนวนหน้า | ปีหลักสูตร/ฉบับ | ตำแหน่งเก็บไฟล์ (ใน repo) |
+|---|---|---|---|
+| M_AITBA2564_old.pdf | 147 หน้า | AITBA พ.ศ. 2564 (old) | `Information_Technology_Course/Masters_Degree/` |
+| M_AITBA2569_current.pdf | 252 หน้า | AITBA พ.ศ. 2569 (current) | `Information_Technology_Course/Masters_Degree/` |
+| M_IT2563_old.pdf | 182 หน้า | IT พ.ศ. 2563 (old) | `Information_Technology_Course/Masters_Degree/` |
+| M_IT2568_current.pdf | 179 หน้า | IT พ.ศ. 2568 (current) | `Information_Technology_Course/Masters_Degree/` |
+
+### สรุป
+
+| | จำนวนไฟล์ | จำนวนหน้ารวม |
+|---|---|---|
+| ปริญญาตรี | 7 | 2,322 หน้า |
+| ปริญญาเอก | 3 | 607 หน้า |
+| ปริญญาโท | 4 | 760 หน้า |
+| **รวมทั้งหมด** | **14 ไฟล์** | **3,689 หน้า** |
+
+**แหล่งที่มา:** ดาวน์โหลดจากเว็บไซต์คณะเทคโนโลยีสารสนเทศ สจล. (มคอ.2 ฉบับเผยแพร่)  
+**ตำแหน่งเก็บ:** `Information_Technology_Course/` ใน root ของโปรเจกต์ (GitHub repo)
+
+### Ground Truth จากอาจารย์ (สำหรับวัดผล OCR + ระบบ)
+
+ข้อมูล GT ที่อาจารย์จัดทำ (จาก GT_Template-2.xlsx) เป็นรายการวิชาระดับฟิลด์ (code, name_th, name_en, credits, year, semester, category, type) — **ไม่ได้ระบุหน้าในเล่ม** เพราะเป็นข้อมูลที่ key จาก spreadsheet โดยตรง
+
+| ไฟล์ GT | หลักสูตร/แผน | จำนวนรายวิชา | ตำแหน่งเก็บไฟล์ |
+|---|---|---|---|
+| AIT_academic_plan.json | AIT 2566 | 58 วิชา | `data/teacher_gt/AIT/` |
+| BIT_academic_plan_coop.json | BIT 2565 (สหกิจ) | 63 วิชา | `data/teacher_gt/BIT/` |
+| BIT_academic_plan_no_coop.json | BIT 2565 (ไม่สหกิจ) | 63 วิชา | `data/teacher_gt/BIT/` |
+| DSBA_academic_plan_coop.json | DSBA 2565 (สหกิจ) | 91 วิชา | `data/teacher_gt/DSBA/` |
+| DSBA_academic_plan_no_coop.json | DSBA 2565 (ไม่สหกิจ) | 92 วิชา | `data/teacher_gt/DSBA/` |
+| IT_academic_plan_coop.json | IT 2565 (สหกิจ) | 107 วิชา | `data/teacher_gt/IT/` |
+| IT_academic_plan_no_coop.json | IT 2565 (ไม่สหกิจ) | 109 วิชา | `data/teacher_gt/IT/` |
+| general_education_ground_truth.json | ทุกหลักสูตร (วิชาศึกษาทั่วไป) | 266 วิชา | `data/teacher_gt/` |
+| rules_ground_truth.json | ทุกหลักสูตร (กฎ/เกณฑ์จบ) | — | `data/teacher_gt/` |
+
+**รวม GT:** 10 ไฟล์ ครอบคลุม 4 หลักสูตร (AIT, BIT, DSBA, IT) + วิชาศึกษาทั่วไป + กฎเกณฑ์  
+**ที่มา:** คัดลอกจาก Lab_Week3/ocr_system/data/ground_truth (อาจารย์จัดทำ) — ใช้เป็น read-only สำหรับวัดผลเท่านั้น ห้ามใช้เป็นแหล่งคำตอบ  
+**หมายเหตุ:** GT ไม่ได้ระบุหน้าในเล่ม PDF (เป็นข้อมูลระดับรายวิชา ไม่ผูกกับหน้าเฉพาะ) การวัดจึงเทียบ field-by-field ระหว่าง OCR output กับ GT โดยตรง
+
+---
+
+## 3. แผนการทำ OCR
+
+**โมเดล/บริการที่ใช้:**
+
+1. **PDF Text Layer Extraction** (PyMuPDF/fitz) — ดึง text layer จาก PDF ที่เป็น digital-born (ส่วนใหญ่ ~2,714 หน้า)
+2. **Tesseract 5 OCR** — สำหรับหน้าที่เป็นภาพ/สแกน (975 หน้า) ได้ผลปรับปรุง 950 หน้า
+3. **Structured Table Parsing** — แกะตารางแผนการเรียน/รายวิชาจาก OCR output แล้ว populate ลงตาราง structured (course, plan_slot)
+
+**เหตุผล:** ใช้ text layer ก่อนเพราะแม่นยำ 100% สำหรับ digital PDF ส่วน Tesseract ใช้เฉพาะหน้าที่ไม่มี text layer (ภาพสแกน) เพื่อลดเวลาประมวลผลและเพิ่มความแม่นยำ
+
+---
+
+## 4. ออกแบบฐานข้อมูล / RAG
+
+| ชื่อตาราง/Collection | ฟิลด์หลัก | Chunking Strategy | Embedding Model / Vector DB |
+|---|---|---|---|
+| `curriculum_version` | version_id PK, program, curriculum_year, edition_status | - | - |
+| `course` | course_id PK, version_id FK, code, name_th, name_en, credits_raw, year, semester, prerequisite_json | - | - |
+| `chunk` | chunk_id PK, version_id FK, page_number, heading, text | แบ่งตามหัวข้อ/หน้า (~300-800 คำ/chunk) | - |
+| `chunk_embedding` | chunk_id FK, dim, vector | - | bge-m3 (dim 1024), SQLite BLOB |
+| `course_embedding` | course_id FK, dim, vector | 1 row ต่อ 1 วิชา (ชื่อไทย+อังกฤษ) | bge-m3 (dim 1024), SQLite BLOB |
+
+**Retrieval Strategy:**
+- **Hybrid Search** (lexical BM25 + dense cosine RRF) สำหรับคำถามทั่วไป
+- **Structured Query Path** สำหรับคำถามรายวิชา/แผนเรียน (query ตรงจากตาราง course/plan_slot)
+- **Semantic Course Search** (bge-m3 course embedding) สำหรับคำถาม "วิชาเกี่ยวกับ X มีอะไรบ้าง"
+- **Vector DB:** SQLite3 + in-memory numpy (ไม่ต้อง external service)
+
+---
+
+## 5. คำถาม / คำแนะนำ / ค่าที่จะ Evaluate
+
+### ระดับง่าย (Easy) — ข้อเท็จจริงตรง ๆ
+
+| # | คำถาม | คำตอบที่ถูกต้อง | อ้างอิง (หน้า/หัวข้อ) |
+|---|---|---|---|
+| 1 | หลักสูตร DSBA 2565 ต้องเรียนครบกี่หน่วยกิตจึงจะสำเร็จการศึกษา? | 126 หน่วยกิต | หน้า 7 หัวข้อ "โครงสร้างหลักสูตร" |
+| 2 | วิชา 06026212 (Data Warehousing) เปิดสอนปีที่เท่าไร เทอมอะไร? | ปีที่ 3 ภาคการศึกษาที่ 1 | หน้า 15 ตารางแผนการเรียน |
+| 3 | หลักสูตร IT 2565 มีกี่แขนงวิชา? | 4 แขนง (Network & Security, Software Engineering, Multimedia, Data Science) | หน้า 10 หัวข้อ "แขนงวิชา" |
+| 4 | วิชา CALCULUS 1 ของ DSBA มีกี่หน่วยกิต? | 3 หน่วยกิต (3-0-6) | หน้า 12 ตารางรายวิชา |
+| 5 | DSBA ปี 1 เทอม 1 เรียนกี่วิชา? | 7 วิชา (18 หน่วยกิต) | หน้า 14 แผนการศึกษา |
+| 6 | วิชา Calculus 2 ต้องผ่านวิชาใดก่อน? | Calculus 1 (06026200) | หน้า 12 หัวข้อ prerequisite |
+| 7 | หลักสูตร AIT 2566 ชื่อเต็มภาษาอังกฤษว่าอะไร? | Bachelor of Science in Artificial Intelligence Technology | หน้า 1 ปกเล่ม |
+
+### ระดับกลาง (Medium) — เชื่อมโยงข้อมูล 2 จุดขึ้นไป
+
+| # | คำถาม | คำตอบที่ถูกต้อง | อ้างอิง (หน้า/หัวข้อ) |
+|---|---|---|---|
+| 1 | วิชา Data Warehousing ต้องผ่านวิชาใดก่อน และวิชานั้นเรียนปีไหน? | ต้องผ่าน 06066300 แนวคิดระบบฐานข้อมูล (ปี 2 เทอม 1) | หน้า 15, 18 (แผนเรียน + prerequisite) |
+| 2 | หมวดวิชาเฉพาะเลือกของ DSBA เก็บกี่หน่วยกิต และต้องเรียนตอนไหน? | ไม่น้อยกว่า 6 หน่วยกิต เริ่มลงได้ตั้งแต่ปี 3 | หน้า 7-8 (โครงสร้าง) + หน้า 15-16 (แผนเรียน) |
+| 3 | DSBA มีวิชาที่เกี่ยวกับการเขียนโปรแกรมกี่วิชา รวมกี่หน่วยกิต? | 4 วิชา รวม 12 หน่วยกิต (PSCP, Computer Programming, Data Analytics & Programming, Web Programming) | หน้า 12-15 (ตารางรายวิชา) |
+| 4 | วิชาที่มีในหลักสูตร DSBA 2560 แต่ไม่มีในหลักสูตร 2565 มีอะไรบ้าง? | (รายการวิชาที่ถูกตัดออก เช่น วิชาภาษาอังกฤษเฉพาะทาง) | หน้า 12 (2560) vs หน้า 12 (2565) |
+| 5 | DSBA มีวิชาเกี่ยวกับคณิตศาสตร์กี่ตัว? | 6 วิชา 18 หน่วยกิต (Calculus 1/2, Linear Algebra, Discrete Math, Probability & Statistics, Bayesian Statistics) | หน้า 12-16 |
+| 6 | IT มีวิชาเกี่ยวกับเครือข่ายกี่วิชา? | 7 วิชา (Network Infrastructure, IoT, Wireless Network, Network Design, Network Performance, Intro to Networks, Troubleshooting) | หน้า 18-25 |
+
+### ระดับยาก (Hard) — ตีความ/สังเคราะห์/ให้คำแนะนำ
+
+| # | คำถาม | คำตอบที่ถูกต้อง | อ้างอิง (หน้า/หัวข้อ) |
+|---|---|---|---|
+| 1 | หากต้องการจบ DSBA ภายใน 3.5 ปี ควรวางแผนอย่างไร? | ต้องดึงวิชาปี 4 เทอม 2 + วิชาเลือก มาลงในเทอมก่อนหน้า เฉลี่ยเพิ่มเทอมละ 3-6 หน่วยกิต ตรวจ prerequisite | หน้า 14-16 แผนการศึกษา |
+| 2 | เรียนวิชา Database ปี 4 ได้ไหม? | ไม่ได้ เพราะ Database System Concepts เป็นวิชาบังคับปี 2 เทอม 1 ไม่ใช่วิชาเลือกที่เปิดให้ลงปี 4 | หน้า 15 แผนเรียน + หน้า 18 prerequisite |
+| 3 | ลงวิชา Data Warehouse ตอนปี 2 ได้ไหม? | ไม่ได้ เพราะต้องผ่าน Database System Concepts (ปี 2 เทอม 1) ก่อน และ Data Warehouse อยู่ปี 3 เทอม 1 ตามแผน | หน้า 15, 18 |
+| 4 | นักศึกษา DSBA ปี 3 ต้องเลือกแขนงไหน และแต่ละแขนงมีวิชาอะไรบ้าง? | ต้องเลือก 1 แขนง จาก 3 กลุ่ม: วิทยาการข้อมูล / การวิเคราะห์เชิงสถิติ / วิศวกรรมข้อมูล (มีวิชาให้เลือกกลุ่มละ ~8-14 วิชา) | หน้า 16-20 หัวข้อวิชาเลือก |
+| 5 | เปรียบเทียบหลักสูตร DSBA 2560 กับ 2565 ต่างกันอย่างไร? | หลักสูตร 2565 เพิ่มวิชา ML/DL/Big Data และตัดวิชาภาษาอังกฤษเฉพาะทางออก โครงสร้างเปลี่ยนจาก 4 ปี 8 เทอม เป็นเน้น data science มากขึ้น | หน้า 7-20 (ทั้ง 2 เวอร์ชัน) |
+| 6 | ถ้าจะจบใน 3.5 ปี ตรวจว่าแผนเรียนครบเงื่อนไขจบหรือไม่? | ต้องตรวจ: หน่วยกิตรวมครบ 126, วิชาบังคับครบ, วิชาเลือกแขนงครบ 6 หน่วยกิต, วิชาเลือกเสรีครบ, วิชา prerequisite ผ่านก่อนลงวิชาถัดไป | หน้า 7 (เกณฑ์จบ) + หน้า 14-16 (แผน) |
+
+---
+
+## 6. แผนการประเมินคำตอบ
+
+### 6.1 การวัดผล OCR
+
+**วิธีวัด:** เปรียบเทียบผลลัพธ์ OCR ที่ระบบสกัดได้ กับ Ground Truth ที่อาจารย์จัดทำ (JSON)
+
+| เกณฑ์การวัด OCR | วิธีคำนวณ | เป้าหมาย |
+|---|---|---|
+| Field Completeness | จำนวนฟิลด์ที่สกัดได้ครบ / จำนวนฟิลด์ทั้งหมดใน GT × 100% | ≥ 95% |
+| Field Accuracy | จำนวนฟิลด์ที่ค่าตรงกับ GT / จำนวนฟิลด์ที่สกัดได้ × 100% | ≥ 90% |
+| Table Structure | ตารางแผนการเรียน (ปี/เทอม/รหัสวิชา/ชื่อ/หน่วยกิต) ตรงกับ GT | ≥ 90% |
+
+**ฟิลด์ที่วัด:**
+- รหัสวิชา (course code) — ต้องตรง 100%
+- ชื่อวิชาไทย/อังกฤษ — Character-level accuracy
+- หน่วยกิต (credits_raw) — ต้องตรง exact
+- ชั้นปี/ภาคการศึกษา (year/semester) — ต้องตรง
+- วิชาบังคับก่อน (prerequisite) — ตรวจว่าดึงมาได้ครบ
+
+**ข้อมูล GT ที่ใช้วัด:**
+- `data/teacher_gt/DSBA/DSBA_academic_plan_coop.json` (91 วิชา) + `DSBA_academic_plan_no_coop.json` (92 วิชา)
+- `data/teacher_gt/IT/IT_academic_plan_coop.json` (107 วิชา) + `IT_academic_plan_no_coop.json` (109 วิชา)
+- `data/teacher_gt/AIT/AIT_academic_plan.json` (58 วิชา)
+- `data/teacher_gt/BIT/BIT_academic_plan_coop.json` (63 วิชา) + `BIT_academic_plan_no_coop.json` (63 วิชา)
+- `data/teacher_gt/general_education_ground_truth.json` (266 วิชา — วิชาศึกษาทั่วไป)
+- `data/teacher_gt/rules_ground_truth.json` (กฎ/เงื่อนไขจบการศึกษา)
+
+**สคริปต์วัดผล:** `katrag/eval/gt_normalizer.py` — normalize ทั้ง OCR output และ GT แล้วเทียบ field-by-field
+
+### 6.2 การวัดผลคำตอบ (QA Accuracy)
+
+| ช่วงความแม่นยำ (ตอบถูก + อ้างอิงถูก) | สัดส่วนคะแนนที่ได้ | หมายเหตุ |
+|---|---|---|
+| มากกว่า 91% | 100% | เป้าหมายที่ทีมตั้งไว้ |
+| 80% – 90% | 80% | ผ่านเกณฑ์ |
+| น้อยกว่า 80% | 60% | ควรปรับปรุง RAG/prompt เพิ่มเติม |
+
+**วิธีคำนวณ accuracy และแผนการทดสอบ:**
+
+- ทดสอบด้วยชุดคำถาม 19 ข้อ (Easy 7 + Medium 6 + Hard 6) โดยใช้ ground truth ที่เตรียมไว้
+- เกณฑ์ "ถูก": คำตอบตรงประเด็น + อ้างอิงหน้า/หัวข้อถูกต้อง (±1 หน้า)
+- Accuracy = จำนวนข้อถูก / จำนวนข้อทั้งหมด × 100%
+- ทดสอบทั้งแบบระบุหลักสูตร (dropdown) และไม่ระบุ (general)
+- ผู้ตรวจ: สมาชิกในทีมเทียบกับเอกสาร มคอ.2 ต้นฉบับ
+
+---
+
+## 7. แผนแอปพลิเคชันและเอกสารประกอบ
+
+
+
+**Checklist:**
+- ☑ Push code ขึ้น GitHub: https://github.com/paldee/OCR-Course.git
+- ☑ มี README
+- ☑ แนบ Dataset (PDF ต้นฉบับ + SQLite database)
+- ☐ มี Presentation/Slide
+- ☐ ส่งลิงก์ใน Discord
+
+---
+
+## สรุปเกณฑ์การให้คะแนน
+
+| องค์ประกอบ | คะแนนเต็ม | สัมพันธ์กับหัวข้อ |
+|---|---|---|
+| 1. ออกแบบฐานข้อมูล / RAG | 20 | หัวข้อ 4 |
+| 2. การอ่านภาพ: OCR / Keypoint | 20 | หัวข้อ 3 |
+| 3. ความแม่นยำ / คุณภาพผลลัพธ์ | 20 | หัวข้อ 6 |
+| 4. LLM / Recommend | 30 | หัวข้อ 5 และ 6 |
+| 5. แอปใช้งานได้จริง + เอกสาร | 10 | หัวข้อ 7 |
