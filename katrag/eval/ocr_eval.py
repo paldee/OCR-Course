@@ -248,6 +248,8 @@ FIELD_SPECS: list[tuple[str, str]] = [
     ("credits", "หน่วยกิต"),
     ("year", "ชั้นปี"),
     ("semester", "ภาคการศึกษา"),
+    ("category", "หมวดวิชา"),
+    ("type", "ประเภทวิชา"),
 ]
 
 
@@ -302,7 +304,7 @@ def evaluate_program(
 
     # ── index ข้อมูลที่ระบบสกัดได้ ──
     ext_rows = conn.execute(
-        "SELECT code, name_th, name_en, credits_raw, year, semester "
+        "SELECT code, name_th, name_en, credits_raw, year, semester, category, type "
         "FROM course WHERE version_id=?",
         (version_id,),
     ).fetchall()
@@ -351,6 +353,14 @@ def evaluate_program(
             pairs.append(("year", str(gy_i), str(e["year"] or "")))
         if gs_i:
             pairs.append(("semester", str(gs_i), str(e["semester"] or "")))
+
+        # category/type: เทียบเฉพาะเมื่อ GT ระบุจริง (ไม่ว่าง)
+        gcat = norm_text(g.get("category"))
+        if gcat:
+            pairs.append(("category", gcat, norm_text(e["category"] or "")))
+        gtype = norm_text(g.get("type"))
+        if gtype:
+            pairs.append(("type", gtype, norm_text(e["type"] or "")))
 
         for fname, gval, eval_ in pairs:
             stat = result.fields[fname]

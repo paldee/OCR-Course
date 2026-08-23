@@ -53,6 +53,25 @@ _TH_NAME_RE = re.compile(r"([ก-๙][ก-๙\s\d\-/().]*)")
 # ปี/เทอม: "ปีที่ 1 ภาคการศึกษาที่ 1"
 _YEAR_SEM_RE = re.compile(r"ปีที่\s*(\d)\s*ภาคการศึกษาที่\s*(\d)")
 
+# ── Category / Type headers ──
+# category: "หมวดวิชาศึกษาทั่วไป", "หมวดวิชาเฉพาะ", "หมวดวิชาเลือกเสรี"
+_CATEGORY_RE = re.compile(r"(หมวดวิชา(?:ศึกษาทั่วไป|เฉพาะ|เลือกเสรี|เสรี))")
+# type: "วิชาบังคับ", "วิชาเลือก" — ต้องไม่ใช่ "วิชาเลือกเสรี" (เป็น category)
+_TYPE_RE = re.compile(r"(วิชาบังคับ|วิชาเลือก)(?!เสรี)")
+
+# normalize หมวดวิชาเสรี → หมวดวิชาเลือกเสรี (ตาม config/value_sets.toml)
+_CATEGORY_NORM: dict[str, str] = {
+    "หมวดวิชาศึกษาทั่วไป": "หมวดวิชาศึกษาทั่วไป",
+    "หมวดวิชาเฉพาะ": "หมวดวิชาเฉพาะ",
+    "หมวดวิชาเลือกเสรี": "หมวดวิชาเลือกเสรี",
+    "หมวดวิชาเสรี": "หมวดวิชาเลือกเสรี",
+}
+# "วิชาบังคับ" → "บังคับ", "วิชาเลือก" → "เลือก" (ตาม value_sets.toml)
+_TYPE_NORM: dict[str, str] = {
+    "วิชาบังคับ": "บังคับ",
+    "วิชาเลือก": "เลือก",
+}
+
 
 def parse_courses_from_text(
     text: str,
@@ -228,6 +247,74 @@ def populate(db_path: Path | str) -> dict[str, int]:
             if chosen is not None:
                 code_year_sem.setdefault((vid, pg, cm.group(1)), chosen)
 
+    # ── Pre-pass (2): จับคู่ "รหัสวิชา → (category, type)" ──
+    # สแกนหน้าที่มี header หมวดวิชา/วิชาบังคับ/วิชาเลือก แล้วจับคู่กับรหัสวิชา
+    # ที่ตามหลัง — carry-forward ข้ามหน้าภายใน version เดียวกัน เพราะ PDF
+    # จัดหมวด: header ปรากฏหน้าแรกแล้ว list รายวิชาต่อเนื่องไปอีกหลายหน้า
+    code_cat_type: dict[tuple[int, str], tuple[str | None, str | None]] = {}
+
+    pages_by_version: dict[int, list[tuple[int, str]]] = {}
+    for (vid, pg), ptext in page_text_map.items():
+        pages_by_version.setdefault(vid, []).append((pg, ptext))
+    for vid in pages_by_version:
+        pages_by_version[vid].sort(key=lambda x: x[0])
+
+    for vid, vpages in pages_by_version.items():
+        carry_cat: str | None = None
+        carry_type: str | None = None
+
+        for pg, ptext in vpages:
+            cat_markers: list[tuple[int, str]] = [
+                (m.start(), _CATEGORY_NORM.get(m.group(1), m.group(1)))
+                for m in _CATEGORY_RE.finditer(ptext)
+            ]
+            type_markers: list[tuple[int, str]] = [
+                (m.start(), _TYPE_NORM.get(m.group(1), m.group(1)))
+                for m in _TYPE_RE.finditer(ptext)
+            ]
+
+            codes_on_page = _CODE_RE.findall(ptext)
+            is_list_page = len(codes_on_page) >= 3
+
+            # อัปเดต carry จาก header ที่พบในหน้าที่มีรหัสวิชา >= 3
+            if cat_markers and is_list_page:
+                carry_cat = cat_markers[-1][1]
+            if type_markers and is_list_page:
+                carry_type = type_markers[-1][1]
+
+            if not is_list_page:
+                # หน้าที่มีรหัส < 3 แต่มี header: อัปเดต carry เฉย ๆ
+                if cat_markers:
+                    carry_cat = cat_markers[-1][1]
+                if type_markers:
+                    carry_type = type_markers[-1][1]
+                continue
+
+            for cm in _CODE_RE.finditer(ptext):
+                pos = cm.start()
+                code = cm.group(1)
+                # หา category ใกล้สุดก่อน pos ในหน้านี้ → fallback carry
+                page_cat: str | None = None
+                for mpos, cval in cat_markers:
+                    if mpos < pos:
+                        page_cat = cval
+                    else:
+                        break
+                cat_val = page_cat or carry_cat
+
+                page_type: str | None = None
+                for mpos, tval in type_markers:
+                    if mpos < pos:
+                        page_type = tval
+                    else:
+                        break
+                type_val = page_type or carry_type
+
+                if cat_val or type_val:
+                    key = (vid, code)
+                    if key not in code_cat_type:
+                        code_cat_type[key] = (cat_val, type_val)
+
     # ดึง chunks ที่มีรหัสวิชา
     rows = conn.execute("""
         SELECT c.chunk_id, c.text, c.page_number, c.document_id, c.version_id
@@ -294,17 +381,23 @@ def populate(db_path: Path | str) -> dict[str, int]:
                     prov_id = prov_cur.lastrowid
 
                     credits_raw = f"{course.credits_total}({course.credits_lecture}-{course.credits_lab}-{course.credits_self_study})"
+
+                    # category / type จาก pre-pass map
+                    ct = code_cat_type.get((version_id, course.code))
+                    cat_val = ct[0] if ct else None
+                    type_val = ct[1] if ct else None
+
                     cur = conn.execute(
                         """INSERT INTO course (version_id, code, name_th, name_en,
                            credits_total, credits_lecture, credits_lab, credits_self_study,
                            credits_raw, year, semester, category, type,
                            prerequisite_json, prerequisite_raw,
                            flexible_year_semester, note, provenance_id)
-                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, '[]', '', 0, '', ?)""",
+                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '[]', '', 0, '', ?)""",
                         (course.version_id, course.code, course.name_th, course.name_en,
                          course.credits_total, course.credits_lecture, course.credits_lab,
                          course.credits_self_study, credits_raw,
-                         final_year, final_sem, prov_id),
+                         final_year, final_sem, cat_val, type_val, prov_id),
                     )
                     seen_codes[key] = cur.lastrowid
                     courses_inserted += 1
@@ -396,6 +489,8 @@ def populate(db_path: Path | str) -> dict[str, int]:
         "plan_slots_inserted": plan_slots_inserted,
         "pages_scanned": len(rows),
         "year_backfilled": backfilled,
+        "with_category": sum(1 for (_, c) in code_cat_type.items() if c[0]),
+        "with_type": sum(1 for (_, c) in code_cat_type.items() if c[1]),
     }
 
 
@@ -406,4 +501,6 @@ if __name__ == "__main__":
     print(f"Done! Courses: {result['courses_inserted']}, "
           f"Plan slots: {result['plan_slots_inserted']}, "
           f"Pages scanned: {result['pages_scanned']}, "
-          f"Year backfilled: {result['year_backfilled']}")
+          f"Year backfilled: {result['year_backfilled']}, "
+          f"With category: {result['with_category']}, "
+          f"With type: {result['with_type']}")

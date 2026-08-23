@@ -151,7 +151,7 @@
       "code_recall": 0.92,
       "code_precision": 0.1257,
       "code_f1": 0.2212,
-      "field_macro_accuracy": 0.9913,
+      "field_macro_accuracy": 0.9503,
       "fields": {
         "name_th": {
           "matched": 45,
@@ -177,6 +177,16 @@
           "matched": 31,
           "compared": 31,
           "accuracy": 1.0
+        },
+        "category": {
+          "matched": 39,
+          "compared": 46,
+          "accuracy": 0.8478
+        },
+        "type": {
+          "matched": 39,
+          "compared": 46,
+          "accuracy": 0.8478
         }
       },
       "category_recall": {
@@ -207,7 +217,7 @@
       "code_recall": 0.9821,
       "code_precision": 1.0,
       "code_f1": 0.991,
-      "field_macro_accuracy": 0.9527,
+      "field_macro_accuracy": 0.8545,
       "fields": {
         "name_th": {
           "matched": 51,
@@ -233,6 +243,16 @@
           "matched": 36,
           "compared": 36,
           "accuracy": 1.0
+        },
+        "category": {
+          "matched": 48,
+          "compared": 55,
+          "accuracy": 0.8727
+        },
+        "type": {
+          "matched": 19,
+          "compared": 55,
+          "accuracy": 0.3455
         }
       },
       "category_recall": {
@@ -260,7 +280,7 @@
       "code_recall": 0.9375,
       "code_precision": 1.0,
       "code_f1": 0.9677,
-      "field_macro_accuracy": 0.9787,
+      "field_macro_accuracy": 0.9124,
       "fields": {
         "name_th": {
           "matched": 67,
@@ -286,6 +306,16 @@
           "matched": 34,
           "compared": 34,
           "accuracy": 1.0
+        },
+        "category": {
+          "matched": 71,
+          "compared": 75,
+          "accuracy": 0.9467
+        },
+        "type": {
+          "matched": 41,
+          "compared": 75,
+          "accuracy": 0.5467
         }
       },
       "category_recall": {
@@ -317,7 +347,7 @@
       "code_recall": 0.9697,
       "code_precision": 0.3048,
       "code_f1": 0.4638,
-      "field_macro_accuracy": 0.9447,
+      "field_macro_accuracy": 0.9114,
       "fields": {
         "name_th": {
           "matched": 87,
@@ -343,6 +373,16 @@
           "matched": 44,
           "compared": 44,
           "accuracy": 1.0
+        },
+        "category": {
+          "matched": 96,
+          "compared": 96,
+          "accuracy": 1.0
+        },
+        "type": {
+          "matched": 63,
+          "compared": 96,
+          "accuracy": 0.6562
         }
       },
       "category_recall": {
