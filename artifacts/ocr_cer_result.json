@@ -1,0 +1,684 @@
+{
+  "protocol": "paired-page (text_layer as reference vs Tesseract on rendered image)",
+  "tesseract_args": [
+    "-l",
+    "tha+eng",
+    "--psm",
+    "6"
+  ],
+  "render_dpi": 300,
+  "documents": [
+    {
+      "relative_path": "Bachelors_Degree/AIT2566_current.pdf",
+      "pages_measured": 4,
+      "cer_micro": 0.1474,
+      "cer_line_match_micro": 0.0232,
+      "cer_bag_micro": 0.0175,
+      "cer_micro_no_whitespace": 0.1458,
+      "wer_micro": 0.2342,
+      "code_ref": 19,
+      "code_hit": 19,
+      "code_extra": 0,
+      "ref_out_of_charset": 0.00012,
+      "mean_ms_per_page": 2344.2,
+      "pages": [
+        {
+          "page_number": 20,
+          "cer": 0.2775,
+          "cer_line_match": 0.0114,
+          "cer_bag": 0.005,
+          "cer_no_whitespace": 0.2583,
+          "table_like": true
+        },
+        {
+          "page_number": 68,
+          "cer": 0.175,
+          "cer_line_match": 0.0429,
+          "cer_bag": 0.0203,
+          "cer_no_whitespace": 0.1764,
+          "table_like": false
+        },
+        {
+          "page_number": 301,
+          "cer": 0.0951,
+          "cer_line_match": 0.0314,
+          "cer_bag": 0.0441,
+          "cer_no_whitespace": 0.0971,
+          "table_like": true
+        },
+        {
+          "page_number": 328,
+          "cer": 0.0754,
+          "cer_line_match": 0.0173,
+          "cer_bag": 0.0061,
+          "cer_no_whitespace": 0.0796,
+          "table_like": false
+        }
+      ]
+    },
+    {
+      "relative_path": "Bachelors_Degree/BIT2560_old.pdf",
+      "pages_measured": 4,
+      "cer_micro": 0.0987,
+      "cer_line_match_micro": 0.0343,
+      "cer_bag_micro": 0.0452,
+      "cer_micro_no_whitespace": 0.1004,
+      "wer_micro": 0.1047,
+      "code_ref": 0,
+      "code_hit": 0,
+      "code_extra": 0,
+      "ref_out_of_charset": 0.0,
+      "mean_ms_per_page": 3078.0,
+      "pages": [
+        {
+          "page_number": 10,
+          "cer": 0.0481,
+          "cer_line_match": 0.0332,
+          "cer_bag": 0.0465,
+          "cer_no_whitespace": 0.0473,
+          "table_like": false
+        },
+        {
+          "page_number": 42,
+          "cer": 0.2097,
+          "cer_line_match": 0.0619,
+          "cer_bag": 0.0843,
+          "cer_no_whitespace": 0.2118,
+          "table_like": false
+        },
+        {
+          "page_number": 43,
+          "cer": 0.0703,
+          "cer_line_match": 0.0557,
+          "cer_bag": 0.07,
+          "cer_no_whitespace": 0.0706,
+          "table_like": false
+        },
+        {
+          "page_number": 228,
+          "cer": 0.0846,
+          "cer_line_match": 0.0026,
+          "cer_bag": 0.0015,
+          "cer_no_whitespace": 0.0894,
+          "table_like": false
+        }
+      ]
+    },
+    {
+      "relative_path": "Bachelors_Degree/BIT2565_current.pdf",
+      "pages_measured": 4,
+      "cer_micro": 0.2514,
+      "cer_line_match_micro": 0.0629,
+      "cer_bag_micro": 0.0592,
+      "cer_micro_no_whitespace": 0.2511,
+      "wer_micro": 0.3848,
+      "code_ref": 17,
+      "code_hit": 11,
+      "code_extra": 0,
+      "ref_out_of_charset": 0.00724,
+      "mean_ms_per_page": 2715.5,
+      "pages": [
+        {
+          "page_number": 44,
+          "cer": 0.6053,
+          "cer_line_match": 0.0221,
+          "cer_bag": 0.0259,
+          "cer_no_whitespace": 0.6136,
+          "table_like": true
+        },
+        {
+          "page_number": 76,
+          "cer": 0.3496,
+          "cer_line_match": 0.1204,
+          "cer_bag": 0.1422,
+          "cer_no_whitespace": 0.336,
+          "table_like": true
+        },
+        {
+          "page_number": 84,
+          "cer": 0.1705,
+          "cer_line_match": 0.0259,
+          "cer_bag": 0.0105,
+          "cer_no_whitespace": 0.1704,
+          "table_like": false
+        },
+        {
+          "page_number": 305,
+          "cer": 0.0785,
+          "cer_line_match": 0.0664,
+          "cer_bag": 0.0502,
+          "cer_no_whitespace": 0.0847,
+          "table_like": false
+        }
+      ]
+    },
+    {
+      "relative_path": "Bachelors_Degree/DSBA2560_old.pdf",
+      "pages_measured": 4,
+      "cer_micro": 0.1066,
+      "cer_line_match_micro": 0.0176,
+      "cer_bag_micro": 0.0207,
+      "cer_micro_no_whitespace": 0.1138,
+      "wer_micro": 0.0808,
+      "code_ref": 2,
+      "code_hit": 2,
+      "code_extra": 0,
+      "ref_out_of_charset": 0.00102,
+      "mean_ms_per_page": 2744.2,
+      "pages": [
+        {
+          "page_number": 7,
+          "cer": 0.0765,
+          "cer_line_match": 0.0533,
+          "cer_bag": 0.0726,
+          "cer_no_whitespace": 0.0788,
+          "table_like": false
+        },
+        {
+          "page_number": 193,
+          "cer": 0.1829,
+          "cer_line_match": 0.0032,
+          "cer_bag": 0.0016,
+          "cer_no_whitespace": 0.1918,
+          "table_like": false
+        },
+        {
+          "page_number": 225,
+          "cer": 0.0896,
+          "cer_line_match": 0.0025,
+          "cer_bag": 0.0017,
+          "cer_no_whitespace": 0.0995,
+          "table_like": false
+        },
+        {
+          "page_number": 241,
+          "cer": 0.1068,
+          "cer_line_match": 0.0138,
+          "cer_bag": 0.0112,
+          "cer_no_whitespace": 0.1135,
+          "table_like": false
+        }
+      ]
+    },
+    {
+      "relative_path": "Bachelors_Degree/DSBA2565_current.pdf",
+      "pages_measured": 4,
+      "cer_micro": 0.2581,
+      "cer_line_match_micro": 0.0167,
+      "cer_bag_micro": 0.0089,
+      "cer_micro_no_whitespace": 0.2652,
+      "wer_micro": 0.2742,
+      "code_ref": 3,
+      "code_hit": 3,
+      "code_extra": 0,
+      "ref_out_of_charset": 0.00175,
+      "mean_ms_per_page": 2289.5,
+      "pages": [
+        {
+          "page_number": 3,
+          "cer": 0.171,
+          "cer_line_match": 0.0262,
+          "cer_bag": 0.0141,
+          "cer_no_whitespace": 0.1752,
+          "table_like": false
+        },
+        {
+          "page_number": 57,
+          "cer": 0.6883,
+          "cer_line_match": 0.0163,
+          "cer_bag": 0.0067,
+          "cer_no_whitespace": 0.6901,
+          "table_like": true
+        },
+        {
+          "page_number": 337,
+          "cer": 0.1778,
+          "cer_line_match": 0.0106,
+          "cer_bag": 0.0056,
+          "cer_no_whitespace": 0.1851,
+          "table_like": false
+        },
+        {
+          "page_number": 397,
+          "cer": 0.1111,
+          "cer_line_match": 0.0146,
+          "cer_bag": 0.0089,
+          "cer_no_whitespace": 0.1215,
+          "table_like": false
+        }
+      ]
+    },
+    {
+      "relative_path": "Bachelors_Degree/IT2560_old.pdf",
+      "pages_measured": 4,
+      "cer_micro": 0.2691,
+      "cer_line_match_micro": 0.079,
+      "cer_bag_micro": 0.0952,
+      "cer_micro_no_whitespace": 0.2722,
+      "wer_micro": 0.4539,
+      "code_ref": 0,
+      "code_hit": 0,
+      "code_extra": 0,
+      "ref_out_of_charset": 9e-05,
+      "mean_ms_per_page": 3045.5,
+      "pages": [
+        {
+          "page_number": 41,
+          "cer": 0.6478,
+          "cer_line_match": 0.0554,
+          "cer_bag": 0.0659,
+          "cer_no_whitespace": 0.6632,
+          "table_like": true
+        },
+        {
+          "page_number": 287,
+          "cer": 0.6599,
+          "cer_line_match": 0.3072,
+          "cer_bag": 0.3894,
+          "cer_no_whitespace": 0.6385,
+          "table_like": true
+        },
+        {
+          "page_number": 294,
+          "cer": 0.0673,
+          "cer_line_match": 0.0123,
+          "cer_bag": 0.0072,
+          "cer_no_whitespace": 0.0723,
+          "table_like": false
+        },
+        {
+          "page_number": 303,
+          "cer": 0.0438,
+          "cer_line_match": 0.0335,
+          "cer_bag": 0.0378,
+          "cer_no_whitespace": 0.0468,
+          "table_like": false
+        }
+      ]
+    },
+    {
+      "relative_path": "Bachelors_Degree/IT2565_current.pdf",
+      "pages_measured": 4,
+      "cer_micro": 0.1813,
+      "cer_line_match_micro": 0.0436,
+      "cer_bag_micro": 0.0393,
+      "cer_micro_no_whitespace": 0.186,
+      "wer_micro": 0.2417,
+      "code_ref": 5,
+      "code_hit": 5,
+      "code_extra": 0,
+      "ref_out_of_charset": 0.0,
+      "mean_ms_per_page": 2513.2,
+      "pages": [
+        {
+          "page_number": 63,
+          "cer": 0.3975,
+          "cer_line_match": 0.0655,
+          "cer_bag": 0.0625,
+          "cer_no_whitespace": 0.4133,
+          "table_like": true
+        },
+        {
+          "page_number": 349,
+          "cer": 0.1089,
+          "cer_line_match": 0.0454,
+          "cer_bag": 0.0195,
+          "cer_no_whitespace": 0.1136,
+          "table_like": false
+        },
+        {
+          "page_number": 359,
+          "cer": 0.0867,
+          "cer_line_match": 0.0144,
+          "cer_bag": 0.0087,
+          "cer_no_whitespace": 0.0904,
+          "table_like": false
+        },
+        {
+          "page_number": 377,
+          "cer": 0.2486,
+          "cer_line_match": 0.0649,
+          "cer_bag": 0.0892,
+          "cer_no_whitespace": 0.252,
+          "table_like": false
+        }
+      ]
+    },
+    {
+      "relative_path": "Doctorals_Degree/PH_D_AITBA2569_current.pdf",
+      "pages_measured": 4,
+      "cer_micro": 0.2324,
+      "cer_line_match_micro": 0.0226,
+      "cer_bag_micro": 0.0167,
+      "cer_micro_no_whitespace": 0.2237,
+      "wer_micro": 0.4501,
+      "code_ref": 6,
+      "code_hit": 6,
+      "code_extra": 0,
+      "ref_out_of_charset": 0.0,
+      "mean_ms_per_page": 2641.5,
+      "pages": [
+        {
+          "page_number": 12,
+          "cer": 0.1239,
+          "cer_line_match": 0.0177,
+          "cer_bag": 0.0268,
+          "cer_no_whitespace": 0.1257,
+          "table_like": false
+        },
+        {
+          "page_number": 31,
+          "cer": 0.7172,
+          "cer_line_match": 0.0404,
+          "cer_bag": 0.0164,
+          "cer_no_whitespace": 0.6785,
+          "table_like": true
+        },
+        {
+          "page_number": 62,
+          "cer": 0.1399,
+          "cer_line_match": 0.0295,
+          "cer_bag": 0.0222,
+          "cer_no_whitespace": 0.1392,
+          "table_like": false
+        },
+        {
+          "page_number": 250,
+          "cer": 0.0661,
+          "cer_line_match": 0.0069,
+          "cer_bag": 0.0042,
+          "cer_no_whitespace": 0.0717,
+          "table_like": false
+        }
+      ]
+    },
+    {
+      "relative_path": "Doctorals_Degree/PH_D_IT2561_old.pdf",
+      "pages_measured": 4,
+      "cer_micro": 0.3302,
+      "cer_line_match_micro": 0.0227,
+      "cer_bag_micro": 0.0168,
+      "cer_micro_no_whitespace": 0.3228,
+      "wer_micro": 0.5632,
+      "code_ref": 16,
+      "code_hit": 16,
+      "code_extra": 0,
+      "ref_out_of_charset": 0.00027,
+      "mean_ms_per_page": 2413.8,
+      "pages": [
+        {
+          "page_number": 10,
+          "cer": 0.1135,
+          "cer_line_match": 0.0122,
+          "cer_bag": 0.0023,
+          "cer_no_whitespace": 0.1116,
+          "table_like": false
+        },
+        {
+          "page_number": 12,
+          "cer": 0.1461,
+          "cer_line_match": 0.0275,
+          "cer_bag": 0.0237,
+          "cer_no_whitespace": 0.1418,
+          "table_like": false
+        },
+        {
+          "page_number": 18,
+          "cer": 0.3834,
+          "cer_line_match": 0.0118,
+          "cer_bag": 0.0025,
+          "cer_no_whitespace": 0.3636,
+          "table_like": true
+        },
+        {
+          "page_number": 31,
+          "cer": 0.6752,
+          "cer_line_match": 0.0369,
+          "cer_bag": 0.0357,
+          "cer_no_whitespace": 0.6952,
+          "table_like": true
+        }
+      ]
+    },
+    {
+      "relative_path": "Doctorals_Degree/PH_D_IT2566_current.pdf",
+      "pages_measured": 4,
+      "cer_micro": 0.4707,
+      "cer_line_match_micro": 0.0227,
+      "cer_bag_micro": 0.0528,
+      "cer_micro_no_whitespace": 0.4811,
+      "wer_micro": 0.5606,
+      "code_ref": 3,
+      "code_hit": 3,
+      "code_extra": 0,
+      "ref_out_of_charset": 0.00119,
+      "mean_ms_per_page": 1599.0,
+      "pages": [
+        {
+          "page_number": 20,
+          "cer": 0.5777,
+          "cer_line_match": 0.0156,
+          "cer_bag": 0.0114,
+          "cer_no_whitespace": 0.5932,
+          "table_like": false
+        },
+        {
+          "page_number": 21,
+          "cer": 0.1676,
+          "cer_line_match": 0.0153,
+          "cer_bag": 0.0096,
+          "cer_no_whitespace": 0.1753,
+          "table_like": false
+        },
+        {
+          "page_number": 36,
+          "cer": 0.4968,
+          "cer_line_match": 0.0408,
+          "cer_bag": 0.2233,
+          "cer_no_whitespace": 0.509,
+          "table_like": true
+        },
+        {
+          "page_number": 84,
+          "cer": 0.5545,
+          "cer_line_match": 0.0242,
+          "cer_bag": 0.0309,
+          "cer_no_whitespace": 0.5591,
+          "table_like": true
+        }
+      ]
+    },
+    {
+      "relative_path": "Masters_Degree/M_AITBA2564_old.pdf",
+      "pages_measured": 4,
+      "cer_micro": 0.2374,
+      "cer_line_match_micro": 0.0943,
+      "cer_bag_micro": 0.1002,
+      "cer_micro_no_whitespace": 0.2434,
+      "wer_micro": 0.2935,
+      "code_ref": 6,
+      "code_hit": 6,
+      "code_extra": 0,
+      "ref_out_of_charset": 0.0001,
+      "mean_ms_per_page": 2115.2,
+      "pages": [
+        {
+          "page_number": 21,
+          "cer": 0.5481,
+          "cer_line_match": 0.4437,
+          "cer_bag": 0.5424,
+          "cer_no_whitespace": 0.5645,
+          "table_like": true
+        },
+        {
+          "page_number": 39,
+          "cer": 0.1783,
+          "cer_line_match": 0.0178,
+          "cer_bag": 0.0057,
+          "cer_no_whitespace": 0.1816,
+          "table_like": false
+        },
+        {
+          "page_number": 49,
+          "cer": 0.353,
+          "cer_line_match": 0.0353,
+          "cer_bag": 0.0252,
+          "cer_no_whitespace": 0.3523,
+          "table_like": true
+        },
+        {
+          "page_number": 141,
+          "cer": 0.0532,
+          "cer_line_match": 0.0594,
+          "cer_bag": 0.0548,
+          "cer_no_whitespace": 0.058,
+          "table_like": false
+        }
+      ]
+    },
+    {
+      "relative_path": "Masters_Degree/M_AITBA2569_current.pdf",
+      "pages_measured": 4,
+      "cer_micro": 0.1249,
+      "cer_line_match_micro": 0.137,
+      "cer_bag_micro": 0.014,
+      "cer_micro_no_whitespace": 0.1326,
+      "wer_micro": 0.3216,
+      "code_ref": 9,
+      "code_hit": 9,
+      "code_extra": 0,
+      "ref_out_of_charset": 0.0,
+      "mean_ms_per_page": 2272.5,
+      "pages": [
+        {
+          "page_number": 63,
+          "cer": 0.2035,
+          "cer_line_match": 0.2084,
+          "cer_bag": 0.0215,
+          "cer_no_whitespace": 0.2068,
+          "table_like": false
+        },
+        {
+          "page_number": 175,
+          "cer": 0.0686,
+          "cer_line_match": 0.0791,
+          "cer_bag": 0.006,
+          "cer_no_whitespace": 0.0757,
+          "table_like": true
+        },
+        {
+          "page_number": 182,
+          "cer": 0.0992,
+          "cer_line_match": 0.1148,
+          "cer_bag": 0.0163,
+          "cer_no_whitespace": 0.1067,
+          "table_like": false
+        },
+        {
+          "page_number": 189,
+          "cer": 0.1082,
+          "cer_line_match": 0.1218,
+          "cer_bag": 0.0092,
+          "cer_no_whitespace": 0.1175,
+          "table_like": false
+        }
+      ]
+    },
+    {
+      "relative_path": "Masters_Degree/M_IT2563_old.pdf",
+      "pages_measured": 4,
+      "cer_micro": 0.0751,
+      "cer_line_match_micro": 0.0048,
+      "cer_bag_micro": 0.0041,
+      "cer_micro_no_whitespace": 0.0781,
+      "wer_micro": 0.0811,
+      "code_ref": 2,
+      "code_hit": 2,
+      "code_extra": 0,
+      "ref_out_of_charset": 0.0,
+      "mean_ms_per_page": 2318.5,
+      "pages": [
+        {
+          "page_number": 59,
+          "cer": 0.1111,
+          "cer_line_match": 0.0043,
+          "cer_bag": 0.0029,
+          "cer_no_whitespace": 0.1086,
+          "table_like": false
+        },
+        {
+          "page_number": 137,
+          "cer": 0.0701,
+          "cer_line_match": 0.0046,
+          "cer_bag": 0.0032,
+          "cer_no_whitespace": 0.071,
+          "table_like": false
+        },
+        {
+          "page_number": 176,
+          "cer": 0.0683,
+          "cer_line_match": 0.0059,
+          "cer_bag": 0.0059,
+          "cer_no_whitespace": 0.0734,
+          "table_like": false
+        },
+        {
+          "page_number": 177,
+          "cer": 0.0657,
+          "cer_line_match": 0.0041,
+          "cer_bag": 0.0041,
+          "cer_no_whitespace": 0.0704,
+          "table_like": false
+        }
+      ]
+    },
+    {
+      "relative_path": "Masters_Degree/M_IT2568_current.pdf",
+      "pages_measured": 4,
+      "cer_micro": 0.1773,
+      "cer_line_match_micro": 0.0558,
+      "cer_bag_micro": 0.0545,
+      "cer_micro_no_whitespace": 0.1783,
+      "wer_micro": 0.288,
+      "code_ref": 4,
+      "code_hit": 4,
+      "code_extra": 0,
+      "ref_out_of_charset": 0.00089,
+      "mean_ms_per_page": 2258.2,
+      "pages": [
+        {
+          "page_number": 6,
+          "cer": 0.248,
+          "cer_line_match": 0.1601,
+          "cer_bag": 0.1355,
+          "cer_no_whitespace": 0.2528,
+          "table_like": false
+        },
+        {
+          "page_number": 127,
+          "cer": 0.0848,
+          "cer_line_match": 0.0081,
+          "cer_bag": 0.0027,
+          "cer_no_whitespace": 0.0878,
+          "table_like": false
+        },
+        {
+          "page_number": 130,
+          "cer": 0.0822,
+          "cer_line_match": 0.0226,
+          "cer_bag": 0.0095,
+          "cer_no_whitespace": 0.0851,
+          "table_like": false
+        },
+        {
+          "page_number": 155,
+          "cer": 0.5424,
+          "cer_line_match": 0.056,
+          "cer_bag": 0.1503,
+          "cer_no_whitespace": 0.5314,
+          "table_like": true
+        }
+      ]
+    }
+  ]
+}

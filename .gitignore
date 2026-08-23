@@ -20,6 +20,8 @@ artifacts/*.sqlite3-wal
 artifacts/*.sqlite3-shm
 artifacts/gt_normalized/
 artifacts/indexes/
+# cache ผล OCR ของ ocr_cer_eval (สร้างใหม่ได้ ใช้แค่ให้รันซ้ำเร็ว)
+artifacts/ocr_cer_cache.json
 
 # ── PDF ข้อมูลต้นฉบับ (1.6 GB — ผู้ใช้จัดเก็บเอง) ──
 Information_Technology_Course/
