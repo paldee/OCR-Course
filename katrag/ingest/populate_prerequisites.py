@@ -28,19 +28,25 @@ def populate(db_path: Path | str) -> dict[str, int]:
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
 
+    # ── รวม text ทุก chunk ในแต่ละ version เป็นข้อความยาว ──
+    # (ข้ามปัญหา chunk boundary ที่ตัดกลางบล็อกคำอธิบายรายวิชา)
     rows = conn.execute("""
-        SELECT chunk_id, text, version_id FROM chunk
+        SELECT text, version_id FROM chunk
         WHERE text LIKE '%บังคับก่อน%' OR text LIKE '%PREREQUISITE%'
-        ORDER BY version_id, page_number
+        ORDER BY version_id, page_number, chunk_id
     """).fetchall()
+
+    # group by version_id — merge text
+    version_texts: dict[int, str] = {}
+    for row in rows:
+        vid = row["version_id"]
+        version_texts[vid] = version_texts.get(vid, "") + "\n" + (row["text"] or "")
 
     updated = 0
     with_prereq = 0
     seen: set[tuple[str, int]] = set()
 
-    for row in rows:
-        text = row["text"]
-        version_id = row["version_id"]
+    for version_id, text in version_texts.items():
 
         # ── ตัดข้อความเป็นบล็อกตรงรหัส 8 หลักที่มี credit ตามหลัง ──
         code_positions = list(_CODE_RE.finditer(text))
