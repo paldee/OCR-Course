@@ -85,18 +85,54 @@ class PageLevelResult:
         return "ผสม (text_layer + Tesseract 5)"
 
 
+def _edit_distance(a: str, b: str) -> int:
+    """Levenshtein distance (ใช้วัดว่าต่างกันกี่ตัวอักษร)."""
+    if len(a) > len(b):
+        a, b = b, a
+    prev = list(range(len(a) + 1))
+    for j in range(1, len(b) + 1):
+        curr = [j] + [0] * len(a)
+        for i in range(1, len(a) + 1):
+            curr[i] = (
+                prev[i - 1]
+                if a[i - 1] == b[j - 1]
+                else 1 + min(prev[i - 1], prev[i], curr[i - 1])
+            )
+        prev = curr
+    return prev[len(a)]
+
+
+# ระยะ edit distance ที่ถือว่า "เกือบตรง" = คนละสะกด/พิมพ์ผิด ไม่ใช่คนละวิชา
+NEAR_MISS_MAX_EDITS = 2
+
+
 @dataclass
 class FieldStat:
-    """สถิติต่อฟิลด์หนึ่งฟิลด์."""
+    """สถิติต่อฟิลด์หนึ่งฟิลด์.
+
+    แยก near-miss (ต่างกัน ≤ 2 ตัวอักษร = สะกดต่าง/พิมพ์ผิด) ออกจาก
+    mismatch จริง เพราะพบว่า GT ของอาจารย์มีคำพิมพ์ผิดหลายจุด
+    (เช่น "โรงเรียนสร้างเสน่าห์", "อัลกอรึทึม", "การตลาดเบื้อต้น")
+    ซึ่งไม่ควรนับเป็นความผิดของ OCR
+    """
 
     name: str
     matched: int = 0
     compared: int = 0
+    near_miss: int = 0
     mismatches: list[tuple[str, str, str]] = field(default_factory=list)
 
     @property
     def accuracy(self) -> float:
+        """exact match accuracy."""
         return self.matched / self.compared if self.compared else 0.0
+
+    @property
+    def lenient_accuracy(self) -> float:
+        """นับ near-miss (สะกดต่าง ≤ 2 ตัวอักษร) เป็นถูกด้วย."""
+        if not self.compared:
+            return 0.0
+        return (self.matched + self.near_miss) / self.compared
 
 
 @dataclass
@@ -113,6 +149,8 @@ class ProgramResult:
     extracted_only_codes: list[str] = field(default_factory=list)
     fields: dict[str, FieldStat] = field(default_factory=dict)
     category_recall: dict[str, tuple[int, int]] = field(default_factory=dict)
+    src_text_layer: int = 0   # จำนวนวิชาที่สกัดจากหน้า text_layer
+    src_ocr: int = 0          # จำนวนวิชาที่สกัดจากหน้า OCR
 
     @property
     def code_recall(self) -> float:
@@ -322,7 +360,11 @@ def evaluate_program(
             stat.compared += 1
             if gval == eval_:
                 stat.matched += 1
-            elif len(stat.mismatches) < 8:
+                continue
+            # ต่างกันไม่กี่ตัวอักษร → สะกดต่าง/พิมพ์ผิด ไม่ใช่คนละวิชา
+            if eval_ and _edit_distance(gval, eval_) <= NEAR_MISS_MAX_EDITS:
+                stat.near_miss += 1
+            if len(stat.mismatches) < 8:
                 stat.mismatches.append((code, gval, eval_))
 
     # ── CATEGORY LEVEL: recall ต่อหมวด ──
@@ -330,6 +372,28 @@ def evaluate_program(
         uniq = {c for c in codes if c in gt_codes}
         found = len(uniq & ext_codes)
         result.category_recall[cat] = (found, len(uniq))
+
+    # ── แหล่งที่มา: วิชาที่จับคู่ได้ มาจากหน้า text_layer หรือ OCR ──
+    src_rows = conn.execute(
+        """
+        SELECT c.code, p.extraction_method
+        FROM course c
+        JOIN provenance pr ON pr.provenance_id = c.provenance_id
+        JOIN page p ON p.document_id = pr.document_id
+                   AND p.page_number = pr.page_number
+        WHERE c.version_id = ?
+        """,
+        (version_id,),
+    ).fetchall()
+    src_map: dict[str, str] = {}
+    for r in src_rows:
+        src_map.setdefault(norm_code(r["code"]), r["extraction_method"] or "")
+    for code in matched:
+        method = src_map.get(code, "")
+        if method.startswith("ocr"):
+            result.src_ocr += 1
+        elif method:
+            result.src_text_layer += 1
 
     return result
 
@@ -426,14 +490,43 @@ def build_report(
     # aggregate per field
     A("### 2.3 รวมทุกหลักสูตร ต่อฟิลด์")
     A("")
-    A("| ฟิลด์ | ตรง | เทียบทั้งหมด | Accuracy |")
-    A("|---|---:|---:|---:|")
+    A("`Accuracy` = ตรงเป๊ะ | `Accuracy (ผ่อนปรน)` = นับกรณีต่างกัน ≤ 2 ตัวอักษรเป็นถูกด้วย")
+    A("(กรณีเหล่านั้นส่วนใหญ่คือ GT พิมพ์ผิด เช่น \"อัลกอรึทึม\", \"การตลาดเบื้อต้น\")")
+    A("")
+    A("| ฟิลด์ | ตรงเป๊ะ | เกือบตรง | เทียบทั้งหมด | Accuracy | Accuracy (ผ่อนปรน) |")
+    A("|---|---:|---:|---:|---:|---:|")
     for fname, label in FIELD_SPECS:
         m = sum(r.fields[fname].matched for r in prog_results if fname in r.fields)
+        nm = sum(r.fields[fname].near_miss for r in prog_results if fname in r.fields)
         c = sum(r.fields[fname].compared for r in prog_results if fname in r.fields)
         acc = f"{m/c:.3f}" if c else "—"
-        A(f"| {label} | {m} | {c} | {acc} |")
+        lacc = f"{(m + nm)/c:.3f}" if c else "—"
+        A(f"| {label} | {m} | {nm} | {c} | {acc} | {lacc} |")
     A("")
+
+    # ── 2.4 แหล่งที่มาของข้อมูลรายวิชา (ตอบคำถาม "ควรเปลี่ยน OCR engine ไหม") ──
+    A("### 2.4 รายวิชาที่เทียบได้ มาจากหน้าที่สกัดด้วยวิธีใด")
+    A("")
+    A("| หลักสูตร | จากหน้า text_layer | จากหน้า OCR |")
+    A("|---|---:|---:|")
+    tot_tl = tot_ocr_src = 0
+    for r in prog_results:
+        A(f"| {r.program} | {r.src_text_layer} | {r.src_ocr} |")
+        tot_tl += r.src_text_layer
+        tot_ocr_src += r.src_ocr
+    A(f"| **รวม** | **{tot_tl}** | **{tot_ocr_src}** |")
+    A("")
+    if tot_ocr_src == 0:
+        A("**ข้อสรุปสำคัญ:** รายวิชาที่เทียบกับ GT ได้ **มาจากหน้า text_layer ทั้งหมด** ")
+        A("ไม่มีรายวิชาใดถูกสกัดจากหน้าที่ผ่าน OCR เลย")
+        A("")
+        A("แปลว่า **การเปลี่ยน OCR engine (เช่น Typhoon OCR) จะไม่ทำให้ตัวเลขความแม่นของรายวิชาดีขึ้น** ")
+        A("เพราะตารางแผนการเรียน/รายวิชาอยู่ในหน้าที่มี text layer อยู่แล้ว ")
+        A("ความผิดพลาดที่เหลือมาจากขั้นตอน parsing ไม่ใช่คุณภาพการอ่านภาพ")
+        A("")
+        A("หน้าที่ผ่าน OCR ยังมีประโยชน์กับ RAG (คำอธิบายรายวิชา กฎเกณฑ์ ภาคผนวก) ")
+        A("แต่ไม่ใช่แหล่งของข้อมูลรายวิชาแบบมีโครงสร้าง")
+        A("")
 
     # ── 3. CATEGORY LEVEL ──
     A("## 3. Category level — recall ต่อหมวดวิชา")

@@ -181,21 +181,52 @@ def populate(db_path: Path | str) -> dict[str, int]:
     conn.execute("DELETE FROM course_field_provenance")
     conn.execute("DELETE FROM course")
 
-    # ── Pre-pass: สร้าง map page_number → (year, semester) ต่อ version ──
-    # กำหนด year/sem เฉพาะหน้าที่มี marker "ปีที่ X ภาคการศึกษาที่ Y" บนหน้านั้นเอง
-    # ไม่ carry-forward ข้ามหน้า เพราะหน้า course description ท้ายเล่มจะรับค่าผิด
-    # (แต่ละหน้าของแผนการศึกษามี header ปี/ภาค ของตัวเองอยู่แล้ว)
-    page_year_sem: dict[tuple[int, int], tuple[int, int]] = {}  # (version_id, page) -> (year, sem)
-    all_chunks = conn.execute("""
-        SELECT text, page_number, version_id FROM chunk ORDER BY version_id, page_number
+    # ── Pre-pass: จับคู่ "รหัสวิชา → (ปี, ภาค)" ตามตำแหน่งในข้อความของหน้า ──
+    # แผนการศึกษาบางหน้ามี header ปี/ภาค มากกว่าหนึ่งค่า (เช่น ปี 3 เทอม 1 และ
+    # ปี 3 เทอม 2 อยู่หน้าเดียวกัน — พบ 52 หน้าในฐานข้อมูลนี้) ถ้าใช้ marker
+    # ตัวสุดท้ายของหน้าเป็นค่าเดียวของทั้งหน้า วิชาในเทอมแรกจะได้ label ผิด
+    # จึงต้องจับวิชาแต่ละตัวกับ marker "ตัวที่อยู่ก่อนมันใกล้สุด" ในข้อความ
+    #
+    # code_year_sem : (version_id, page, code) -> (year, semester)
+    # page_year_sem : (version_id, page) -> (year, semester)  ใช้เป็น fallback
+    #                 เฉพาะหน้าที่มี marker ค่าเดียว
+    code_year_sem: dict[tuple[int, int, str], tuple[int, int]] = {}
+    page_year_sem: dict[tuple[int, int], tuple[int, int]] = {}
+
+    page_chunks = conn.execute("""
+        SELECT chunk_id, text, page_number, version_id FROM chunk
+        ORDER BY version_id, page_number, chunk_id
     """).fetchall()
-    for ch in all_chunks:
-        text = ch["text"] or ""
-        vid = ch["version_id"]
-        pg = ch["page_number"]
-        for m in _YEAR_SEM_RE.finditer(text):
-            yr, sem = int(m.group(1)), int(m.group(2))
-            page_year_sem[(vid, pg)] = (yr, sem)
+
+    # รวม text ของ chunk ทั้งหมดในหน้าเดียวกัน (เรียงตาม chunk_id = ลำดับในหน้า)
+    page_text_map: dict[tuple[int, int], str] = {}
+    for ch in page_chunks:
+        key = (ch["version_id"], ch["page_number"])
+        page_text_map[key] = page_text_map.get(key, "") + "\n" + (ch["text"] or "")
+
+    for (vid, pg), ptext in page_text_map.items():
+        markers = [
+            (m.start(), int(m.group(1)), int(m.group(2)))
+            for m in _YEAR_SEM_RE.finditer(ptext)
+        ]
+        if not markers:
+            continue
+
+        distinct = {(y, s) for _, y, s in markers}
+        if len(distinct) == 1:
+            page_year_sem[(vid, pg)] = next(iter(distinct))
+
+        # จับวิชากับ marker ที่อยู่ก่อนมันใกล้สุด
+        for cm in _CODE_RE.finditer(ptext):
+            pos = cm.start()
+            chosen: tuple[int, int] | None = None
+            for mpos, yr, sem in markers:
+                if mpos < pos:
+                    chosen = (yr, sem)
+                else:
+                    break
+            if chosen is not None:
+                code_year_sem.setdefault((vid, pg, cm.group(1)), chosen)
 
     # ดึง chunks ที่มีรหัสวิชา
     rows = conn.execute("""
@@ -239,9 +270,16 @@ def populate(db_path: Path | str) -> dict[str, int]:
                 current_sem_per_version[version_id] = course.semester
 
             key = (course.code, course.version_id)
-            # ใช้ year/sem จาก course หรือ fallback จาก pre-pass map
-            final_year = course.year or cy
-            final_sem = course.semester or cs
+            # ลำดับความน่าเชื่อถือของ ปี/ภาค:
+            #   1. map ที่จับคู่ตามตำแหน่งในหน้า (แม่นสุด รองรับหน้าที่มีหลายเทอม)
+            #   2. marker ที่พบใน chunk ตอน parse
+            #   3. marker เดียวของหน้า (fallback)
+            pos_ys = code_year_sem.get((version_id, page_number, course.code))
+            if pos_ys:
+                final_year, final_sem = pos_ys
+            else:
+                final_year = course.year or cy
+                final_sem = course.semester or cs
 
             if key not in seen_codes:
                 # Insert course
