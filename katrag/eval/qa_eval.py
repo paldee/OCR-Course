@@ -62,6 +62,12 @@ class QAResult:
     check_hit: list[str] = field(default_factory=list)
     check_miss: list[str] = field(default_factory=list)
     forbid_hit: list[str] = field(default_factory=list)
+    # ── citation metrics (เทียบกับ gold_set) ──
+    cited_pages: list[tuple[str, int]] = field(default_factory=list)
+    expected_pages: list[tuple[str, int]] = field(default_factory=list)
+    cite_precision: float | None = None
+    cite_recall: float | None = None
+    answered_from: str = ""   # "structured" | "llm+evidence"
 
     @property
     def auto_pass(self) -> bool:
@@ -95,9 +101,15 @@ def ask(url: str, item: QAItem, timeout: float = 180.0) -> QAResult:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             data = json.loads(resp.read().decode("utf-8"))
         result.answer = data.get("answer", "")
-        result.citations = len(data.get("citations", []))
+        cites = data.get("citations", [])
+        result.citations = len(cites)
+        result.cited_pages = [
+            (str(c.get("document_id", "")), int(c.get("page", 0))) for c in cites
+        ]
         result.versions = data.get("versions_resolved", [])
         result.elapsed = float(data.get("total_time_seconds", 0.0))
+        # คำตอบที่มาจาก structured path จะไม่มี citation (ตอบจากตารางตรง ๆ)
+        result.answered_from = "structured" if not cites else "llm+evidence"
     except Exception as exc:  # noqa: BLE001 — รายงานทุก error ไม่ให้ล้ม
         result.error = f"{type(exc).__name__}: {exc}"
         result.elapsed = time.time() - t0
@@ -112,12 +124,58 @@ def ask(url: str, item: QAItem, timeout: float = 180.0) -> QAResult:
     return result
 
 
-def run_all(url: str) -> list[QAResult]:
+def load_gold_pages(db_path: Path) -> dict[str, list[tuple[str, int]]]:
+    """โหลดหน้าหลักฐานที่ถูกต้องจาก gold_set (qid -> [(document_id, page)])."""
+    import sqlite3
+
+    if not db_path.is_file():
+        return {}
+    conn = sqlite3.connect(str(db_path))
+    conn.row_factory = sqlite3.Row
+    out: dict[str, list[tuple[str, int]]] = {}
+    try:
+        rows = conn.execute(
+            "SELECT payload_json, expected_citations_json FROM gold_set "
+            "WHERE item_kind='question'"
+        ).fetchall()
+    except Exception:
+        conn.close()
+        return {}
+    for r in rows:
+        try:
+            qid = json.loads(r["payload_json"]).get("qid", "")
+            cites = json.loads(r["expected_citations_json"])
+        except Exception:
+            continue
+        if qid:
+            out[qid] = [
+                (str(c.get("document_id", "")), int(c.get("page", 0))) for c in cites
+            ]
+    conn.close()
+    return out
+
+
+def run_all(url: str, gold: dict[str, list[tuple[str, int]]] | None = None) -> list[QAResult]:
+    from katrag.eval.metrics import citation_page_precision, citation_page_recall
+
+    gold = gold or {}
     results: list[QAResult] = []
     for item in ALL_QUESTIONS:
         r = ask(url, item)
+        exp = gold.get(item.qid, [])
+        r.expected_pages = exp
+        # วัด citation เฉพาะข้อที่ระบบคืน citation มา และมีหน้าหลักฐานใน gold_set
+        if exp and r.cited_pages:
+            r.cite_precision = citation_page_precision(r.cited_pages, exp)
+            r.cite_recall = citation_page_recall(r.cited_pages, exp)
         status = "PASS" if r.auto_pass else ("ERR " if r.error else "CHECK")
-        print(f"  [{status}] {r.item.qid} ({r.item.level}) {r.elapsed:6.2f}s  {r.item.question[:45]}")
+        cite = ""
+        if r.cite_precision is not None:
+            cite = f" cite_p={r.cite_precision:.2f}"
+        print(
+            f"  [{status}] {r.item.qid} ({r.item.level}) {r.elapsed:6.2f}s"
+            f"{cite}  {r.item.question[:40]}"
+        )
         results.append(r)
     return results
 
@@ -160,6 +218,59 @@ def build_report(results: list[QAResult]) -> str:
     A("")
     if nerr:
         A(f"> มี {nerr} ข้อที่เรียก API ไม่สำเร็จ")
+        A("")
+
+    # ── แหล่งที่มาของคำตอบ (structured vs LLM+evidence) ──
+    n_struct = sum(1 for r in results if r.answered_from == "structured")
+    n_llm = sum(1 for r in results if r.answered_from == "llm+evidence")
+    A("## คำตอบมาจากเส้นทางไหน")
+    A("")
+    A("| เส้นทาง | จำนวนข้อ | มี citation | ลักษณะ |")
+    A("|---|---:|---|---|")
+    A(f"| structured (ตอบจากตาราง course/plan ตรง ๆ) | {n_struct} | ไม่มี | "
+      "ข้อมูลครบและ deterministic ไม่ผ่าน LLM |")
+    A(f"| LLM + evidence (hybrid retrieval → Typhoon) | {n_llm} | มี | "
+      "ต้องอ้างอิงหน้า/หัวข้อ |")
+    A("")
+    A("เส้นทาง structured ไม่คืน citation เพราะตอบจากฐานข้อมูลที่ผ่านการ validate แล้ว ")
+    A("(ทุกแถวใน `course` มี `provenance_id` ชี้หน้าต้นทางอยู่ จึงตรวจย้อนกลับได้)")
+    A("")
+
+    # ── citation accuracy ──
+    scored = [r for r in results if r.cite_precision is not None]
+    A("## ความถูกต้องของการอ้างอิง (citation accuracy)")
+    A("")
+    if scored:
+        mp = sum(r.cite_precision or 0 for r in scored) / len(scored)
+        mr = sum(r.cite_recall or 0 for r in scored) / len(scored)
+        A(f"วัดได้ **{len(scored)} จาก {len(results)} ข้อ** (เฉพาะข้อที่ระบบคืน citation "
+          "และมีหน้าหลักฐานใน `gold_set`)")
+        A("")
+        A("| ตัวชี้วัด | ค่า | ความหมาย |")
+        A("|---|---:|---|")
+        A(f"| citation page precision | {mp:.3f} | หน้าที่อ้าง อยู่ในชุดหน้าหลักฐานจริงกี่ % |")
+        A(f"| citation page recall | {mr:.3f} | หน้าหลักฐานจริง ถูกอ้างถึงกี่ % |")
+        A("")
+        A("| ข้อ | ระดับ | หน้าที่ระบบอ้าง | หน้าหลักฐาน (gold) | precision | recall | เพดาน recall |")
+        A("|---|---|---:|---:|---:|---:|---:|")
+        for r in scored:
+            ceil = min(1.0, len(r.cited_pages) / len(r.expected_pages))
+            A(f"| {r.item.qid} | {r.item.level} | {len(r.cited_pages)} | "
+              f"{len(r.expected_pages)} | {r.cite_precision:.3f} | {r.cite_recall:.3f} | "
+              f"{ceil:.3f} |")
+        A("")
+        A("**เพดาน recall** = จำนวน citation ที่ระบบคืน / จำนวนหน้าหลักฐาน — "
+          "ถ้าหน้าหลักฐานมากกว่าจำนวน citation ที่คืนได้ recall จะไม่มีทางถึง 1.0")
+        A("ระบบตั้งค่าคืน citation 10 รายการต่อคำถาม ดังนั้นควรอ่าน precision เป็นตัวหลัก")
+        A("")
+        A("`gold_set` สร้างจาก provenance ของข้อมูลจริงในฐาน (`katrag/eval/build_gold_set.py`) ")
+        A("ไม่ได้ derive จากคำตอบของระบบ จึงไม่เป็นการตรวจตัวเอง")
+        A("")
+    else:
+        A("ยังไม่มีข้อที่วัดได้ — ทุกข้อตอบผ่านเส้นทาง structured (ไม่คืน citation) ")
+        A("หรือยังไม่มีหน้าหลักฐานใน `gold_set`")
+        A("")
+        A("รัน `python -m katrag.eval.build_gold_set` เพื่อสร้างหน้าหลักฐานก่อน")
         A("")
 
     # ── แบบฟอร์มให้ผู้ตรวจ ──
@@ -223,12 +334,15 @@ def main() -> None:
     root = Path(__file__).resolve().parent.parent.parent
     ap = argparse.ArgumentParser(description="QA evaluation (3 levels)")
     ap.add_argument("--url", default="http://127.0.0.1:8000/ask")
+    ap.add_argument("--db", default=str(root / "artifacts" / "katrag.sqlite3"))
     ap.add_argument("--report", default=str(root / "artifacts" / "qa_eval_report.md"))
     ap.add_argument("--json", default=str(root / "artifacts" / "qa_eval_result.json"))
     args = ap.parse_args()
 
+    gold = load_gold_pages(Path(args.db))
     print(f"ยิงคำถาม {len(ALL_QUESTIONS)} ข้อไปที่ {args.url}")
-    results = run_all(args.url)
+    print(f"หน้าหลักฐานจาก gold_set: {len(gold)} ข้อ")
+    results = run_all(args.url, gold)
 
     report = build_report(results)
     out = Path(args.report)
@@ -248,6 +362,11 @@ def main() -> None:
             "check_hit": r.check_hit,
             "check_miss": r.check_miss,
             "forbid_hit": r.forbid_hit,
+            "answered_from": r.answered_from,
+            "cited_pages": [{"document_id": d, "page": p} for d, p in r.cited_pages],
+            "expected_pages": [{"document_id": d, "page": p} for d, p in r.expected_pages],
+            "citation_precision": r.cite_precision,
+            "citation_recall": r.cite_recall,
             "error": r.error,
         }
         for r in results

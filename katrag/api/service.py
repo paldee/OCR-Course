@@ -315,7 +315,7 @@ def create_app(
                         chunk_id=h.chunk_id, page_number=h.page_number,
                         heading=h.heading, text=h.text, program=h.program,
                         curriculum_year=h.curriculum_year, edition_status=h.edition_status,
-                        score=h.fused_score
+                        score=h.fused_score, document_id=h.document_id,
                     ) for h in raw_hits]
                 else:
                     # Fallback: lexical only
@@ -345,16 +345,20 @@ def create_app(
                     snippet = hit.text[:500].strip()
                     context_parts.append(f"[{i}] ({heading} — {ver}, หน้า {hit.page_number}):\n{snippet}")
                     cite_id = f"cite-{i:03d}"
+                    # document_id ต้องเป็นเอกสารต้นทางจริง ไม่ใช่ chunk_id
+                    # เพื่อให้ตรวจย้อนกลับไปหน้าใน PDF ได้ และวัด citation accuracy ได้
+                    doc_id = getattr(hit, "document_id", "") or ""
                     citations.append(CitationItem(
                         citation_id=cite_id,
-                        document_id=str(hit.chunk_id),
+                        document_id=doc_id,
                         page=hit.page_number,
                         heading=heading,
                     ))
                     # เก็บลง store เพื่อให้ GET /pages/{citation_id} ใช้งานได้
                     app.state.citations_store[cite_id] = {
                         "citation_id": cite_id,
-                        "document_id": str(hit.chunk_id),
+                        "document_id": doc_id,
+                        "chunk_id": hit.chunk_id,
                         "page": hit.page_number,
                         "heading": heading,
                         "bbox": None,

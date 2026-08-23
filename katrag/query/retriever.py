@@ -72,6 +72,8 @@ class RetrievedChunk:
     curriculum_year: int
     edition_status: str
     score: float
+    # เอกสารต้นทาง — ใช้สร้าง citation ที่ตรวจย้อนกลับได้
+    document_id: str = ""
 
 
 def detect_program(question: str) -> str | None:
@@ -215,7 +217,7 @@ def search(
     # ไม่ใส่ LIMIT ต่ำ มิฉะนั้นตารางแผนการศึกษาท้ายเล่มจะถูกตัดก่อน scoring
     limit_sql = "" if version_ids else "LIMIT 800"
     rows = conn.execute(
-        f"SELECT c.chunk_id, c.page_number, c.heading, c.text, "
+        f"SELECT c.chunk_id, c.document_id, c.page_number, c.heading, c.text, "
         f"cv.program, cv.curriculum_year, cv.edition_status "
         f"FROM chunk c JOIN curriculum_version cv ON cv.version_id = c.version_id "
         f"WHERE {where_sql} {limit_sql}",
@@ -283,6 +285,7 @@ def search(
                     curriculum_year=r["curriculum_year"] or 0,
                     edition_status=r["edition_status"] or "",
                     score=score,
+                    document_id=r["document_id"] or "",
                 )
             )
 

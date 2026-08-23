@@ -35,6 +35,9 @@ class HybridHit:
     fused_score: float
     lexical_rank: int | None
     dense_rank: int | None
+    # เอกสารต้นทาง — จำเป็นสำหรับ citation ที่ตรวจย้อนกลับได้
+    # (เดิมไม่มี ทำให้ service ใส่ chunk_id ลงช่อง document_id ของ citation)
+    document_id: str = ""
 
 
 # RRF parameters
@@ -126,4 +129,20 @@ def hybrid_search(
 
     # Sort by fused score descending, tie-break by chunk_id
     scored.sort(key=lambda x: (-x.fused_score, x.chunk_id))
-    return scored[:limit]
+    top = scored[:limit]
+
+    # เติม document_id ให้ผลลัพธ์ที่เลือกแล้ว (query เดียว)
+    if top:
+        conn.row_factory = sqlite3.Row
+        ids = [h.chunk_id for h in top]
+        ph = ",".join("?" * len(ids))
+        doc_map = {
+            r["chunk_id"]: r["document_id"]
+            for r in conn.execute(
+                f"SELECT chunk_id, document_id FROM chunk WHERE chunk_id IN ({ph})", ids
+            )
+        }
+        for h in top:
+            h.document_id = doc_map.get(h.chunk_id, "")
+
+    return top

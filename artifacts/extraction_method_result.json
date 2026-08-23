@@ -1,0 +1,348 @@
+{
+  "documents": [
+    {
+      "document": "AIT2566_current.pdf",
+      "degree": "bachelor",
+      "version": "AIT 2566 (current)",
+      "total_pages": 346,
+      "text_layer_pages": 122,
+      "ocr_pages": 224,
+      "ocr_pct": 64.74,
+      "method": "ผสม",
+      "ocr_confidence": 0.9941
+    },
+    {
+      "document": "BIT2560_old.pdf",
+      "degree": "bachelor",
+      "version": "BIT 2560 (old)",
+      "total_pages": 242,
+      "text_layer_pages": 242,
+      "ocr_pages": 0,
+      "ocr_pct": 0.0,
+      "method": "text layer เท่านั้น",
+      "ocr_confidence": null
+    },
+    {
+      "document": "BIT2565_current.pdf",
+      "degree": "bachelor",
+      "version": "BIT 2565 (current)",
+      "total_pages": 317,
+      "text_layer_pages": 317,
+      "ocr_pages": 0,
+      "ocr_pct": 0.0,
+      "method": "text layer เท่านั้น",
+      "ocr_confidence": null
+    },
+    {
+      "document": "DSBA2560_old.pdf",
+      "degree": "bachelor",
+      "version": "DSBA 2560 (old)",
+      "total_pages": 258,
+      "text_layer_pages": 258,
+      "ocr_pages": 0,
+      "ocr_pct": 0.0,
+      "method": "text layer เท่านั้น",
+      "ocr_confidence": null
+    },
+    {
+      "document": "DSBA2565_current.pdf",
+      "degree": "bachelor",
+      "version": "DSBA 2565 (current)",
+      "total_pages": 403,
+      "text_layer_pages": 403,
+      "ocr_pages": 0,
+      "ocr_pct": 0.0,
+      "method": "text layer เท่านั้น",
+      "ocr_confidence": null
+    },
+    {
+      "document": "IT2560_old.pdf",
+      "degree": "bachelor",
+      "version": "IT 2560 (old)",
+      "total_pages": 327,
+      "text_layer_pages": 204,
+      "ocr_pages": 123,
+      "ocr_pct": 37.61,
+      "method": "ผสม",
+      "ocr_confidence": 0.8502
+    },
+    {
+      "document": "IT2565_current.pdf",
+      "degree": "bachelor",
+      "version": "IT 2565 (current)",
+      "total_pages": 429,
+      "text_layer_pages": 200,
+      "ocr_pages": 229,
+      "ocr_pct": 53.38,
+      "method": "ผสม",
+      "ocr_confidence": 0.9725
+    },
+    {
+      "document": "PH_D_IT2561_old.pdf",
+      "degree": "doctoral",
+      "version": "IT 2561 (old)",
+      "total_pages": 156,
+      "text_layer_pages": 107,
+      "ocr_pages": 49,
+      "ocr_pct": 31.41,
+      "method": "ผสม",
+      "ocr_confidence": 1.0
+    },
+    {
+      "document": "PH_D_IT2566_current.pdf",
+      "degree": "doctoral",
+      "version": "IT 2566 (current)",
+      "total_pages": 199,
+      "text_layer_pages": 199,
+      "ocr_pages": 0,
+      "ocr_pct": 0.0,
+      "method": "text layer เท่านั้น",
+      "ocr_confidence": null
+    },
+    {
+      "document": "PH_D_AITBA2569_current.pdf",
+      "degree": "master",
+      "version": "AITBA 2569 (current)",
+      "total_pages": 252,
+      "text_layer_pages": 153,
+      "ocr_pages": 99,
+      "ocr_pct": 39.29,
+      "method": "ผสม",
+      "ocr_confidence": 0.9908
+    },
+    {
+      "document": "M_AITBA2564_old.pdf",
+      "degree": "master",
+      "version": "AITBA 2564 (old)",
+      "total_pages": 147,
+      "text_layer_pages": 147,
+      "ocr_pages": 0,
+      "ocr_pct": 0.0,
+      "method": "text layer เท่านั้น",
+      "ocr_confidence": null
+    },
+    {
+      "document": "M_AITBA2569_current.pdf",
+      "degree": "master",
+      "version": "AITBA 2569 (current)",
+      "total_pages": 252,
+      "text_layer_pages": 154,
+      "ocr_pages": 98,
+      "ocr_pct": 38.89,
+      "method": "ผสม",
+      "ocr_confidence": 0.9907
+    },
+    {
+      "document": "M_IT2563_old.pdf",
+      "degree": "master",
+      "version": "IT 2563 (old)",
+      "total_pages": 182,
+      "text_layer_pages": 113,
+      "ocr_pages": 69,
+      "ocr_pct": 37.91,
+      "method": "ผสม",
+      "ocr_confidence": 0.9999
+    },
+    {
+      "document": "M_IT2568_current.pdf",
+      "degree": "master",
+      "version": "IT 2568 (current)",
+      "total_pages": 179,
+      "text_layer_pages": 120,
+      "ocr_pages": 59,
+      "ocr_pct": 32.96,
+      "method": "ผสม",
+      "ocr_confidence": 1.0
+    }
+  ],
+  "routing": [
+    {
+      "route_reason": "low_image_area",
+      "candidate_reason": "—",
+      "method": "text_layer",
+      "pages": 1148
+    },
+    {
+      "route_reason": "default_standard",
+      "candidate_reason": "—",
+      "method": "text_layer",
+      "pages": 1092
+    },
+    {
+      "route_reason": "high_image_area",
+      "candidate_reason": "low_text_with_image",
+      "method": "ocr_tesseract5",
+      "pages": 719
+    },
+    {
+      "route_reason": "high_image_area",
+      "candidate_reason": "—",
+      "method": "text_layer",
+      "pages": 474
+    },
+    {
+      "route_reason": "default_standard",
+      "candidate_reason": "low_text_with_image",
+      "method": "ocr_tesseract5",
+      "pages": 229
+    },
+    {
+      "route_reason": "high_image_area",
+      "candidate_reason": "low_text_with_image",
+      "method": "text_layer",
+      "pages": 25
+    },
+    {
+      "route_reason": "low_image_area",
+      "candidate_reason": "low_text_with_image",
+      "method": "ocr_tesseract5",
+      "pages": 2
+    }
+  ],
+  "thresholds": {
+    "ocr_n": 950,
+    "ocr_chars": 93.8432,
+    "ocr_img": 0.7879,
+    "ocr_oc": 0.0,
+    "ocr_lex": 2.9589,
+    "ocr_q": 0.3146,
+    "text_n": 2739,
+    "text_chars": 1264.0807,
+    "text_img": 0.3401,
+    "text_oc": 0.0128,
+    "text_lex": 10.2118,
+    "text_q": 0.724
+  },
+  "versions": [
+    {
+      "program": "AIT",
+      "year": 2566,
+      "edition": "current",
+      "chunk_text_layer": 466,
+      "chunk_ocr": 806,
+      "course_text_layer": 46,
+      "course_ocr": 320,
+      "has_ground_truth": true
+    },
+    {
+      "program": "AITBA",
+      "year": 2564,
+      "edition": "old",
+      "chunk_text_layer": 487,
+      "chunk_ocr": 0,
+      "course_text_layer": 39,
+      "course_ocr": 0,
+      "has_ground_truth": false
+    },
+    {
+      "program": "AITBA",
+      "year": 2569,
+      "edition": "current",
+      "chunk_text_layer": 1131,
+      "chunk_ocr": 475,
+      "course_text_layer": 46,
+      "course_ocr": 0,
+      "has_ground_truth": false
+    },
+    {
+      "program": "BIT",
+      "year": 2560,
+      "edition": "old",
+      "chunk_text_layer": 582,
+      "chunk_ocr": 0,
+      "course_text_layer": 55,
+      "course_ocr": 0,
+      "has_ground_truth": false
+    },
+    {
+      "program": "BIT",
+      "year": 2565,
+      "edition": "current",
+      "chunk_text_layer": 770,
+      "chunk_ocr": 0,
+      "course_text_layer": 55,
+      "course_ocr": 0,
+      "has_ground_truth": true
+    },
+    {
+      "program": "DSBA",
+      "year": 2560,
+      "edition": "old",
+      "chunk_text_layer": 677,
+      "chunk_ocr": 0,
+      "course_text_layer": 71,
+      "course_ocr": 0,
+      "has_ground_truth": false
+    },
+    {
+      "program": "DSBA",
+      "year": 2565,
+      "edition": "current",
+      "chunk_text_layer": 788,
+      "chunk_ocr": 0,
+      "course_text_layer": 75,
+      "course_ocr": 0,
+      "has_ground_truth": true
+    },
+    {
+      "program": "IT",
+      "year": 2560,
+      "edition": "old",
+      "chunk_text_layer": 648,
+      "chunk_ocr": 260,
+      "course_text_layer": 100,
+      "course_ocr": 61,
+      "has_ground_truth": false
+    },
+    {
+      "program": "IT",
+      "year": 2561,
+      "edition": "old",
+      "chunk_text_layer": 532,
+      "chunk_ocr": 312,
+      "course_text_layer": 44,
+      "course_ocr": 0,
+      "has_ground_truth": false
+    },
+    {
+      "program": "IT",
+      "year": 2563,
+      "edition": "old",
+      "chunk_text_layer": 558,
+      "chunk_ocr": 385,
+      "course_text_layer": 90,
+      "course_ocr": 0,
+      "has_ground_truth": false
+    },
+    {
+      "program": "IT",
+      "year": 2565,
+      "edition": "current",
+      "chunk_text_layer": 676,
+      "chunk_ocr": 526,
+      "course_text_layer": 96,
+      "course_ocr": 219,
+      "has_ground_truth": true
+    },
+    {
+      "program": "IT",
+      "year": 2566,
+      "edition": "current",
+      "chunk_text_layer": 692,
+      "chunk_ocr": 0,
+      "course_text_layer": 27,
+      "course_ocr": 0,
+      "has_ground_truth": false
+    },
+    {
+      "program": "IT",
+      "year": 2568,
+      "edition": "current",
+      "chunk_text_layer": 486,
+      "chunk_ocr": 330,
+      "course_text_layer": 75,
+      "course_ocr": 0,
+      "has_ground_truth": false
+    }
+  ]
+}
