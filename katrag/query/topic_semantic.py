@@ -23,8 +23,16 @@ from katrag.query.course_semantic import CourseHit, CourseSemanticIndex, current
 
 # ── คำถาม/คำกริยาที่ไม่ใช่ "หัวข้อวิชา" — ตัดออกก่อน embed เพื่อลด noise ──
 _QUESTION_NOISE = [
+    # ถามชื่อ/รายละเอียดของวิชา — ต้องตัดก่อน ไม่งั้น "ภาษาอังกฤษ" กลายเป็นหัวข้อ
+    # แล้วไปดึงวิชา "ภาษาอังกฤษพื้นฐาน" มาเป็นคำตอบ
+    "ชื่อภาษาอังกฤษว่าอะไร", "ชื่อภาษาอังกฤษคืออะไร", "ชื่อภาษาอังกฤษ",
+    "ชื่ออังกฤษว่าอะไร", "ชื่ออังกฤษคืออะไร", "ชื่ออังกฤษ",
+    "ชื่อภาษาไทยว่าอะไร", "ชื่อภาษาไทย", "ชื่อไทย",
+    "ภาษาอังกฤษว่าอะไร", "ภาษาอังกฤษเรียกว่าอะไร",
+    "ว่าอะไร", "คืออะไร", "แปลว่าอะไร", "เรียกว่าอะไร",
     "มีกี่หน่วยกิต", "กี่หน่วยกิต", "มีกี่วิชา", "กี่วิชา", "มีกี่ตัว", "กี่ตัว",
     "มีอะไรบ้าง", "อะไรบ้าง", "มีวิชาอะไร", "ได้บ้าง", "บ้าง",
+    "เรียนปีไหน", "เรียนตอนไหน", "ปีไหน", "เทอมอะไร", "เทอมไหน",
     "อยากทราบ", "ช่วยบอก", "บอกหน่อย", "ตอบหน่อย", "หน่อย",
     "ครับ", "ค่ะ", "คะ", "ทั้งหมด", "รวม", "จำนวน",
     "ที่เกี่ยวข้องกับ", "ที่เกี่ยวกับ", "เกี่ยวข้องกับ", "เกี่ยวกับ",
@@ -55,6 +63,19 @@ _PLACEHOLDER_RE = re.compile(
 
 # หลักสูตรที่เลิกรับแล้ว (BIT = ชื่อเดิมของ AIT) — ไม่นับในคำถามแบบ "ทุกหลักสูตร"
 LEGACY_PROGRAMS = {"BIT"}
+
+# คำบ่งชี้ว่าคำถามต้องการ "หลายวิชา" — ห้ามเข้าเส้นทางตอบวิชาเดียว
+# เช่น "วิชาเกี่ยวกับปัญญาประดิษฐ์มีอะไรบ้าง" มีวิชาชื่อ "ปัญญาประดิษฐ์" ตรงตัว
+# แต่ผู้ถามต้องการรายการทั้งหมด ไม่ใช่วิชานั้นวิชาเดียว
+_PLURAL_MARKERS = [
+    "มีอะไรบ้าง", "อะไรบ้าง", "บ้าง", "กี่วิชา", "กี่ตัว", "กี่หน่วยกิต",
+    "ทั้งหมด", "รายการ", "มีอะไร", "เกี่ยวกับ", "เกี่ยวข้อง", "กลุ่ม",
+]
+
+
+def wants_multiple(question: str) -> bool:
+    """คำถามนี้ต้องการรายการหลายวิชาหรือไม่."""
+    return any(m in question for m in _PLURAL_MARKERS)
 
 _PROGRAM_CODES = ["AITBA", "DSBA", "AIT", "BIT", "IT"]
 
@@ -162,6 +183,65 @@ def _topic_keywords(topic: str) -> list[str]:
     from katrag.query.structured_query import _extract_topic_keywords
 
     return [k for k in _extract_topic_keywords(topic, None) if len(k) >= 3]
+
+
+def _norm_name(s: str | None) -> str:
+    return "".join((s or "").split()).lower()
+
+
+def find_exact_course(
+    conn: sqlite3.Connection, topic: str, version_ids: list[int]
+) -> list[CourseHit]:
+    """ตรวจว่าคำถามชี้ถึง *วิชาเดียว* ชัดเจนหรือไม่.
+
+    เช่น "วิชาระบบข้อมูลมหัต ชื่อภาษาอังกฤษว่าอะไร" → topic = "ระบบข้อมูลมหัต"
+    ซึ่งตรงกับชื่อวิชา 06026213 แบบเต็ม ๆ ไม่ใช่การถามหัวข้อกว้าง
+
+    ถ้าเข้าเงื่อนไขนี้ต้องตอบและอ้างอิงเฉพาะวิชานั้น ไม่ใช่ดึงวิชาที่มีคำร่วมกันมาทั้งหมด
+    (เดิมคำว่า "ระบบ"/"ข้อมูล" ทำให้ได้วิชาอื่นมาอีก 11 วิชา)
+
+    คืน list ว่างถ้าไม่ใช่คำถามเจาะวิชาเดียว
+    """
+    if not topic or not version_ids or len(topic) < 6:
+        return []
+    conn.row_factory = sqlite3.Row
+    ntopic = _norm_name(topic)
+
+    ph = ",".join("?" * len(version_ids))
+    rows = conn.execute(
+        f"SELECT c.code, c.name_th, c.name_en, c.credits_raw, c.year, c.semester, "
+        f"       c.version_id, cv.program, cv.curriculum_year "
+        f"FROM course c JOIN curriculum_version cv ON cv.version_id = c.version_id "
+        f"WHERE c.version_id IN ({ph})",
+        version_ids,
+    ).fetchall()
+
+    exact: list[CourseHit] = []
+    for r in rows:
+        nth = _norm_name(r["name_th"])
+        nen = _norm_name(r["name_en"])
+        # ชื่อวิชาตรงกับ topic ทั้งชื่อ หรือ topic ครอบชื่อวิชาไว้ทั้งชื่อ
+        if not nth and not nen:
+            continue
+        hit = (
+            (nth and (nth == ntopic or ntopic == nth))
+            or (nth and len(nth) >= 6 and nth in ntopic)
+            or (nen and len(nen) >= 6 and nen in ntopic)
+        )
+        if hit:
+            exact.append(
+                CourseHit(
+                    code=r["code"], name_th=r["name_th"], name_en=r["name_en"],
+                    credits_raw=r["credits_raw"], program=r["program"],
+                    curriculum_year=r["curriculum_year"], score=1.0,
+                    year=r["year"], semester=r["semester"], version_id=r["version_id"],
+                )
+            )
+
+    # ต้องชี้ชัดจริง — ถ้าตรงหลายวิชาข้ามหลายรหัส ถือว่าเป็นคำถามกว้าง
+    if len({h.code for h in exact}) > 3:
+        return []
+    return exact
 
 
 def _literal_match(hit: CourseHit, keywords: list[str]) -> bool:
@@ -347,6 +427,20 @@ def answer_topic(
     topic, cands, _labels = gather_candidates(conn, index, question, program)
     if not cands:
         return TopicResult(matched=False)
+
+    # ── ถ้าคำถามชี้วิชาเดียวชัดเจน → ตอบเฉพาะวิชานั้น ──
+    # ต้องเช็คก่อน เพราะ semantic/keyword recall จะดึงวิชาที่มีคำร่วมกันมาด้วย
+    # ทำให้ทั้งคำตอบและ citation กว้างเกินความจำเป็น
+    # แต่ต้องไม่ทริกเกอร์เมื่อคำถามขอรายการ ("มีอะไรบ้าง", "กี่วิชา")
+    version_ids, _lbl = current_version_ids(conn, program)
+    exact = [] if wants_multiple(question) else find_exact_course(conn, topic, version_ids)
+    if exact:
+        answer = format_answer(topic, exact, program)
+        return TopicResult(
+            matched=True, context=answer,
+            version_label=program or "ทุกหลักสูตร",
+            intent="topic_semantic", topic=topic, candidates=exact,
+        )
 
     kws = _topic_keywords(topic)
     literal = [h for h in cands if _literal_match(h, kws)]
