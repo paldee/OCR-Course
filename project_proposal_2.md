@@ -149,30 +149,61 @@
 
 ### 6.1 การวัดผล OCR
 
-**วิธีวัด:** เปรียบเทียบผลลัพธ์ OCR ที่ระบบสกัดได้ กับ Ground Truth ที่อาจารย์จัดทำ (JSON)
+**สคริปต์:** `python -m katrag.eval.ocr_eval` → รายงาน `artifacts/ocr_eval_report.md`
 
-| เกณฑ์การวัด OCR | วิธีคำนวณ | เป้าหมาย |
-|---|---|---|
-| Field Completeness | จำนวนฟิลด์ที่สกัดได้ครบ / จำนวนฟิลด์ทั้งหมดใน GT × 100% | ≥ 95% |
-| Field Accuracy | จำนวนฟิลด์ที่ค่าตรงกับ GT / จำนวนฟิลด์ที่สกัดได้ × 100% | ≥ 90% |
-| Table Structure | ตารางแผนการเรียน (ปี/เทอม/รหัสวิชา/ชื่อ/หน่วยกิต) ตรงกับ GT | ≥ 90% |
+วัด **3 ระดับ** โดยเทียบกับ Ground Truth ของอาจารย์ (เปิดแบบ read-only เท่านั้น)
 
-**ฟิลด์ที่วัด:**
-- รหัสวิชา (course code) — ต้องตรง 100%
-- ชื่อวิชาไทย/อังกฤษ — Character-level accuracy
-- หน่วยกิต (credits_raw) — ต้องตรง exact
-- ชั้นปี/ภาคการศึกษา (year/semester) — ต้องตรง
-- วิชาบังคับก่อน (prerequisite) — ตรวจว่าดึงมาได้ครบ
+#### ระดับที่ 1 — Page level (วิธีสกัดและคุณภาพหน้า)
+
+| ตัวชี้วัด | ความหมาย |
+|---|---|
+| extraction method | หน้านั้นใช้ text layer หรือ OCR Tesseract 5 |
+| page quality score | คะแนนคุณภาพหน้า (0-1) จาก char count, สัดส่วนภาพ, คำในคลังศัพท์เฉพาะทาง |
+| out-of-charset ratio | สัดส่วนอักขระนอกชุดที่คาดหวัง (สูง = OCR เพี้ยน) |
+| OCR confidence | ค่าความมั่นใจของ Tesseract เฉพาะหน้าที่ผ่าน OCR |
+
+**ผลจริง:** 14 เล่ม / 3,689 หน้า — text layer 2,739 หน้า (74.2%), OCR 950 หน้า (25.8%)  
+OCR confidence เฉลี่ย 0.85–1.00 | out-of-charset 0.0004–0.0311
+
+#### ระดับที่ 2 — Field level (เทียบฟิลด์รายวิชากับ GT)
+
+**ผลจริง (course-code coverage):**
+
+| หลักสูตร | GT | ระบบสกัดได้ | จับคู่ได้ | Recall | Precision | F1 |
+|---|---:|---:|---:|---:|---:|---:|
+| AIT 2566 | 50 | 366 | 46 | 0.920 | 0.126 | 0.221 |
+| BIT 2565 | 56 | 55 | 55 | 0.982 | 1.000 | 0.991 |
+| DSBA 2565 | 80 | 75 | 75 | 0.938 | 1.000 | 0.968 |
+| IT 2565 | 99 | 315 | 96 | 0.970 | 0.305 | 0.464 |
+
+Recall สูงทุกหลักสูตร (0.92–0.98) = OCR ไม่ตกวิชา  
+Precision ต่ำใน AIT/IT เพราะระบบสกัดวิชาเลือกทั้งเล่ม (366/315 วิชา) ขณะที่ GT ครอบคลุมเฉพาะแผนการเรียน (50/99 วิชา) — ไม่ใช่ error ของ OCR
+
+**ผลจริง (ความถูกต้องต่อฟิลด์ รวมทุกหลักสูตร):**
+
+| ฟิลด์ | ตรง / เทียบ | Accuracy |
+|---|---:|---:|
+| ชื่อวิชา (ไทย) | 250 / 272 | 0.919 |
+| ชื่อวิชา (อังกฤษ) | 252 / 272 | 0.926 |
+| หน่วยกิต | 270 / 271 | 0.996 |
+| ชั้นปี | 137 / 145 | 0.945 |
+| ภาคการศึกษา | 131 / 145 | 0.903 |
+
+Field macro-accuracy ต่อหลักสูตร: AIT 0.991 | DSBA 0.979 | BIT 0.953 | IT 0.858
+
+#### ระดับที่ 3 — Category level (recall ต่อหมวดวิชา)
+
+เช่น DSBA 2565: หมวดวิชาเฉพาะ, หมวดวิชาศึกษาทั่วไป, หมวดวิชาเลือกเสรี — วัดว่าแต่ละหมวดสกัดได้ครบกี่ %
 
 **ข้อมูล GT ที่ใช้วัด:**
-- `data/teacher_gt/DSBA/DSBA_academic_plan_coop.json` (91 วิชา) + `DSBA_academic_plan_no_coop.json` (92 วิชา)
-- `data/teacher_gt/IT/IT_academic_plan_coop.json` (107 วิชา) + `IT_academic_plan_no_coop.json` (109 วิชา)
 - `data/teacher_gt/AIT/AIT_academic_plan.json` (58 วิชา)
-- `data/teacher_gt/BIT/BIT_academic_plan_coop.json` (63 วิชา) + `BIT_academic_plan_no_coop.json` (63 วิชา)
-- `data/teacher_gt/general_education_ground_truth.json` (266 วิชา — วิชาศึกษาทั่วไป)
+- `data/teacher_gt/BIT/BIT_academic_plan_no_coop.json` (63 วิชา)
+- `data/teacher_gt/DSBA/DSBA_academic_plan_no_coop.json` (92 วิชา)
+- `data/teacher_gt/IT/IT_academic_plan_no_coop.json` (109 วิชา)
+- `data/teacher_gt/general_education_ground_truth.json` (266 วิชา)
 - `data/teacher_gt/rules_ground_truth.json` (กฎ/เงื่อนไขจบการศึกษา)
 
-**สคริปต์วัดผล:** `katrag/eval/gt_normalizer.py` — normalize ทั้ง OCR output และ GT แล้วเทียบ field-by-field
+**บั๊กที่ evaluation ตรวจเจอและแก้แล้ว:** regex สกัดชื่อวิชาทำเลขลำดับหาย ("แคลคูลัส 1" → "แคลคูลัส") และดูดเลขหน่วยกิตเข้าชื่ออังกฤษ ("LINEAR ALGEBRA 3") — หลังแก้ ชื่ออังกฤษดีขึ้นจาก 0.213 → 0.926
 
 ### 6.2 การวัดผลคำตอบ (QA Accuracy)
 
@@ -182,13 +213,31 @@
 | 80% – 90% | 80% | ผ่านเกณฑ์ |
 | น้อยกว่า 80% | 60% | ควรปรับปรุง RAG/prompt เพิ่มเติม |
 
+**สคริปต์:** `python -m katrag.eval.qa_eval` → รายงาน `artifacts/qa_eval_report.md`
+
 **วิธีคำนวณ accuracy และแผนการทดสอบ:**
 
-- ทดสอบด้วยชุดคำถาม 19 ข้อ (Easy 7 + Medium 6 + Hard 6) โดยใช้ ground truth ที่เตรียมไว้
-- เกณฑ์ "ถูก": คำตอบตรงประเด็น + อ้างอิงหน้า/หัวข้อถูกต้อง (±1 หน้า)
-- Accuracy = จำนวนข้อถูก / จำนวนข้อทั้งหมด × 100%
-- ทดสอบทั้งแบบระบุหลักสูตร (dropdown) และไม่ระบุ (general)
+- ทดสอบด้วยชุดคำถาม 19 ข้อ (Easy 7 + Medium 6 + Hard 6) ที่เก็บใน `katrag/eval/qa_questions.py`
+- ให้คะแนน 2 ชั้น:
+  1. **auto-screening** — ตรวจอัตโนมัติว่าคำสำคัญปรากฏในคำตอบไหม (คัดกรองเบื้องต้น)
+  2. **human review** — ผู้ตรวจกาช่อง "คำตอบถูก" + "อ้างอิงถูก" ตามเกณฑ์ในใบเสนอโครงการ
+- Accuracy = จำนวนข้อที่ (คำตอบถูก AND อ้างอิงถูก) / จำนวนข้อทั้งหมด × 100%
 - ผู้ตรวจ: สมาชิกในทีมเทียบกับเอกสาร มคอ.2 ต้นฉบับ
+
+**การป้องกันการรั่วของเฉลย (anti-leak):**  
+`qa_eval.py` ส่งเข้า API เฉพาะ `{question, program}` เท่านั้น และมี `assert` บังคับว่า
+ฟิลด์ `expected` / `reference` ต้องไม่ปรากฏใน payload — เฉลยจึงไม่เคยเข้าถึง prompt หรือ LLM
+
+**ผล auto-screening ล่าสุด:**
+
+| ระดับ | จำนวนข้อ | auto pass | เวลาเฉลี่ย |
+|---|---:|---:|---:|
+| easy | 7 | 7/7 | ~1.2s |
+| medium | 6 | 6/6 | ~0.9s |
+| hard | 6 | 6/6 | ~2.5s |
+| **รวม** | **19** | **19/19** | |
+
+(ตัวเลขนี้เป็นการคัดกรองว่าคำตอบมีข้อมูลที่ควรมี ยังต้องให้ผู้ตรวจยืนยันความถูกต้องของเนื้อหาและการอ้างอิง)
 
 ---
 
