@@ -83,14 +83,55 @@ def _pages_for_codes(conn: sqlite3.Connection, version_id: int,
     ]
 
 
+def _pages_for_course_name(conn: sqlite3.Connection, version_id: int,
+                           keyword: str) -> list[tuple[str, int]]:
+    """ทุกหน้าที่ *รหัสวิชา* ของวิชาที่ชื่อตรงคำสำคัญ ปรากฏอยู่.
+
+    ทำสองขั้น:
+      1. หารหัสวิชาที่ชื่อ (ไทย/อังกฤษ) ตรงกับคำสำคัญ
+      2. หาทุกหน้าที่มีรหัสนั้นใน chunk
+
+    ไม่ใช้ provenance ของ course โดยตรง เพราะ populate_courses บันทึกเฉพาะ
+    ครั้งแรกที่เจอวิชา (dedup ด้วยรหัส) แต่ในเล่มจริงวิชาหนึ่งปรากฏหลายหน้า
+    (ตารางแผนการเรียน + ตารางรายวิชา + คำอธิบายรายวิชา) ซึ่งทุกหน้าเป็นหลักฐานที่ถูก
+    ถ้าใช้ provenance หน้าเดียว gold จะแคบเกินจริงและลงโทษระบบอย่างไม่เป็นธรรม
+    """
+    codes = [
+        r["code"]
+        for r in conn.execute(
+            "SELECT DISTINCT code FROM course "
+            "WHERE version_id=? AND (name_th LIKE ? OR name_en LIKE ?)",
+            (version_id, f"%{keyword}%", f"%{keyword}%"),
+        )
+    ]
+    if not codes:
+        return []
+
+    pages: set[tuple[str, int]] = set()
+    for code in codes[:12]:  # กันคำกว้างที่ตรงหลายสิบวิชา
+        for r in conn.execute(
+            "SELECT DISTINCT document_id, page_number FROM chunk "
+            "WHERE version_id=? AND text LIKE ? "
+            "AND COALESCE(is_boilerplate, 0) = 0",
+            (version_id, f"%{code}%"),
+        ):
+            pages.add((r["document_id"], r["page_number"]))
+    return sorted(pages)
+
+
 def _pages_for_keyword(conn: sqlite3.Connection, version_id: int,
                        keyword: str, limit: int = 20) -> list[tuple[str, int]]:
-    """หน้าที่มีคำสำคัญปรากฏ (ใช้กับคำถามหัวข้อ/โครงสร้าง)."""
+    """หน้าที่มีคำสำคัญปรากฏใน chunk (fallback เมื่อคำนั้นไม่ใช่ชื่อวิชา).
+
+    ข้าม chunk ที่เป็นหัว/ท้ายกระดาษซ้ำทุกหน้า (boilerplate) เพราะมีชื่อหลักสูตร
+    ครบทุกหน้าแต่ไม่ใช่หลักฐานของคำตอบ
+    """
     return [
         (r["document_id"], r["page_number"])
         for r in conn.execute(
             "SELECT DISTINCT document_id, page_number FROM chunk "
-            "WHERE version_id=? AND text LIKE ? LIMIT ?",
+            "WHERE version_id=? AND text LIKE ? "
+            "AND COALESCE(is_boilerplate, 0) = 0 LIMIT ?",
             (version_id, f"%{keyword}%", limit),
         )
     ]
@@ -124,12 +165,19 @@ def expected_pages(conn: sqlite3.Connection, item: QAItem) -> list[tuple[str, in
     if year is not None:
         primary = _pages_for_year(conn, version_id, year, sem)
 
-    # ── ชั้น 2: หน้าที่มีคำสำคัญ — ให้คะแนนตามจำนวนคำสำคัญที่พบ ──
+    # ── ชั้น 2: หน้าต้นทางของรายวิชาที่ชื่อตรงคำสำคัญ (แม่นกว่าค้นทุก chunk) ──
     tokens = [t for t in item.check if len(t) >= 4 and not t.isdigit()]
     score: dict[tuple[str, int], int] = {}
     for token in tokens:
-        for pg in _pages_for_keyword(conn, version_id, token, limit=40):
-            score[pg] = score.get(pg, 0) + 1
+        pages_by_course = _pages_for_course_name(conn, version_id, token)
+        if pages_by_course:
+            for pg in pages_by_course:
+                # ให้น้ำหนักสูงกว่า เพราะผูกกับรายวิชาจริง
+                score[pg] = score.get(pg, 0) + 2
+        else:
+            # คำที่ไม่ใช่ชื่อวิชา (เช่น "แขนง", "หน่วยกิต") → ค้นใน chunk
+            for pg in _pages_for_keyword(conn, version_id, token, limit=20):
+                score[pg] = score.get(pg, 0) + 1
 
     ranked_secondary = sorted(score.items(), key=lambda kv: (-kv[1], kv[0]))
 

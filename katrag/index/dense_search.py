@@ -68,15 +68,17 @@ class DenseSearchIndex:
             return 0
         self._dim = int(dim_rows[0]["dim"])
 
+        # ข้าม chunk ที่เป็นหัว/ท้ายกระดาษซ้ำทุกหน้า (boilerplate)
+        # ดู katrag/ingest/mark_boilerplate.py — chunk พวกนี้ทำให้ผลค้นเปื้อน
         rows = conn.execute(
             """
             SELECT ce.chunk_id, ce.dim, ce.vector,
-                   c.text, c.heading, c.page_number,
+                   c.text, c.heading, c.page_number, c.document_id,
                    cv.program, cv.curriculum_year, cv.edition_status
             FROM chunk_embedding ce
             JOIN chunk c ON c.chunk_id = ce.chunk_id
             JOIN curriculum_version cv ON cv.version_id = c.version_id
-            WHERE ce.dim = ?
+            WHERE ce.dim = ? AND COALESCE(c.is_boilerplate, 0) = 0
             """,
             (self._dim,),
         ).fetchall()

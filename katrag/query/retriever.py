@@ -211,6 +211,11 @@ def search(
             where_parts.append(f"({or_clause})")
             params.extend(f"%{kw}%" for kw in kw_for_sql)
 
+    # กัน chunk ที่เป็นหัว/ท้ายกระดาษซ้ำทุกหน้า (boilerplate) ออกจากผลค้น
+    # chunk พวกนี้มีคำสำคัญของหลักสูตรครบแต่ไม่มีสาระ ทำให้ citation precision ตก
+    # (คอลัมน์อาจไม่มีในฐานเก่า → ใช้ COALESCE กันพัง)
+    where_parts.append("COALESCE(c.is_boilerplate, 0) = 0")
+
     where_sql = " AND ".join(where_parts) if where_parts else "1=1"
 
     # version-scoped: ดึงทุก chunk ใน scope (มีขอบเขตจำกัดต่อหลักสูตรอยู่แล้ว)

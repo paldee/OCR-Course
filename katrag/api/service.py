@@ -258,9 +258,13 @@ def create_app(
                 else:
                     sr = try_structured_answer(conn, question)
                 structured_intent = ""
+                structured_codes: list[str] = []
+                structured_version_id: int | None = None
                 if sr.matched:
                     structured_context = sr.context
                     structured_intent = sr.intent
+                    structured_codes = list(sr.codes)
+                    structured_version_id = sr.version_id
                     if sr.version_label and sr.version_label not in versions_resolved:
                         versions_resolved.append(sr.version_label)
 
@@ -288,6 +292,10 @@ def create_app(
                             if tr.matched:
                                 structured_context = tr.context
                                 structured_intent = tr.intent
+                                # รหัสวิชาที่ถูกเลือกมาตอบ = หลักฐานของคำตอบนี้
+                                structured_codes = [h.code for h in tr.candidates]
+                                if tr.candidates:
+                                    structured_version_id = tr.candidates[0].version_id
                                 if tr.version_label not in versions_resolved:
                                     versions_resolved.append(tr.version_label)
             except Exception:
@@ -335,6 +343,38 @@ def create_app(
                     "หรือถามให้เจาะจงขึ้น เช่น 'หลักสูตร DSBA เรียนกี่หน่วยกิต'"
                 )
             else:
+                # ── ตัดหลักฐานซ้ำหน้าเดียวกัน ──
+                # หลาย chunk อาจอยู่หน้าเดียวกัน ถ้าอ้างซ้ำจะเปลือง citation slot
+                # และทำให้ precision ตก โดยไม่ได้เพิ่มข้อมูลใหม่
+                _seen_pages: set[tuple[str, int]] = set()
+                _deduped = []
+                for h in hits:
+                    key = (getattr(h, "document_id", "") or "", h.page_number)
+                    if key in _seen_pages:
+                        continue
+                    _seen_pages.add(key)
+                    _deduped.append(h)
+                hits = _deduped
+
+                # ── ตัดหลักฐานที่คะแนนต่ำกว่าอันดับหนึ่งมาก (adaptive cutoff) ──
+                # คะแนน hybrid มักมี "cliff" ชัดเจนระหว่างหน้าที่เกี่ยวจริงกับหน้าอื่น
+                # เช่น 0.020 / 0.019 / 0.018 / 0.018 แล้วตกเป็น 0.008
+                # การคืนครบ 10 หน้าทุกครั้งทำให้ citation precision ตกโดยไม่จำเป็น
+                # จึงเก็บเฉพาะหน้าที่คะแนน >= อันดับหนึ่ง × RATIO
+                _CUTOFF_RATIO = 0.55
+                _MIN_EVIDENCE = 3       # ต้องมีหลักฐานพอให้ LLM เรียบเรียง
+                if hits:
+                    _top = max(getattr(h, "score", 0.0) or 0.0 for h in hits)
+                    if _top > 0:
+                        _kept = [
+                            h for h in hits
+                            if (getattr(h, "score", 0.0) or 0.0) >= _top * _CUTOFF_RATIO
+                        ]
+                        if len(_kept) >= _MIN_EVIDENCE:
+                            hits = _kept
+                        else:
+                            hits = hits[:_MIN_EVIDENCE]
+
                 # สร้าง context — เริ่มด้วย structured data (ถ้ามี) ในฐานะหลักฐานหลัก
                 context_parts = []
                 if structured_context:
@@ -372,6 +412,43 @@ def create_app(
                             versions_resolved.append(ver_label)
 
                 context = "\n\n".join(context_parts)
+
+                # ── ถ้าคำตอบมาจาก structured path ให้ citation ชี้หน้าต้นทางของ
+                # รายวิชาที่ใช้ตอบ แทน chunk ที่ retrieval ดึงมา (ซึ่งอาจไม่ใช่หน้าที่ให้คำตอบ)
+                if structured_codes and structured_version_id is not None:
+                    try:
+                        from katrag.query.structured_query import source_pages_for_codes
+
+                        conn3 = sqlite3.connect(str(db_path))
+                        src_pages = source_pages_for_codes(
+                            conn3, structured_codes, structured_version_id, limit=8
+                        )
+                        conn3.close()
+                        if src_pages:
+                            citations = []
+                            app.state.citations_store = getattr(
+                                app.state, "citations_store", {}
+                            )
+                            for i, (doc_id, page_no, head) in enumerate(src_pages, 1):
+                                cid = f"cite-{i:03d}"
+                                citations.append(CitationItem(
+                                    citation_id=cid,
+                                    document_id=doc_id,
+                                    page=page_no,
+                                    heading=head or "ตารางรายวิชา/แผนการศึกษา",
+                                ))
+                                app.state.citations_store[cid] = {
+                                    "citation_id": cid,
+                                    "document_id": doc_id,
+                                    "page": page_no,
+                                    "heading": head or "ตารางรายวิชา/แผนการศึกษา",
+                                    "bbox": None,
+                                    "page_width": 0.0,
+                                    "page_height": 0.0,
+                                    "chunk_text": "",
+                                }
+                    except Exception:
+                        pass
 
                 # ── Short-circuit: คำถามรายวิชา/แผน ที่ตอบจากตาราง structured ครบแล้ว ──
                 # คืน context ตรง ๆ ไม่ให้ LLM reformat (กันตกหล่นวิชาเลือก/ตัดคำตอบ)

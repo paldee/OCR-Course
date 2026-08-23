@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import re
 import sqlite3
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 PROGRAM_CODES = ["AITBA", "DSBA", "AIT", "BIT", "IT"]
@@ -24,6 +24,10 @@ class StructuredResult:
     context: str  # evidence text สำหรับส่ง LLM
     version_label: str
     intent: str  # "year_sem" | "all_courses" | "none"
+    # รหัสวิชาที่ใช้ประกอบคำตอบ — ใช้สร้าง citation ที่ชี้หน้าต้นทางจริง
+    # (เดิม citation มาจาก chunk ที่ retrieval ดึงมา ซึ่งอาจไม่ใช่หน้าที่ให้คำตอบ)
+    codes: list[str] = field(default_factory=list)
+    version_id: int | None = None
 
 
 def detect_program(question: str) -> str | None:
@@ -279,7 +283,10 @@ def try_structured_answer(conn: sqlite3.Connection, question: str) -> Structured
                         lines.append(f"    • {e}")
             total = sum(_parse_credit(r["credits_raw"]) for r in rows)
             lines.append(f"\nรวมปีที่ {year_level} (วิชาบังคับ): {len(rows)} วิชา {total} หน่วยกิต (ยังไม่รวมวิชาเลือก)")
-            return StructuredResult(True, "\n".join(lines), version_label, "year_sem")
+            return StructuredResult(
+                True, "\n".join(lines), version_label, "year_sem",
+                codes=[r["code"] for r in rows], version_id=version_id,
+            )
 
     # ── กรณี: ถามรายวิชา "ทั้งหมด" ของหลักสูตร (ต้องระบุชัดว่าเอาทั้งหมด) ──
     # ถ้าถามเจาะจงหัวข้อ (เช่น "วิชาเขียนโปรแกรม") ไม่เข้า branch นี้ → ให้ hybrid ค้นแทน
@@ -300,7 +307,10 @@ def try_structured_answer(conn: sqlite3.Connection, question: str) -> Structured
                 if r["year"] and r["semester"]:
                     ys = f" [ปีที่ {r['year']} ภาคการศึกษาที่ {r['semester']}]"
                 lines.append(f"- {r['code']} {r['name_th']}{en} — {r['credits_raw']}{ys}")
-            return StructuredResult(True, "\n".join(lines), version_label, "all_courses")
+            return StructuredResult(
+                True, "\n".join(lines), version_label, "all_courses",
+                codes=[r["code"] for r in rows], version_id=version_id,
+            )
 
     # คำถามเจาะจงหัวข้อ (ไม่ระบุปี ไม่เอาทั้งหมด) → ปล่อยให้ hybrid retrieval จัดการ
     return StructuredResult(False, "", "", "none")
@@ -309,6 +319,51 @@ def try_structured_answer(conn: sqlite3.Connection, question: str) -> Structured
 def _parse_credit(credits_raw: str) -> int:
     m = re.match(r"(\d+)", credits_raw or "")
     return int(m.group(1)) if m else 0
+
+
+def source_pages_for_codes(
+    conn: sqlite3.Connection,
+    codes: list[str],
+    version_id: int | None,
+    *,
+    limit: int = 10,
+) -> list[tuple[str, int, str]]:
+    """หาหน้าต้นทางของรายวิชาที่ใช้ตอบ — สำหรับสร้าง citation ที่ตรงกับคำตอบ.
+
+    คืน (document_id, page_number, heading) เรียงตามจำนวนรหัสวิชาที่ปรากฏในหน้านั้น
+    (หน้าที่มีวิชาในคำตอบหลายตัว = หน้าตารางแผนการเรียน = หลักฐานที่ดีที่สุด)
+    """
+    if not codes or version_id is None:
+        return []
+    conn.row_factory = sqlite3.Row
+
+    uniq = list(dict.fromkeys(c for c in codes if c))[:40]
+    if not uniq:
+        return []
+
+    like_clause = " OR ".join(["text LIKE ?"] * len(uniq))
+    params: list = [f"%{c}%" for c in uniq]
+    params.append(version_id)
+
+    rows = conn.execute(
+        f"SELECT document_id, page_number, heading, text FROM chunk "
+        f"WHERE ({like_clause}) AND version_id=? "
+        f"AND COALESCE(is_boilerplate, 0) = 0",
+        params,
+    ).fetchall()
+
+    # นับว่าแต่ละหน้ามีรหัสวิชาในคำตอบกี่ตัว
+    scored: dict[tuple[str, int], tuple[int, str]] = {}
+    for r in rows:
+        text = r["text"] or ""
+        n = sum(1 for c in uniq if c in text)
+        key = (r["document_id"], r["page_number"])
+        prev = scored.get(key)
+        if prev is None or n > prev[0]:
+            scored[key] = (n, r["heading"] or "")
+
+    ordered = sorted(scored.items(), key=lambda kv: (-kv[1][0], kv[0][1]))
+    return [(d, p, h) for (d, p), (_n, h) in ordered[:limit]]
 
 
 _ELECTIVE_SLOT_RE = re.compile(r"(?:\d{4}xxx\s*)?(วิชาเลือก[ก-๙\s]*?\d?)\s*\n?\s*(ELECTIVE[A-Z\s]*\d?)?", re.IGNORECASE)
@@ -517,7 +572,16 @@ def try_prerequisite(
         else:
             lines.append("คำตอบ: ได้ — วิชานี้ไม่มีวิชาบังคับก่อน สามารถลงทะเบียนได้เลย")
 
-    return StructuredResult(True, "\n".join(lines), "", "prerequisite")
+    # รหัสวิชาที่ตอบ + รหัสวิชาบังคับก่อน = หลักฐานของคำตอบนี้
+    answer_codes: list[str] = []
+    for r in rows:
+        answer_codes.append(r["code"])
+        answer_codes.extend(json.loads(r["prerequisite_json"] or "[]"))
+    return StructuredResult(
+        True, "\n".join(lines), "", "prerequisite",
+        codes=answer_codes,
+        version_id=rows[0]["version_id"] if rows else None,
+    )
 
 
 def detect_plan_summary_intent(question: str) -> bool:
