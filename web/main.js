@@ -48,9 +48,15 @@ form.addEventListener("submit", async (e) => {
     const question = questionInput.value.trim();
     if (!question) return;
 
-    // ส่ง program เป็น field แยก (backend prepend เอง — robust)
+    // หลักสูตรเป็นค่าบังคับ — ข้อมูลรายวิชา/แผนเรียนต่างกันทุกหลักสูตร
+    // ถ้าไม่เลือก คำถามจะกำกวมและระบบตอบผิดหลักสูตรได้
     const programSelect = document.getElementById("program-select");
     const selectedProgram = programSelect ? programSelect.value : "";
+    if (!selectedProgram) {
+        showError("กรุณาเลือกหลักสูตรก่อนถาม");
+        if (programSelect) programSelect.focus();
+        return;
+    }
 
     // Reset UI
     hideElement(errorDisplay);

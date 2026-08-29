@@ -29,18 +29,29 @@ class TestAskRequest:
 
     def test_valid_question_minimal(self) -> None:
         """คำถาม 1 อักขระ — ขอบล่างที่ยอมรับ."""
-        req = AskRequest(question="a")
+        req = AskRequest(question="a", program="IT")
         assert req.question == "a"
 
     def test_valid_question_max_length(self) -> None:
         """คำถาม 2000 อักขระ — ขอบบนที่ยอมรับ."""
-        req = AskRequest(question="x" * 2000)
+        req = AskRequest(question="x" * 2000, program="IT")
         assert len(req.question) == 2000
 
     def test_valid_question_thai(self) -> None:
         """คำถามภาษาไทยปกติ."""
-        req = AskRequest(question="วิชา 09064100 มีกี่หน่วยกิต?")
+        req = AskRequest(question="วิชา 09064100 มีกี่หน่วยกิต?", program="DSBA")
         assert "หน่วยกิต" in req.question
+
+    def test_missing_program_rejected(self) -> None:
+        """ไม่ส่ง program — ปฏิเสธ เพราะข้อมูลรายวิชาผูกกับสาขา."""
+        with pytest.raises(ValidationError) as exc_info:
+            AskRequest(question="มีวิชาอะไรบ้าง")  # type: ignore[call-arg]
+        assert any(e["loc"] == ("program",) for e in exc_info.value.errors())
+
+    def test_empty_program_rejected(self) -> None:
+        """program ว่าง — ปฏิเสธ (เดิมค่าว่างเคยหมายถึง 'ทุกหลักสูตร')."""
+        with pytest.raises(ValidationError):
+            AskRequest(question="มีวิชาอะไรบ้าง", program="")
 
     def test_empty_question_rejected(self) -> None:
         """คำถามว่าง — ปฏิเสธ (R19.3)."""

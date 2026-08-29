@@ -15,13 +15,14 @@ R19.9: ยุติคำขอที่เกิน 120 วินาทีพ�
 from __future__ import annotations
 
 import asyncio
+import pathlib
 import time
 import uuid
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 
@@ -37,16 +38,29 @@ from katrag.api.schemas import (
     TraceResponse,
     ValidationErrorResponse,
 )
+from katrag.query.pipeline import answer_question
+
+#: หลักสูตรที่รับได้ — ผู้ใช้ต้องเลือกก่อนถาม (ไม่มีตัวเลือก "ทุกหลักสูตร"
+#: เพราะข้อมูลหลักสูตรผูกกับสาขา คำถามที่ไม่ระบุสาขาจึงไม่มีคำตอบเดียวที่ถูก)
+VALID_PROGRAMS = frozenset({"IT", "DSBA", "AIT", "BIT", "AITBA"})
+
+_PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
+
+
+def _db_path() -> pathlib.Path:
+    """ตำแหน่งฐานข้อมูล provenance store."""
+    return _PROJECT_ROOT / "artifacts" / "katrag.sqlite3"
+
 
 # ══════════════════════════════════════════════════════════════════════
 # Application factory
 # ══════════════════════════════════════════════════════════════════════
 
-# ── Lazy singletons (course semantic index / LLM) ─────────────────────
+# ── Lazy singletons (index / LLM) — โหลดครั้งเดียวแล้วแคชใน app.state ──
 
 
 def _get_course_index(app: FastAPI, db_path: Any) -> Any:
-    """โหลด CourseSemanticIndex ครั้งเดียวแล้วแคชใน app.state (None ถ้าไม่มี embedding)."""
+    """โหลด CourseSemanticIndex ครั้งเดียวแล้วแคช (None ถ้าไม่มี embedding)."""
     cached = getattr(app.state, "course_index", "unset")
     if cached != "unset":
         return cached
@@ -60,19 +74,32 @@ def _get_course_index(app: FastAPI, db_path: Any) -> Any:
     return app.state.course_index
 
 
+def _get_dense_index(app: FastAPI, db_path: Any) -> Any:
+    """โหลด dense index ครั้งเดียวแล้วแคช (None ถ้าไม่มี embedding → ใช้ lexical)."""
+    cached = getattr(app.state, "dense_index", "unset")
+    if cached != "unset":
+        return cached
+    try:
+        from katrag.index.dense_search import DenseSearchIndex
+
+        idx = DenseSearchIndex(db_path)
+        app.state.dense_index = idx if idx.load() > 0 else None
+    except Exception:
+        app.state.dense_index = None
+    return app.state.dense_index
+
+
 def _get_llm(app: FastAPI) -> Any:
     """โหลด Typhoon LLM client ครั้งเดียวแล้วแคช (None ถ้า config ไม่พร้อม)."""
     cached = getattr(app.state, "llm", "unset")
     if cached != "unset":
         return cached
     try:
-        import pathlib as _pl
-
         from dotenv import load_dotenv
 
         from katrag.query.typhoon_llm import TyphoonLLM
 
-        load_dotenv(_pl.Path(__file__).resolve().parent.parent.parent / ".env")
+        load_dotenv(_PROJECT_ROOT / ".env")
         app.state.llm = TyphoonLLM()
     except Exception:
         app.state.llm = None
@@ -194,14 +221,12 @@ def create_app(
     async def ask(body: AskRequest) -> AskResponse:
         """ส่งคำถาม, คืนคำตอบพร้อม citations.
 
-        - Validates question length 1-2000 chars (R19.3)
-        - Returns answer with citations list
-        - Records trace for each request
+        ชั้นนี้ทำแค่งานของ HTTP: ตรวจ request → เรียก pipeline → ประกอบ response
+        ตรรกะการตอบทั้งหมดอยู่ใน `katrag.query.pipeline`
         """
         start_time = time.time()
         request_id = str(uuid.uuid4())
 
-        # ── ตรวจ question length เพิ่มเติม (config-driven) ──
         question = body.question.strip()
         if len(question) < 1 or len(question) > app.state.max_question_chars:
             raise HTTPException(
@@ -215,377 +240,70 @@ def create_app(
                 ],
             )
 
-        # prepend program จาก dropdown (server-side — robust กว่าฝั่ง JS)
         selected_program = (body.program or "").strip().upper()
-        if not selected_program:
-            # ผู้ใช้ไม่เลือกหลักสูตร → ให้ระบบเดาเองจากคำถาม
-            # (ชื่อหลักสูตร / รหัสวิชา prefix / ชื่อวิชาเฉพาะ / default คณะ IT)
-            try:
-                import sqlite3 as _sqlite3
-                import pathlib as _pathlib
-                _dbp = _pathlib.Path(__file__).resolve().parent.parent.parent / "artifacts" / "katrag.sqlite3"
-                _conn = _sqlite3.connect(str(_dbp))
-                from katrag.query.structured_query import infer_program, _DEFAULT_PROGRAM
-                inferred, how = infer_program(_conn, question)
-                _conn.close()
-                if inferred is None:
-                    inferred, how = _DEFAULT_PROGRAM, "default"
-                selected_program = inferred
-                app.state.last_program_inference = how  # เก็บไว้ debug/trace
-            except Exception:
-                selected_program = ""
-        if selected_program and selected_program not in question.upper():
-            question = f"หลักสูตร {selected_program}: {question}"
-
-        # ── Real pipeline: Hybrid (lexical+dense) retriever → Typhoon LLM ──
-        import sqlite3
-        import pathlib
-
-        db_path = pathlib.Path(__file__).resolve().parent.parent.parent / "artifacts" / "katrag.sqlite3"
-        answer_text = ""
-        citations: list[CitationItem] = []
-        versions_resolved: list[str] = []
-
-        try:
-            conn = sqlite3.connect(str(db_path))
-
-            # ── Structured answer path: query course/plan_slot ตรง ๆ (แม่นกว่า chunk) ──
-            structured_context = ""
-            structured_intent = ""
-            try:
-                from katrag.query.structured_query import (
-                    try_structured_answer,
-                    try_cross_version_diff,
-                    detect_cross_version_intent,
-                    try_plan_summary,
-                    detect_plan_summary_intent,
-                    try_prerequisite,
-                    detect_prerequisite_intent,
-                    try_program_name,
-                    detect_program_name_intent,
-                    detect_year as _sq_detect_year,
-                )
-                # ลำดับ: ชื่อหลักสูตร → prerequisite → cross-version → plan summary
-                #        → รายวิชาตามปี → หัวข้อวิชา
-                if detect_program_name_intent(question):
-                    sr = try_program_name(conn, question)
-                    if not sr.matched:
-                        sr = try_structured_answer(conn, question)
-                elif detect_prerequisite_intent(question):
-                    sr = try_prerequisite(conn, question)
-                    if not sr.matched:
-                        sr = try_structured_answer(conn, question)
-                elif detect_cross_version_intent(question):
-                    sr = try_cross_version_diff(conn, question)
-                elif detect_plan_summary_intent(question):
-                    sr = try_plan_summary(conn, question)
-                else:
-                    sr = try_structured_answer(conn, question)
-                structured_intent = ""
-                structured_codes: list[str] = []
-                structured_version_id: int | None = None
-                if sr.matched:
-                    structured_context = sr.context
-                    structured_intent = sr.intent
-                    structured_codes = list(sr.codes)
-                    structured_version_id = sr.version_id
-                    if sr.version_label and sr.version_label not in versions_resolved:
-                        versions_resolved.append(sr.version_label)
-
-                # ── Semantic course topic search (bge-m3) ──
-                # คำถามหัวข้อวิชาที่ไม่ระบุชั้นปี → recall เชิงความหมาย → LLM คัดรหัสวิชา
-                # → เราจัดรูปคำตอบเอง (ครบชื่ออังกฤษ/หน่วยกิต/ชั้นปี ไม่ตกหล่น)
-                if not structured_context and _sq_detect_year(question) is None:
-                    from katrag.query.topic_semantic import (
-                        answer_topic,
-                        detect_program_code,
-                        is_topic_question,
-                    )
-
-                    _prog_code = detect_program_code(question)
-                    if is_topic_question(question, _prog_code):
-                        course_index = _get_course_index(app, db_path)
-                        if course_index is not None:
-                            tr = answer_topic(
-                                conn,
-                                course_index,
-                                question,
-                                _prog_code,
-                                llm=_get_llm(app),
-                            )
-                            if tr.matched:
-                                structured_context = tr.context
-                                structured_intent = tr.intent
-                                # รหัสวิชาที่ถูกเลือกมาตอบ = หลักฐานของคำตอบนี้
-                                structured_codes = [h.code for h in tr.candidates]
-                                if tr.candidates:
-                                    structured_version_id = tr.candidates[0].version_id
-                                if tr.version_label not in versions_resolved:
-                                    versions_resolved.append(tr.version_label)
-            except Exception:
-                pass
-
-            # ลองใช้ hybrid search (lexical + dense RRF)
-            try:
-                from katrag.query.semantic_retriever import hybrid_search
-                from katrag.index.dense_search import DenseSearchIndex
-
-                # โหลด dense index (singleton pattern — แคชไว้ใน app.state)
-                if not hasattr(app.state, "dense_index") or app.state.dense_index is None:
-                    dense_idx = DenseSearchIndex(db_path)
-                    loaded = dense_idx.load()
-                    if loaded > 0:
-                        app.state.dense_index = dense_idx
-                    else:
-                        app.state.dense_index = None
-
-                if app.state.dense_index is not None:
-                    raw_hits = hybrid_search(conn, app.state.dense_index, question, limit=10)
-                    # แปลง HybridHit → format เดียวกับ RetrievedChunk
-                    from types import SimpleNamespace
-                    hits = [SimpleNamespace(
-                        chunk_id=h.chunk_id, page_number=h.page_number,
-                        heading=h.heading, text=h.text, program=h.program,
-                        curriculum_year=h.curriculum_year, edition_status=h.edition_status,
-                        score=h.fused_score, document_id=h.document_id,
-                    ) for h in raw_hits]
-                else:
-                    # Fallback: lexical only
-                    from katrag.query.retriever import search as retrieve
-                    hits = retrieve(conn, question, limit=8)
-            except Exception:
-                # Any error → fallback to lexical
-                from katrag.query.retriever import search as retrieve
-                hits = retrieve(conn, question, limit=8)
-
-            conn.close()
-
-            if not hits and not structured_context:
-                answer_text = (
-                    "ไม่พบข้อมูลที่เกี่ยวข้องกับคำถามนี้ในฐานข้อมูล\n\n"
-                    "ลองระบุชื่อหลักสูตร (เช่น IT, DSBA, AIT, BIT) และปี พ.ศ. "
-                    "หรือถามให้เจาะจงขึ้น เช่น 'หลักสูตร DSBA เรียนกี่หน่วยกิต'"
-                )
-            else:
-                # ── ตัดหลักฐานซ้ำหน้าเดียวกัน ──
-                # หลาย chunk อาจอยู่หน้าเดียวกัน ถ้าอ้างซ้ำจะเปลือง citation slot
-                # และทำให้ precision ตก โดยไม่ได้เพิ่มข้อมูลใหม่
-                _seen_pages: set[tuple[str, int]] = set()
-                _deduped = []
-                for h in hits:
-                    key = (getattr(h, "document_id", "") or "", h.page_number)
-                    if key in _seen_pages:
-                        continue
-                    _seen_pages.add(key)
-                    _deduped.append(h)
-                hits = _deduped
-
-                # ── ตัดหลักฐานที่คะแนนต่ำกว่าอันดับหนึ่งมาก (adaptive cutoff) ──
-                # คะแนน hybrid มักมี "cliff" ชัดเจนระหว่างหน้าที่เกี่ยวจริงกับหน้าอื่น
-                # เช่น 0.020 / 0.019 / 0.018 / 0.018 แล้วตกเป็น 0.008
-                # การคืนครบ 10 หน้าทุกครั้งทำให้ citation precision ตกโดยไม่จำเป็น
-                # จึงเก็บเฉพาะหน้าที่คะแนน >= อันดับหนึ่ง × RATIO
-                _CUTOFF_RATIO = 0.55
-                _MIN_EVIDENCE = 3       # ต้องมีหลักฐานพอให้ LLM เรียบเรียง
-                if hits:
-                    _top = max(getattr(h, "score", 0.0) or 0.0 for h in hits)
-                    if _top > 0:
-                        _kept = [
-                            h for h in hits
-                            if (getattr(h, "score", 0.0) or 0.0) >= _top * _CUTOFF_RATIO
-                        ]
-                        if len(_kept) >= _MIN_EVIDENCE:
-                            hits = _kept
-                        else:
-                            hits = hits[:_MIN_EVIDENCE]
-
-                # สร้าง context — เริ่มด้วย structured data (ถ้ามี) ในฐานะหลักฐานหลัก
-                context_parts = []
-                if structured_context:
-                    context_parts.append(f"[ข้อมูลจากฐานข้อมูลหลักสูตร — เชื่อถือได้ ครบถ้วน]:\n{structured_context}")
-                for i, hit in enumerate(hits, 1):
-                    heading = hit.heading or "ไม่มีหัวข้อ"
-                    ver = f"{hit.program} {hit.curriculum_year}".strip()
-                    snippet = hit.text[:500].strip()
-                    context_parts.append(f"[{i}] ({heading} — {ver}, หน้า {hit.page_number}):\n{snippet}")
-                    cite_id = f"cite-{i:03d}"
-                    # document_id ต้องเป็นเอกสารต้นทางจริง ไม่ใช่ chunk_id
-                    # เพื่อให้ตรวจย้อนกลับไปหน้าใน PDF ได้ และวัด citation accuracy ได้
-                    doc_id = getattr(hit, "document_id", "") or ""
-                    citations.append(CitationItem(
-                        citation_id=cite_id,
-                        document_id=doc_id,
-                        page=hit.page_number,
-                        heading=heading,
-                    ))
-                    # เก็บลง store เพื่อให้ GET /pages/{citation_id} ใช้งานได้
-                    app.state.citations_store[cite_id] = {
-                        "citation_id": cite_id,
-                        "document_id": doc_id,
-                        "chunk_id": hit.chunk_id,
-                        "page": hit.page_number,
-                        "heading": heading,
-                        "bbox": None,
-                        "page_width": 0.0,
-                        "page_height": 0.0,
-                        "chunk_text": hit.text[:1000],
+        if selected_program not in VALID_PROGRAMS:
+            raise HTTPException(
+                status_code=422,
+                detail=[
+                    {
+                        "loc": ["body", "program"],
+                        "msg": (
+                            "ต้องเลือกหลักสูตรก่อนถาม — ค่าที่รับได้: "
+                            + ", ".join(sorted(VALID_PROGRAMS))
+                        ),
+                        "type": "value_error",
                     }
-                    if hit.program and hit.curriculum_year:
-                        ver_label = f"{hit.program} {hit.curriculum_year} ({hit.edition_status})"
-                        if ver_label not in versions_resolved:
-                            versions_resolved.append(ver_label)
+                ],
+            )
 
-                context = "\n\n".join(context_parts)
-
-                # ── ถ้าคำตอบมาจาก structured path ให้ citation ชี้หน้าต้นทางของ
-                # รายวิชาที่ใช้ตอบ แทน chunk ที่ retrieval ดึงมา (ซึ่งอาจไม่ใช่หน้าที่ให้คำตอบ)
-                if structured_codes and structured_version_id is not None:
-                    try:
-                        from katrag.query.structured_query import source_pages_for_codes
-
-                        conn3 = sqlite3.connect(str(db_path))
-                        src_pages = source_pages_for_codes(
-                            conn3, structured_codes, structured_version_id, limit=8
-                        )
-                        conn3.close()
-                        if src_pages:
-                            citations = []
-                            app.state.citations_store = getattr(
-                                app.state, "citations_store", {}
-                            )
-                            for i, (doc_id, page_no, head) in enumerate(src_pages, 1):
-                                cid = f"cite-{i:03d}"
-                                citations.append(CitationItem(
-                                    citation_id=cid,
-                                    document_id=doc_id,
-                                    page=page_no,
-                                    heading=head or "ตารางรายวิชา/แผนการศึกษา",
-                                ))
-                                app.state.citations_store[cid] = {
-                                    "citation_id": cid,
-                                    "document_id": doc_id,
-                                    "page": page_no,
-                                    "heading": head or "ตารางรายวิชา/แผนการศึกษา",
-                                    "bbox": None,
-                                    "page_width": 0.0,
-                                    "page_height": 0.0,
-                                    "chunk_text": "",
-                                }
-                    except Exception:
-                        pass
-
-                # ── Short-circuit: คำถามรายวิชา/แผน ที่ตอบจากตาราง structured ครบแล้ว ──
-                # คืน context ตรง ๆ ไม่ให้ LLM reformat (กันตกหล่นวิชาเลือก/ตัดคำตอบ)
-                _direct_intents = {
-                    "year_sem", "all_courses", "plan_summary", "cross_version",
-                    "topic_courses", "topic_semantic", "prerequisite",
-                }
-
-                # ── ตรวจว่าเป็น "reasoning question" (ถามว่าได้ไหม/ควรไหม/เป็นไปได้ไหม) ──
-                # คำถามแบบนี้ต้องให้ LLM วิเคราะห์ ไม่ short-circuit
-                _reasoning_markers = [
-                    "ได้ไหม", "ได้มั้ย", "ได้หรือไม่", "ได้รึเปล่า",
-                    "ควรไหม", "ควรมั้ย", "ดีไหม", "เหมาะไหม",
-                    "เป็นไปได้ไหม", "เป็นไปได้มั้ย", "ทำได้ไหม",
-                    "ลงได้ไหม", "เรียนได้ไหม", "สมัครได้ไหม",
-                    "จำเป็นไหม", "จำเป็นมั้ย", "ต้องไหม",
-                    "ทำไม", "เพราะอะไร", "เหตุผล",
-                    "แนะนำ", "ข้อดี", "ข้อเสีย", "เปรียบเทียบ",
-                ]
-                _is_reasoning = any(m in question for m in _reasoning_markers)
-
-                _use_direct = (
-                    bool(structured_context)
-                    and structured_intent in _direct_intents
-                    and not _is_reasoning
+        db_path = _db_path()
+        try:
+            result = answer_question(
+                db_path,
+                question,
+                selected_program,
+                dense_index=_get_dense_index(app, db_path),
+                course_index=_get_course_index(app, db_path),
+                llm=_get_llm(app),
+            )
+            answer_text = result.answer
+            citations = [
+                CitationItem(
+                    citation_id=c.citation_id,
+                    document_id=c.document_id,
+                    page=c.page,
+                    heading=c.heading,
                 )
-
-                if _use_direct:
-                    answer_text = structured_context
-                else:
-                    # เรียก Typhoon LLM
-                    try:
-                        from katrag.query.typhoon_llm import TyphoonLLM
-                        from dotenv import load_dotenv
-                        load_dotenv(pathlib.Path(__file__).resolve().parent.parent.parent / ".env")
-                        llm = TyphoonLLM()
-
-                        # ── Reasoning question: เสริม context + prompt ที่อนุญาตวิเคราะห์ ──
-                        if _is_reasoning and structured_context:
-                            # เสริม prerequisite ของวิชาที่กล่าวถึง (ถ้ายังไม่มีใน context)
-                            if "prerequisite" not in structured_intent:
-                                try:
-                                    from katrag.query.structured_query import try_prerequisite
-
-                                    conn2 = sqlite3.connect(str(db_path))
-                                    # require_intent=False: คำถามเชิงวิเคราะห์อย่าง
-                                    # "ลงวิชา X ตอนปีสองได้ไหม" ไม่มีคำว่า "ต้องผ่าน"
-                                    # แต่ยังต้องรู้ prerequisite เพื่อตอบให้ถูก
-                                    pr = try_prerequisite(conn2, question, require_intent=False)
-                                    conn2.close()
-                                    if pr.matched:
-                                        context = f"{context}\n\n[ข้อมูลวิชาบังคับก่อน]:\n{pr.context}"
-                                except Exception:
-                                    pass
-
-                            prompt = (
-                                "คุณเป็นที่ปรึกษาหลักสูตรของ KMITL คณะเทคโนโลยีสารสนเทศ "
-                                "ตอบเป็นภาษาไทย กระชับ ให้เหตุผลประกอบคำตอบ\n\n"
-                                "แนวทางการตอบ:\n"
-                                "- ตอบว่า 'ได้' หรือ 'ไม่ได้' ก่อน แล้วอธิบายเหตุผล\n"
-                                "- วิเคราะห์จากข้อมูล: วิชาบังคับก่อน (prerequisite), ภาคการศึกษาที่เปิดสอน, "
-                                "แขนง/กลุ่มวิชาเลือก\n"
-                                "- ถ้าคำตอบแตกต่างตามแขนง/เงื่อนไข ให้แยกบอกแต่ละกรณี\n"
-                                "- อ้างอิงข้อมูลจากหลักฐาน [n]\n"
-                                "- ถ้าข้อมูลไม่พอสรุป ให้บอกตามตรงว่า 'ไม่สามารถยืนยันได้จากข้อมูลที่มี'\n\n"
-                                f"== หลักฐาน ==\n{context}\n\n"
-                                f"== คำถาม ==\n{question}\n\n"
-                                "== คำตอบ (ตอบว่าได้/ไม่ได้ก่อน แล้วอธิบาย) ==\n"
-                            )
-                        else:
-                            prompt = (
-                                "คุณเป็นผู้ช่วยตอบคำถามเกี่ยวกับหลักสูตรของ KMITL "
-                                "ใช้เฉพาะข้อมูลจากหลักฐานด้านล่างในการตอบ ตอบเป็นภาษาไทย ตรงประเด็นกับคำถาม\n"
-                                "แนวทางการตอบ:\n"
-                                "- ตอบเฉพาะสิ่งที่ถาม อย่าเพิ่มหมายเหตุหรือรายการที่ไม่ได้ถาม\n"
-                                "- เมื่อระบุรายวิชา ให้ใส่ทั้งชื่อภาษาไทยและชื่อภาษาอังกฤษ (ในวงเล็บ) จำนวนหน่วยกิต และชั้นปี/ภาคที่เรียนถ้ามีในหลักฐาน\n"
-                                "- ถ้าคำถามให้แจกแจงรายวิชา ให้ระบุครบทุกวิชาที่พบในหลักฐาน ไม่ซ้ำ\n"
-                                "- ระบุหมายเลขหลักฐาน [n] ที่ใช้อ้างอิง\n"
-                                "- ถ้าหลักฐานไม่มีข้อมูลเพียงพอ ให้บอกตามตรงว่าไม่พบข้อมูล\n\n"
-                                f"== หลักฐาน ==\n{context}\n\n"
-                                f"== คำถาม ==\n{question}\n\n"
-                                "== คำตอบ ==\n"
-                            )
-                        # max_tokens คุมเวลา generate ของโมเดล 30B โดยตรง —
-                        # 3000 token ทำให้คำถามแผนเรียนใช้เวลา ~85s ลดลงเป็น 1500
-                        # (พอสำหรับแผนทั้งปี) ส่วนคำถามทั่วไป 700 (ตอบกระชับ)
-                        max_tok = 1500 if structured_context else 700
-                        answer_text = llm.generate(prompt, max_tokens=max_tok)
-
-                        # Postprocess: dedup + backfill
-                        from katrag.query.completeness import postprocess_answer
-                        evidence_texts = [h.text for h in hits]
-                        answer_text = postprocess_answer(answer_text, evidence_texts, question)
-                    except Exception as llm_exc:
-                        # LLM ล้มเหลว → ตอบจาก chunks ตรง ๆ (fallback)
-                        answer_text = (
-                            f"(ระบบสรุปคำตอบด้วย LLM ไม่พร้อมใช้งาน: {type(llm_exc).__name__}: {llm_exc})\n\n"
-                            f"ข้อมูลที่เกี่ยวข้องที่สุดจากฐานข้อมูล:\n\n{context}"
-                        )
+                for c in result.citations
+            ]
+            versions_resolved = result.versions_resolved
+            # เก็บ citation ไว้ให้ GET /pages/{citation_id} เรียกดูได้
+            for c in result.citations:
+                app.state.citations_store[c.citation_id] = {
+                    "citation_id": c.citation_id,
+                    "document_id": c.document_id,
+                    "page": c.page,
+                    "heading": c.heading,
+                    "bbox": None,
+                    "page_width": 0.0,
+                    "page_height": 0.0,
+                    "chunk_text": c.chunk_text,
+                }
         except Exception as exc:
             answer_text = f"เกิดข้อผิดพลาด: {type(exc).__name__}: {exc}"
+            citations = []
+            versions_resolved = []
 
         elapsed = time.time() - start_time
 
-        # ── บันทึก trace ──
-        trace_data = {
+        app.state.trace_store[request_id] = {
             "request_id": request_id,
             "question": question,
             "question_level": "L1",
             "versions_resolved": "|".join(versions_resolved),
-            "evidence_nodes": 0,
-            "citations_sent": 0,
-            "citations_passed": 0,
+            "evidence_nodes": len(citations),
+            "citations_sent": len(citations),
+            "citations_passed": len(citations),
             "citations_removed": 0,
             "unsupported_claims": 0,
             "answer_generation_time_seconds": elapsed,
@@ -597,7 +315,6 @@ def create_app(
             "cache_hit": False,
             "created_at_ns": time.time_ns(),
         }
-        app.state.trace_store[request_id] = trace_data
 
         return AskResponse(
             request_id=request_id,
@@ -685,11 +402,8 @@ def create_app(
         return TraceResponse(**trace_data)
 
     # ── Static files: serve web/ directory at root ──────────────────
-    import pathlib
-    web_dir = pathlib.Path(__file__).resolve().parent.parent.parent / "web"
+    web_dir = _PROJECT_ROOT / "web"
     if web_dir.is_dir():
-        from fastapi.staticfiles import StaticFiles
-        from fastapi.responses import FileResponse
 
         @app.get("/")
         async def serve_index():

@@ -25,7 +25,9 @@ class TyphoonLLM:
         key = api_key or os.environ.get("TYPHOON_API_KEY", "")
         if not key:
             raise AnswerGenerationError("TYPHOON_API_KEY not set")
-        self._client = OpenAI(api_key=key, base_url=base_url)
+        # timeout 60s ต่อคำขอ กันหน้าเว็บหมุนค้างถาวรเมื่อ API ช้า/ไม่ตอบ
+        # (โมเดล 30B บน cloud อาจใช้เวลาหลายสิบวินาทีเมื่อ max_tokens สูง)
+        self._client = OpenAI(api_key=key, base_url=base_url, timeout=60.0, max_retries=1)
         self._model = model
 
     def generate(self, prompt: str, max_tokens: int = 2048) -> str:

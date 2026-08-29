@@ -8,7 +8,7 @@
 </head>
 <body>
     <header class="header">
-        <h1>KatRAG</h1>
+        <h1>Jingjok-Thorius</h1>
         <p class="subtitle">ระบบถาม-ตอบหลักสูตร IT KMITL</p>
     </header>
 
@@ -17,15 +17,18 @@
         <section class="ask-section">
             <form id="ask-form" aria-label="ฟอร์มถามคำถาม">
                 <div class="program-selector">
-                    <label for="program-select">หลักสูตร:</label>
-                    <select id="program-select">
-                        <option value="">ทุกหลักสูตร (ระบุในคำถามเอง)</option>
-                        <option value="DSBA">DSBA — วิทยาการข้อมูลและการวิเคราะห์เชิงธุรกิจ</option>
+                    <label for="program-select">หลักสูตรของคุณ:</label>
+                    <select id="program-select" required aria-describedby="program-hint">
+                        <option value="" disabled selected>— เลือกหลักสูตร —</option>
                         <option value="IT">IT — เทคโนโลยีสารสนเทศ</option>
+                        <option value="DSBA">DSBA — วิทยาการข้อมูลและการวิเคราะห์เชิงธุรกิจ</option>
                         <option value="AIT">AIT — เทคโนโลยีปัญญาประดิษฐ์</option>
                         <option value="AITBA">AITBA — ป.โท/เอก ปัญญาประดิษฐ์ทางธุรกิจ</option>
                         <option value="BIT">BIT — เทคโนโลยีสารสนเทศทางธุรกิจ (หลักสูตรเก่า)</option>
                     </select>
+                    <small id="program-hint" class="program-hint">
+                        แต่ละหลักสูตรมีรายวิชาและแผนการเรียนต่างกัน จึงต้องเลือกก่อนถาม
+                    </small>
                 </div>
                 <label for="question-input" class="sr-only">คำถาม</label>
                 <textarea

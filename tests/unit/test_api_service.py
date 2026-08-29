@@ -36,7 +36,9 @@ class TestAskEndpoint:
 
     def test_valid_question(self, client: TestClient) -> None:
         """คำถามปกติ — 200 พร้อม request_id."""
-        resp = client.post("/ask", json={"question": "วิชา IT มีอะไรบ้าง?"})
+        resp = client.post(
+            "/ask", json={"question": "วิชา IT มีอะไรบ้าง?", "program": "IT"}
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert "request_id" in data
@@ -46,13 +48,30 @@ class TestAskEndpoint:
 
     def test_minimal_question(self, client: TestClient) -> None:
         """คำถาม 1 อักขระ — ขอบล่าง."""
-        resp = client.post("/ask", json={"question": "a"})
+        resp = client.post("/ask", json={"question": "a", "program": "IT"})
         assert resp.status_code == 200
 
     def test_max_length_question(self, client: TestClient) -> None:
         """คำถาม 2000 อักขระ — ขอบบน."""
-        resp = client.post("/ask", json={"question": "x" * 2000})
+        resp = client.post("/ask", json={"question": "x" * 2000, "program": "IT"})
         assert resp.status_code == 200
+
+    def test_missing_program_returns_422(self, client: TestClient) -> None:
+        """ไม่ส่ง program — 422 เพราะต้องเลือกหลักสูตรก่อนถาม."""
+        resp = client.post("/ask", json={"question": "มีวิชาอะไรบ้าง"})
+        assert resp.status_code == 422
+        locs = [d["loc"] for d in resp.json()["detail"]]
+        assert any("program" in loc for loc in locs)
+
+    def test_unknown_program_returns_422(self, client: TestClient) -> None:
+        """program ที่ไม่มีในระบบ — 422 พร้อมบอกค่าที่รับได้."""
+        resp = client.post(
+            "/ask", json={"question": "มีวิชาอะไรบ้าง", "program": "XYZ"}
+        )
+        assert resp.status_code == 422
+        assert any(
+            "program" in d["loc"] for d in resp.json()["detail"]
+        )
 
     def test_empty_question_returns_422(self, client: TestClient) -> None:
         """คำถามว่าง — 422 (R19.3)."""
@@ -93,14 +112,16 @@ class TestAskEndpoint:
 
     def test_response_has_versions_resolved(self, client: TestClient) -> None:
         """Response ต้องมี versions_resolved field."""
-        resp = client.post("/ask", json={"question": "test question"})
+        resp = client.post(
+            "/ask", json={"question": "test question", "program": "IT"}
+        )
         data = resp.json()
         assert "versions_resolved" in data
         assert isinstance(data["versions_resolved"], list)
 
     def test_response_records_trace(self, app, client: TestClient) -> None:
         """POST /ask ต้องบันทึก trace ที่ดึงได้ภายหลัง."""
-        resp = client.post("/ask", json={"question": "trace test"})
+        resp = client.post("/ask", json={"question": "trace test", "program": "IT"})
         request_id = resp.json()["request_id"]
 
         trace_resp = client.get(f"/traces/{request_id}")
