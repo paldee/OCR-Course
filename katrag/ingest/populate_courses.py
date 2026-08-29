@@ -259,61 +259,90 @@ def populate(db_path: Path | str) -> dict[str, int]:
     for vid in pages_by_version:
         pages_by_version[vid].sort(key=lambda x: x[0])
 
+    # แยกการเก็บ category กับ type เพราะมีลำดับความน่าเชื่อถือต่างกัน:
+    #   category: carry-forward ทำงานดี (หมวดวิชาเป็นบล็อกใหญ่ต่อเนื่องหลายหน้า)
+    #   type: carry-forward ทำ "วิชาเลือก" จากหน้าโครงสร้างรั่วไปทับวิชาบังคับ
+    #         ในหน้าแผนการเรียน จึงต้องใช้สัญญาณจากหน้าแผนเป็นหลัก
+    #
+    # หน้าแผนการเรียน (มี year/sem marker) ประกอบด้วยวิชาบังคับเป็นหลัก
+    # และวิชาเลือกจะมี header "วิชาเลือก" ชัดเจนบนหน้าเดียวกัน — ดังนั้น
+    # บนหน้าแผน ถ้าไม่มี type marker ก่อนรหัสวิชา → default "บังคับ"
+    #
+    # เก็บ type แยกเป็น 2 ระดับความมั่นใจ:
+    #   type_from_plan  : มาจากหน้าแผน (แม่นสุด — ทับได้)
+    #   type_from_carry : มาจาก carry-forward หน้าโครงสร้าง (ใช้เป็น fallback)
+    cat_map: dict[tuple[int, str], str] = {}
+    type_from_plan: dict[tuple[int, str], str] = {}
+    type_from_carry: dict[tuple[int, str], str] = {}
+
     for vid, vpages in pages_by_version.items():
         carry_cat: str | None = None
         carry_type: str | None = None
 
         for pg, ptext in vpages:
-            cat_markers: list[tuple[int, str]] = [
+            cat_markers = [
                 (m.start(), _CATEGORY_NORM.get(m.group(1), m.group(1)))
                 for m in _CATEGORY_RE.finditer(ptext)
             ]
-            type_markers: list[tuple[int, str]] = [
+            type_markers = [
                 (m.start(), _TYPE_NORM.get(m.group(1), m.group(1)))
                 for m in _TYPE_RE.finditer(ptext)
             ]
-
             codes_on_page = _CODE_RE.findall(ptext)
             is_list_page = len(codes_on_page) >= 3
+            is_plan_page = bool(_YEAR_SEM_RE.search(ptext))
 
-            # อัปเดต carry จาก header ที่พบในหน้าที่มีรหัสวิชา >= 3
-            if cat_markers and is_list_page:
+            if cat_markers:
                 carry_cat = cat_markers[-1][1]
-            if type_markers and is_list_page:
+            if type_markers:
                 carry_type = type_markers[-1][1]
 
             if not is_list_page:
-                # หน้าที่มีรหัส < 3 แต่มี header: อัปเดต carry เฉย ๆ
-                if cat_markers:
-                    carry_cat = cat_markers[-1][1]
-                if type_markers:
-                    carry_type = type_markers[-1][1]
                 continue
 
             for cm in _CODE_RE.finditer(ptext):
                 pos = cm.start()
                 code = cm.group(1)
-                # หา category ใกล้สุดก่อน pos ในหน้านี้ → fallback carry
+                key = (vid, code)
+
+                # ── category ── (carry-forward ปกติ)
                 page_cat: str | None = None
                 for mpos, cval in cat_markers:
                     if mpos < pos:
                         page_cat = cval
                     else:
                         break
-                cat_val = page_cat or carry_cat
+                cval = page_cat or carry_cat
+                if cval and key not in cat_map:
+                    cat_map[key] = cval
 
+                # ── type marker ก่อน pos บนหน้านี้ ──
                 page_type: str | None = None
                 for mpos, tval in type_markers:
                     if mpos < pos:
                         page_type = tval
                     else:
                         break
-                type_val = page_type or carry_type
 
-                if cat_val or type_val:
-                    key = (vid, code)
-                    if key not in code_cat_type:
-                        code_cat_type[key] = (cat_val, type_val)
+                if is_plan_page:
+                    # หน้าแผน: type จาก marker บนหน้า ไม่งั้น default "บังคับ"
+                    resolved = page_type or "บังคับ"
+                    # หน้าแผนแม่นสุด — เก็บค่าแรกที่เจอจากหน้าแผน
+                    if key not in type_from_plan:
+                        type_from_plan[key] = resolved
+                else:
+                    # หน้าโครงสร้าง: ใช้ marker บนหน้า/ carry เป็น fallback
+                    resolved = page_type or carry_type
+                    if resolved and key not in type_from_carry:
+                        type_from_carry[key] = resolved
+
+    # รวม: category + type (plan ชนะ carry)
+    code_cat_type: dict[tuple[int, str], tuple[str | None, str | None]] = {}
+    all_keys = set(cat_map) | set(type_from_plan) | set(type_from_carry)
+    for key in all_keys:
+        cat_val = cat_map.get(key)
+        type_val = type_from_plan.get(key) or type_from_carry.get(key)
+        code_cat_type[key] = (cat_val, type_val)
 
     # ดึง chunks ที่มีรหัสวิชา
     rows = conn.execute("""

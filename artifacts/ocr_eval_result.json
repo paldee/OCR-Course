@@ -151,7 +151,7 @@
       "code_recall": 0.92,
       "code_precision": 0.1257,
       "code_f1": 0.2212,
-      "field_macro_accuracy": 0.9503,
+      "field_macro_accuracy": 0.9627,
       "fields": {
         "name_th": {
           "matched": 45,
@@ -184,9 +184,9 @@
           "accuracy": 0.8478
         },
         "type": {
-          "matched": 39,
+          "matched": 43,
           "compared": 46,
-          "accuracy": 0.8478
+          "accuracy": 0.9348
         }
       },
       "category_recall": {
@@ -217,7 +217,7 @@
       "code_recall": 0.9821,
       "code_precision": 1.0,
       "code_f1": 0.991,
-      "field_macro_accuracy": 0.8545,
+      "field_macro_accuracy": 0.9351,
       "fields": {
         "name_th": {
           "matched": 51,
@@ -250,9 +250,9 @@
           "accuracy": 0.8727
         },
         "type": {
-          "matched": 19,
+          "matched": 50,
           "compared": 55,
-          "accuracy": 0.3455
+          "accuracy": 0.9091
         }
       },
       "category_recall": {
@@ -280,7 +280,7 @@
       "code_recall": 0.9375,
       "code_precision": 1.0,
       "code_f1": 0.9677,
-      "field_macro_accuracy": 0.9124,
+      "field_macro_accuracy": 0.9714,
       "fields": {
         "name_th": {
           "matched": 67,
@@ -313,9 +313,9 @@
           "accuracy": 0.9467
         },
         "type": {
-          "matched": 41,
+          "matched": 72,
           "compared": 75,
-          "accuracy": 0.5467
+          "accuracy": 0.96
         }
       },
       "category_recall": {
@@ -347,7 +347,7 @@
       "code_recall": 0.9697,
       "code_precision": 0.3048,
       "code_f1": 0.4638,
-      "field_macro_accuracy": 0.9114,
+      "field_macro_accuracy": 0.9412,
       "fields": {
         "name_th": {
           "matched": 87,
@@ -380,9 +380,9 @@
           "accuracy": 1.0
         },
         "type": {
-          "matched": 63,
+          "matched": 83,
           "compared": 96,
-          "accuracy": 0.6562
+          "accuracy": 0.8646
         }
       },
       "category_recall": {
