@@ -244,10 +244,17 @@ def create_app(
                     detect_plan_summary_intent,
                     try_prerequisite,
                     detect_prerequisite_intent,
+                    try_program_name,
+                    detect_program_name_intent,
                     detect_year as _sq_detect_year,
                 )
-                # ลำดับ: prerequisite → cross-version → plan summary → รายวิชาตามปี → หัวข้อวิชา
-                if detect_prerequisite_intent(question):
+                # ลำดับ: ชื่อหลักสูตร → prerequisite → cross-version → plan summary
+                #        → รายวิชาตามปี → หัวข้อวิชา
+                if detect_program_name_intent(question):
+                    sr = try_program_name(conn, question)
+                    if not sr.matched:
+                        sr = try_structured_answer(conn, question)
+                elif detect_prerequisite_intent(question):
                     sr = try_prerequisite(conn, question)
                     if not sr.matched:
                         sr = try_structured_answer(conn, question)
@@ -532,8 +539,10 @@ def create_app(
                                 f"== คำถาม ==\n{question}\n\n"
                                 "== คำตอบ ==\n"
                             )
-                        # แผนการเรียน/รายวิชาเยอะ → ต้องการ token มากขึ้นกันคำตอบขาด
-                        max_tok = 3000 if structured_context else 1024
+                        # max_tokens คุมเวลา generate ของโมเดล 30B โดยตรง —
+                        # 3000 token ทำให้คำถามแผนเรียนใช้เวลา ~85s ลดลงเป็น 1500
+                        # (พอสำหรับแผนทั้งปี) ส่วนคำถามทั่วไป 700 (ตอบกระชับ)
+                        max_tok = 1500 if structured_context else 700
                         answer_text = llm.generate(prompt, max_tokens=max_tok)
 
                         # Postprocess: dedup + backfill

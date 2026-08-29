@@ -771,3 +771,102 @@ def try_cross_version_diff(conn: sqlite3.Connection, question: str) -> Structure
         lines.append(f"- {th}{en_s} [รหัส {code}]")
 
     return StructuredResult(True, "\n".join(lines), label, "cross_version")
+
+
+# ── Program name intent (ชื่อหลักสูตรเต็ม ไทย/อังกฤษ) ──────────────────
+# คำถาม "หลักสูตร X ชื่อเต็มภาษาอังกฤษว่าอะไร" เป็น metadata ของเล่ม ไม่ใช่
+# รายวิชา — hybrid/semantic retrieval มักพลาดเพราะหน้าปก/หน้าข้อมูลทั่วไป
+# มีคำน้อยและไม่ตรง embedding ของคำถาม จึงดึงตรงจาก chunk หน้าแรก ๆ ที่มี
+# "ชื่อภาษาอังกฤษ/ชื่อหลักสูตร" + ข้อความภาษาอังกฤษ
+
+_PROGRAM_NAME_KW = (
+    "ชื่อหลักสูตร", "ชื่อเต็ม", "ชื่อปริญญา", "ชื่อภาษาอังกฤษ",
+    "ชื่ออังกฤษ", "ชื่อภาษาไทย", "full name", "program name",
+)
+
+
+def detect_program_name_intent(question: str) -> bool:
+    """ถามชื่อหลักสูตร/ชื่อปริญญา (ไม่ใช่ชื่อรายวิชา).
+
+    ต้องมีคำว่า 'หลักสูตร' หรือ 'ปริญญา' ประกอบ เพื่อไม่ชนกับคำถามชื่อ 'วิชา'
+    """
+    q = question.lower()
+    if "วิชา" in question and "หลักสูตร" not in question:
+        return False  # ถามชื่อวิชา ไม่ใช่ชื่อหลักสูตร
+    has_name_kw = any(kw.lower() in q for kw in _PROGRAM_NAME_KW)
+    has_program_ctx = any(w in question for w in ["หลักสูตร", "ปริญญา", "สาขา"])
+    return has_name_kw and has_program_ctx
+
+
+def try_program_name(conn: sqlite3.Connection, question: str) -> StructuredResult:
+    """ดึงชื่อหลักสูตร (ไทย/อังกฤษ) จากหน้าข้อมูลทั่วไปของเล่ม.
+
+    ค้น chunk ที่มี 'ชื่อภาษาอังกฤษ'/'ชื่อหลักสูตร' + ข้อความละติน ในหน้าต้นเล่ม
+    (โครงสร้าง มคอ.2 วางข้อมูลนี้ในหมวดที่ 1 หน้า 1-6)
+    """
+    conn.row_factory = sqlite3.Row
+    if not detect_program_name_intent(question):
+        return StructuredResult(False, "", "", "none")
+
+    program = detect_program(question)
+    year = detect_year(question)  # พ.ศ.
+
+    # หา version ที่ตรง (program + year ถ้าระบุ ไม่งั้น current)
+    vid = None
+    version_label = program or ""
+    if program:
+        rows = conn.execute(
+            "SELECT version_id, curriculum_year, edition_status "
+            "FROM curriculum_version WHERE program=? ORDER BY curriculum_year DESC",
+            (program,),
+        ).fetchall()
+        for r in rows:
+            if year and r["curriculum_year"] == year:
+                vid = r["version_id"]
+                version_label = f"{program} {r['curriculum_year']}"
+                break
+        if vid is None and rows:
+            # ไม่ระบุปี → เอา current (ปีล่าสุด)
+            vid = rows[0]["version_id"]
+            version_label = f"{program} {rows[0]['curriculum_year']}"
+
+    # ค้น chunk ที่มี keyword ชื่อหลักสูตร + ข้อความละติน ในหน้าต้นเล่ม (<=10)
+    sql = (
+        "SELECT chunk_id, page_number, text FROM chunk "
+        "WHERE page_number <= 10 AND is_boilerplate = 0 "
+        "AND (text LIKE '%ชื่อภาษาอังกฤษ%' OR text LIKE '%ชื่อหลักสูตร%' "
+        "     OR text LIKE '%Bachelor%' OR text LIKE '%Master%' OR text LIKE '%Doctor%') "
+    )
+    params: list = []
+    if vid is not None:
+        sql += "AND version_id = ? "
+        params.append(vid)
+    sql += "ORDER BY page_number LIMIT 4"
+    rows = conn.execute(sql, params).fetchall()
+    if not rows:
+        return StructuredResult(False, "", "", "none")
+
+    # ประกอบ context — เอาบรรทัดที่มีชื่อไทย/อังกฤษของหลักสูตร
+    lines: list[str] = []
+    for r in rows:
+        for ln in r["text"].split("\n"):
+            s = ln.strip()
+            if not s:
+                continue
+            if any(kw in s for kw in ("ชื่อหลักสูตร", "ชื่อภาษา", "ชื่ออังกฤษ", "ชื่อปริญญา",
+                                       "Bachelor", "Master", "Doctor", "B.Sc", "M.Sc", "Ph.D")):
+                lines.append(f"(หน้า {r['page_number']}) {s}")
+
+    if not lines:
+        return StructuredResult(False, "", "", "none")
+
+    # ตัดซ้ำ คงลำดับ
+    seen: set[str] = set()
+    uniq = [x for x in lines if not (x in seen or seen.add(x))]
+    context = "ข้อมูลชื่อหลักสูตรที่พบในเล่ม:\n" + "\n".join(uniq[:12])
+
+    return StructuredResult(
+        matched=True, context=context,
+        version_label=version_label or "หลักสูตร",
+        intent="program_name", version_id=vid,
+    )
