@@ -45,6 +45,80 @@ def detect_program(question: str) -> str | None:
     return None
 
 
+# prefix รหัสวิชา 5 หลัก → program (จากข้อมูลจริงในฐาน, current versions)
+_CODE_PREFIX_PROGRAM = {
+    "06026": "DSBA", "06066": "DSBA",
+    "06016": "IT", "06017": "IT",
+    "06036": "BIT", "96641": "BIT", "96644": "BIT",
+    "06046": "AIT",
+    "06048": "AITBA",
+}
+# หลักสูตรหลักของคณะ (ใช้เมื่อเดาไม่ได้จริง ๆ) — คณะ IT
+_DEFAULT_PROGRAM = "IT"
+
+
+def infer_program(conn: sqlite3.Connection, question: str) -> tuple[str | None, str]:
+    """เดา program จากคำถามเมื่อผู้ใช้ไม่ระบุ — คืน (program, วิธีที่เดา).
+
+    ลำดับความมั่นใจ:
+      1. ชื่อหลักสูตรตรง ๆ ในคำถาม (DSBA/IT/...) — detect_program
+      2. รหัสวิชา 8 หลัก → prefix บอกหลักสูตร
+      3. ชื่อวิชาเฉพาะที่ปรากฏใน "หลักสูตรเดียว" (current) → รู้หลักสูตรนั้น
+      4. เดาไม่ได้ → คืน (None, "ambiguous") ให้ผู้เรียกตัดสินใจ default เอง
+    """
+    # 1. ชื่อหลักสูตรตรง ๆ
+    direct = detect_program(question)
+    if direct:
+        return direct, "explicit"
+
+    # 2. รหัสวิชา 8 หลัก
+    m = re.search(r"\b(\d{8})\b", question)
+    if m:
+        pfx = m.group(1)[:5]
+        prog = _CODE_PREFIX_PROGRAM.get(pfx)
+        if prog:
+            return prog, "code_prefix"
+
+    # 3. ชื่อวิชาเฉพาะ — หาว่าคำในคำถามตรงกับชื่อวิชาในหลักสูตรเดียวหรือไม่
+    #    ดึงคำเดี่ยว (อังกฤษ) + วลีไทย จากคำถามไปค้นชื่อวิชา (current versions)
+    #    ใช้คำเดี่ยวเพราะวลีเต็ม ("Data Warehouse") มักไม่ตรง substring กับชื่อ
+    #    ในฐาน ("DATA WAREHOUSING") — คำเดี่ยว "warehous" ครอบทั้งคู่
+    conn.row_factory = sqlite3.Row
+    STOP = {"วิชา", "ต้องผ่าน", "ใดก่อน", "ได้ไหม", "ตอนปี", "เรียน", "หลักสูตร",
+            "อะไร", "เท่าไร", "กี่หน่วยกิต", "มีอะไร", "data", "system", "concepts"}
+    # คำอังกฤษเดี่ยว >= 5 ตัว (ตัด s/ing ท้ายเพื่อจับ stem)
+    raw_en = re.findall(r"[A-Za-z]{5,}", question)
+    en_stems = []
+    for w in raw_en:
+        wl = w.lower()
+        if wl in STOP:
+            continue
+        # ตัด suffix ที่ทำให้ substring ไม่ตรง
+        for suf in ("ing", "es", "s"):
+            if wl.endswith(suf) and len(wl) - len(suf) >= 5:
+                wl = wl[: -len(suf)]
+                break
+        en_stems.append(wl)
+    th_terms = [t for t in re.findall(r"[\u0E00-\u0E7F]{4,}", question) if t not in STOP]
+
+    for term in sorted(en_stems + th_terms, key=len, reverse=True)[:6]:
+        if len(term) < 4:
+            continue
+        rows = conn.execute(
+            """SELECT DISTINCT cv.program
+               FROM course co JOIN curriculum_version cv ON cv.version_id=co.version_id
+               WHERE cv.edition_status='current'
+                 AND (co.name_th LIKE ? OR upper(co.name_en) LIKE upper(?))""",
+            (f"%{term}%", f"%{term}%"),
+        ).fetchall()
+        progs = {r["program"] for r in rows}
+        if len(progs) == 1:
+            return progs.pop(), "unique_course"
+
+    # 4. เดาไม่ได้
+    return None, "ambiguous"
+
+
 def detect_year(question: str) -> int | None:
     """ตรวจชั้นปี (1-4) จาก 'ปีหนึ่ง/ปีที่ 2/ปี 3'."""
     for word, n in _THAI_NUM.items():

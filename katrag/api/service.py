@@ -217,6 +217,23 @@ def create_app(
 
         # prepend program จาก dropdown (server-side — robust กว่าฝั่ง JS)
         selected_program = (body.program or "").strip().upper()
+        if not selected_program:
+            # ผู้ใช้ไม่เลือกหลักสูตร → ให้ระบบเดาเองจากคำถาม
+            # (ชื่อหลักสูตร / รหัสวิชา prefix / ชื่อวิชาเฉพาะ / default คณะ IT)
+            try:
+                import sqlite3 as _sqlite3
+                import pathlib as _pathlib
+                _dbp = _pathlib.Path(__file__).resolve().parent.parent.parent / "artifacts" / "katrag.sqlite3"
+                _conn = _sqlite3.connect(str(_dbp))
+                from katrag.query.structured_query import infer_program, _DEFAULT_PROGRAM
+                inferred, how = infer_program(_conn, question)
+                _conn.close()
+                if inferred is None:
+                    inferred, how = _DEFAULT_PROGRAM, "default"
+                selected_program = inferred
+                app.state.last_program_inference = how  # เก็บไว้ debug/trace
+            except Exception:
+                selected_program = ""
         if selected_program and selected_program not in question.upper():
             question = f"หลักสูตร {selected_program}: {question}"
 
