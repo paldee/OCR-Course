@@ -11,6 +11,9 @@ venv/
 .vscode/
 .idea/
 
+# ── Kiro spec เอกสาร (เก็บในเครื่อง ไม่ขึ้น repo) ──
+.kiro/
+
 # ── Secrets ──
 .env
 
