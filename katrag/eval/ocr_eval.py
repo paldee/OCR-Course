@@ -419,7 +419,7 @@ def build_report(
     L: list[str] = []
     A = L.append
 
-    A("# รายงานการประเมิน OCR — KatRAG-lite")
+    A("# รายงานการประเมิน OCR — Jingjok-Thorius")
     A("")
     A("ประเมิน 3 ระดับ: **page level** (วิธีสกัด/คุณภาพหน้า), **field level** ")
     A("(เทียบฟิลด์รายวิชากับ ground truth ของอาจารย์), **category level** (recall ต่อหมวดวิชา)")

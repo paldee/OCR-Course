@@ -1,4 +1,4 @@
--- KatRAG-lite schema — 19 ตารางฐาน + 1 virtual table (design §5.2)
+-- Jingjok-Thorius schema — 19 ตารางฐาน + 1 virtual table (design §5.2)
 -- provenance-first: ทุกแถวข้อมูลหลักสูตรมี provenance_id NOT NULL (R9.2)
 -- version-stamped: course / plan_slot / rule / chunk ผูก version_id NOT NULL (R10.1)
 -- content-addressed: sha256 ทุกช่องเป็น hex ตัวพิมพ์เล็ก 64 อักขระ (R1.1, R9.6)

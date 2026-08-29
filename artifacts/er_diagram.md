@@ -1,4 +1,4 @@
-# ER Diagram — KatRAG-lite Database Schema
+# ER Diagram — Jingjok-Thorius Database Schema
 
 ## Table Relationships
 

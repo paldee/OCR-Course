@@ -261,7 +261,7 @@ def build_parser() -> argparse.ArgumentParser:
     """Build the argument parser for all CLI commands."""
     parser = argparse.ArgumentParser(
         prog="katrag",
-        description="KatRAG-lite: Curriculum QA system - offline RAG for 14 PDF files",
+        description="Jingjok-Thorius: Curriculum QA system - offline RAG for 14 PDF files",
     )
     subparsers = parser.add_subparsers(dest="command", help="available commands")
 

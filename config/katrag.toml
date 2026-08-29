@@ -1,4 +1,4 @@
-# KatRAG-lite configuration — ทุกค่าที่ requirements ระบุว่า "อ่านจากไฟล์ตั้งค่า" อยู่ในไฟล์นี้
+# Jingjok-Thorius configuration — ทุกค่าที่ requirements ระบุว่า "อ่านจากไฟล์ตั้งค่า" อยู่ในไฟล์นี้
 # โหลดเป็น KatragConfig (frozen) ครั้งเดียวต่อ process
 
 [halt]                      # ใช้ร่วมกันสองที่: OCR escalation (R5.2-5.4) และ evidence hops (R14.5-14.8)

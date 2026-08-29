@@ -1,4 +1,4 @@
-"""ชนิดข้อมูลร่วมของ KatRAG-lite (design §4.1).
+"""ชนิดข้อมูลร่วมของ Jingjok-Thorius (design §4.1).
 
 ทุกชนิดเป็น frozen + slots เพื่อให้การเปรียบเทียบและการ hash เป็น deterministic
 ซึ่งจำเป็นต่อ property ด้าน determinism และ cache key ที่ต้องตรงทุกค่า

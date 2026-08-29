@@ -1,4 +1,4 @@
-# รายงานการประเมิน OCR — KatRAG-lite
+# รายงานการประเมิน OCR — Jingjok-Thorius
 
 ประเมิน 3 ระดับ: **page level** (วิธีสกัด/คุณภาพหน้า), **field level** 
 (เทียบฟิลด์รายวิชากับ ground truth ของอาจารย์), **category level** (recall ต่อหมวดวิชา)

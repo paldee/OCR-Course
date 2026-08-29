@@ -189,7 +189,7 @@ def build_report(results: list[QAResult]) -> str:
     L: list[str] = []
     A = L.append
 
-    A("# รายงานผลทดสอบคำถาม 3 ระดับ — KatRAG-lite")
+    A("# รายงานผลทดสอบคำถาม 3 ระดับ — Jingjok-Thorius")
     A("")
     A("ระบบยิงคำถามเข้า `POST /ask` โดยส่งเฉพาะ `question` + `program`")
     A("**ไม่มีการส่งเฉลยหรือคำอ้างอิงเข้าไปในระบบ/prompt** (บังคับด้วย assertion ใน `qa_eval.py`)")

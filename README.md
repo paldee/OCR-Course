@@ -1,10 +1,10 @@
-# KatRAG-lite
+# Jingjok-Thorius
 
 Curriculum QA system — offline RAG for KMITL Information Technology course documents.
 
 ## Overview
 
-KatRAG-lite is an offline, provenance-first Retrieval-Augmented Generation (RAG) system
+Jingjok-Thorius is an offline, provenance-first Retrieval-Augmented Generation (RAG) system
 designed to answer questions about KMITL's Information Technology curriculum from 14 PDF
 documents. The system runs entirely on a single machine without any network access —
 enforced at the socket level via a net guard module.

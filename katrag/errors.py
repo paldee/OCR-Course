@@ -1,4 +1,4 @@
-"""Error taxonomy ของ KatRAG-lite (design §6).
+"""Error taxonomy ของ Jingjok-Thorius (design §6).
 
 หลักการ: ทุกความล้มเหลวต้องกลายเป็นข้อมูลที่ตรวจสอบได้ ไม่ใช่ silent fallback
 error ทุกชนิดจึงพา payload ที่ระบุ "อะไรผิด ที่ไหน" ไปด้วยเสมอ

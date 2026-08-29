@@ -1,4 +1,4 @@
-"""One-command demo — แสดง end-to-end functionality ของ KatRAG-lite (R21.4-R21.8).
+"""One-command demo — แสดง end-to-end functionality ของ Jingjok-Thorius (R21.4-R21.8).
 
 ลำดับขั้นตอน:
   1. Preflight — ตรวจ engine readiness (skip ถ้า weight ไม่พร้อม)

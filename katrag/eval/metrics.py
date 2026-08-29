@@ -1,4 +1,4 @@
-"""Evaluation metrics สำหรับ KatRAG-lite.
+"""Evaluation metrics สำหรับ Jingjok-Thorius.
 
 Metrics ทั้งหมดเป็น deterministic: input เดิมให้ผลเท่ากันทุกครั้ง
 
