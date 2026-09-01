@@ -15,6 +15,7 @@ R19.9: ยุติคำขอที่เกิน 120 วินาทีพ�
 from __future__ import annotations
 
 import asyncio
+import os
 import pathlib
 import time
 import uuid
@@ -400,6 +401,31 @@ def create_app(
             )
 
         return TraceResponse(**trace_data)
+
+    # ── Warmup ตอน startup: โหลดโมเดล/ดัชนีล่วงหน้า (R: latency คำขอแรก) ──
+    # ต้นเหตุคำขอแรกช้าคือโมเดล embedding BGE-M3 (หลาย GB) ถูก lazy-load ตอน
+    # encode query แรก การ warmup ย้าย latency มาไว้ตอน server ขึ้น เพื่อให้
+    # คำขอ /ask แรกเร็วเท่าคำขอถัดไป
+    # ปิดได้ด้วย KATRAG_SKIP_WARMUP=1 (เช่น ตอน dev ที่ไม่อยากรอ)
+    @app.on_event("startup")
+    async def _warmup() -> None:
+        if os.environ.get("KATRAG_SKIP_WARMUP") == "1":
+            return
+        try:
+            db_path = _db_path()
+            # preload เวกเตอร์ dense/course เข้า app.state
+            _get_dense_index(app, db_path)
+            _get_course_index(app, db_path)
+            # สร้าง LLM client ล่วงหน้า (เบา แต่ทำให้ .env ถูกโหลดครบ)
+            _get_llm(app)
+            # จุดสำคัญ: บังคับโหลดน้ำหนัก BGE-M3 เข้า RAM/GPU ตอนนี้
+            # (นี่คือส่วนที่กินเวลาจริงของคำขอแรก)
+            from katrag.index import bge_encoder
+
+            bge_encoder.encode_one("warmup")
+        except Exception:
+            # warmup พลาดไม่ควรทำให้ server ไม่ขึ้น — ค่อย lazy-load ตามเดิม
+            pass
 
     # ── Static files: serve web/ directory at root ──────────────────
     web_dir = _PROJECT_ROOT / "web"
