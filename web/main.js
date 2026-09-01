@@ -97,8 +97,9 @@ form.addEventListener("submit", async (e) => {
 // ── Render answer ────────────────────────────────────────────────────
 
 function renderAnswer(data) {
-    // Answer text
-    answerText.textContent = data.answer || "(ไม่มีคำตอบ)";
+    // Answer text — คำตอบจาก LLM มักมี markdown (**ตัวหนา**, รายการ -, หัวข้อ)
+    // render แบบปลอดภัย: escape HTML ก่อนเสมอ แล้วค่อยแปลง markdown ชุดจำกัด
+    answerText.innerHTML = renderMarkdown(data.answer || "(ไม่มีคำตอบ)");
 
     // Version badge
     if (data.versions_resolved && data.versions_resolved.length > 0) {
@@ -208,6 +209,73 @@ document.addEventListener("keydown", (e) => {
         hideElement(pageViewer);
     }
 });
+
+// ── Minimal markdown renderer ────────────────────────────────────────
+// รองรับเฉพาะ subset ที่ LLM ใช้จริง: หัวข้อ #, ตัวหนา **, ตัวเอียง *,
+// inline code `, รายการ - / •, และเว้นบรรทัด
+// escape HTML ก่อนเสมอ เพราะข้อความคำตอบเป็น untrusted (ป้องกัน XSS)
+
+function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function renderInline(text) {
+    // text ถูก escape มาแล้ว — ปลอดภัยที่จะใส่ tag
+    return text
+        .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+        .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>")
+        .replace(/`([^`]+)`/g, "<code>$1</code>");
+}
+
+function renderMarkdown(raw) {
+    const lines = escapeHtml(raw).split("\n");
+    const html = [];
+    let inList = false;
+
+    const closeList = () => {
+        if (inList) {
+            html.push("</ul>");
+            inList = false;
+        }
+    };
+
+    for (const line of lines) {
+        const trimmed = line.trim();
+
+        if (trimmed === "") {
+            closeList();
+            continue;
+        }
+
+        // หัวข้อ: #, ##, ###
+        const heading = trimmed.match(/^(#{1,3})\s+(.*)$/);
+        if (heading) {
+            closeList();
+            const level = heading[1].length + 2; // #→h3, ##→h4, ###→h5
+            html.push(`<h${level}>${renderInline(heading[2])}</h${level}>`);
+            continue;
+        }
+
+        // รายการ: -, *, • ตามด้วยช่องว่าง
+        const bullet = trimmed.match(/^[-*•]\s+(.*)$/);
+        if (bullet) {
+            if (!inList) {
+                html.push("<ul class=\"md-list\">");
+                inList = true;
+            }
+            html.push(`<li>${renderInline(bullet[1])}</li>`);
+            continue;
+        }
+
+        // ย่อหน้าปกติ
+        closeList();
+        html.push(`<p>${renderInline(trimmed)}</p>`);
+    }
+    closeList();
+    return html.join("");
+}
 
 // ── Utility ──────────────────────────────────────────────────────────
 
