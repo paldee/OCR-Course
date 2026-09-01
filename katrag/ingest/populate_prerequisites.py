@@ -1,17 +1,24 @@
 """Populate prerequisite fields จากหน้าคำอธิบายรายวิชา.
 
-วิธีที่ 3 (block-by-code): ตัดข้อความเป็นบล็อกตรงตำแหน่ง "รหัส 8 หลัก + credit
-ในระยะ 200 ตัว" ซึ่ง = course header แน่ ๆ (ต่างจากรหัส prereq ที่ไม่มี credit ตาม)
-แต่ละบล็อก = หนึ่งรายวิชา → หา "วิชาบังคับก่อน" ภายในบล็อก → เก็บรหัส prereq
+วิธีที่ 4 (block-by-code + prereq zone): ตัดข้อความเป็นบล็อกตรงตำแหน่ง
+"รหัส 8 หลัก + credit ในระยะ 200 ตัว" ซึ่ง = course header แต่**ยกเว้น**รหัสที่ตกอยู่ใน
+"prereq zone" (ช่วงหลังคำว่า วิชาบังคับก่อน/PREREQUISITE) เพราะรหัสตรงนั้นคือรหัสของวิชา
+ที่ถูกอ้างเป็นเงื่อนไข ไม่ใช่หัวรายวิชาใหม่
 
 ปัญหาเดิม:
 1. (v1) จับรหัสตัวสุดท้ายก่อน keyword → match ผิดตัวเมื่อรหัส prereq อยู่ก่อน keyword
 2. (v2) ตัดบล็อกที่ credit → body กินรหัสวิชาถัดไป (ที่ยังไม่ถูก credit ตัดออก)
-ทั้งสองวิธีล้มเหลวกับ IT เพราะหน้าคำอธิบายรายวิชาจัดหลายวิชาต่อ chunk
+3. (v3) รหัส prereq ถูกนับเป็น course header เมื่อเอกสารวาง credit ไว้**ท้าย**บล็อก
+   (รูปแบบของ DSBA/AIT ฉบับใหม่) ทำให้บล็อกถูกตัดคาที่ "วิชาบังคับก่อน :" พอดี
+   เหลือ window ที่ไม่มีรหัสให้จับ → prerequisite_json = [] ทั้งหลักสูตร
+   เช่น DSBA 2565: `06026212 ... วิชาบังคับก่อน : 06066300 ... PREREQUISITE : 06066300 ... 3(2-2-5)`
+   รหัส 06066300 มี credit ของวิชาแม่อยู่ในระยะ 200 ตัว จึงถูกเข้าใจผิดว่าเป็นหัวรายวิชา
+   (DSBA 2560 รอดเพราะวาง credit ไว้ก่อน prereq: `06026120 ... 3(2-2-5) ... วิชาบังคับก่อน : ...`)
 """
 
 from __future__ import annotations
 
+import bisect
 import json
 import re
 import sqlite3
@@ -21,6 +28,48 @@ _CODE_RE = re.compile(r"\b(\d{8})\b")
 _CREDIT_RE = re.compile(r"\d\s*\(\d-\d-\d+\)")
 _PREREQ_KW = re.compile(r"วิชาบังคับก่อน|PREREQUISITE", re.IGNORECASE)
 _NONE_MARKERS = ["ไม่มี", "none", "-"]
+
+# "ไม่มี"/"NONE" ที่ตามหลัง keyword ทันที = ประกาศว่าไม่มีวิชาบังคับก่อน
+_NONE_AFTER_KW = re.compile(r"\s*:?\s*(?:ไม่มี|none)\b", re.IGNORECASE)
+
+# ความยาวสูงสุดของ prereq zone (ตัวอักษร) — กันไม่ให้ zone กินรหัสของวิชาถัดไป
+_ZONE_MAX_CHARS = 200
+
+
+def _prereq_zones(text: str) -> list[tuple[int, int]]:
+    """หาช่วงข้อความที่รหัส 8 หลักภายในเป็น "รหัสที่ถูกอ้างเป็นเงื่อนไข" ไม่ใช่หัวรายวิชา.
+
+    zone เริ่มหลัง keyword และจบที่ credit pattern ตัวแรก (= credit ของวิชาแม่
+    ซึ่งอยู่ท้ายบล็อกในเอกสารฉบับใหม่) หรือที่ _ZONE_MAX_CHARS แล้วแต่อะไรมาก่อน
+    """
+    zones: list[tuple[int, int]] = []
+    for kw in _PREREQ_KW.finditer(text):
+        start = kw.end()
+
+        # ประกาศ "ไม่มี/NONE" ทันทีหลัง keyword → zone จบตรงนั้น
+        # (ถ้าปล่อยให้ zone ยาวต่อ จะไหลไปกลบรหัสของวิชาถัดไป ซึ่งทำให้วิชาถัดไป
+        #  ไม่ถูกนับเป็นหัวรายวิชา และรหัสนั้นถูกเก็บเป็น prereq ผิด ๆ
+        #  พบในรูปแบบของ AIT/BIT ที่วาง credit ไว้ก่อน keyword จึงไม่มี credit มาหยุด zone)
+        none_m = _NONE_AFTER_KW.match(text, start)
+        if none_m:
+            zones.append((start, none_m.end()))
+            continue
+
+        end = min(start + _ZONE_MAX_CHARS, len(text))
+        cred = _CREDIT_RE.search(text, start, end)
+        if cred:
+            end = cred.start()
+        if end > start:
+            zones.append((start, end))
+
+    # merge ช่วงที่ทับกัน (keyword ไทย/อังกฤษ ของวิชาเดียวกันอยู่ติดกัน)
+    merged: list[tuple[int, int]] = []
+    for start, end in sorted(zones):
+        if merged and start <= merged[-1][1]:
+            merged[-1] = (merged[-1][0], max(merged[-1][1], end))
+        else:
+            merged.append((start, end))
+    return merged
 
 
 def populate(db_path: Path | str) -> dict[str, int]:
@@ -53,9 +102,20 @@ def populate(db_path: Path | str) -> dict[str, int]:
         if not code_positions:
             continue
 
+        # ช่วงที่รหัสภายในเป็นรหัส prerequisite ไม่ใช่หัวรายวิชา
+        zones = _prereq_zones(text)
+        zone_starts = [s for s, _ in zones]
+
+        def in_prereq_zone(pos: int) -> bool:
+            i = bisect.bisect_right(zone_starts, pos) - 1
+            return i >= 0 and pos < zones[i][1]
+
         # หา "course header positions" = รหัสที่มี credit ในระยะ 200 ตัว
+        # และไม่อยู่ใน prereq zone
         header_positions: list[tuple[int, str]] = []  # (start_pos, code)
         for cm in code_positions:
+            if in_prereq_zone(cm.start()):
+                continue
             lookahead = text[cm.start():cm.start() + 200]
             if _CREDIT_RE.search(lookahead):
                 header_positions.append((cm.start(), cm.group(1)))
