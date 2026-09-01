@@ -137,10 +137,22 @@ def backfill_courses(answer: str, evidence_texts: list[str], question: str = "")
     return answer + "\n".join(backfill_lines)
 
 
-def postprocess_answer(answer: str, evidence_texts: list[str], question: str = "") -> str:
-    """Main entry: dedup only (backfill disabled — LLM interpretation issue, not retrieval)."""
-    result = dedup_answer(answer)
+def postprocess_answer(
+    answer: str,
+    evidence_texts: list[str],
+    question: str = "",
+    *,
+    dedup: bool = True,
+) -> str:
+    """Main entry: dedup only (backfill disabled — LLM interpretation issue, not retrieval).
+
+    dedup ออกแบบสำหรับคำถามแจกแจงรายวิชา (list) ที่ LLM อาจพิมพ์รหัสซ้ำ
+    แต่กับคำถามวิเคราะห์ (ได้ไหม/ทำไม) ที่อ้างวิชาเดียวกันหลายครั้งในการให้เหตุผล
+    dedup จะตัดบรรทัดกลางประโยคทิ้งจนเหตุผลขาดวิ่น จึงต้องปิดสำหรับคำถามกลุ่มนั้น
+    (ดู is_reasoning_question ใน pipeline.py — ส่ง dedup=False มา)
+    """
+    if not dedup:
+        return answer
     # backfill disabled: LLM ตีความ "เขียนโปรแกรม" กว้างเกิน ทำให้เติมวิชาไม่ตรง
     # จะเปิดเมื่อมี enumeration detection + keyword filtering ที่แม่นกว่า
-    # result = backfill_courses(result, evidence_texts, question)
-    return result
+    return dedup_answer(answer)
