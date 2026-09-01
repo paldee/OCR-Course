@@ -30,77 +30,6 @@ DOMAIN_LEXICON_TOML = "domain_lexicon.toml"
 
 
 @dataclass(frozen=True, slots=True)
-class HaltConfig:
-    tau: float
-    l_min: int
-    oscillation_patience: int
-
-
-@dataclass(frozen=True, slots=True)
-class TyphoonConfig:
-    """ค่าตั้งค่าของ stage 2 (Typhoon-OCR-1.5-2B) — GPU-gated (R5.1.1, R5.1.3, R20.7)."""
-
-    model_id: str
-    max_new_tokens: int
-    repetition_penalty: float
-    no_repeat_ngram_size: int
-    image_max_dimension_px: int
-    known_institution_name: str
-    require_cuda: bool
-
-
-@dataclass(frozen=True, slots=True)
-class StageTimeoutConfig:
-    """Per-engine hard wall-clock timeout ต่อ region (R5.6 revised)."""
-
-    tesseract5: float
-    typhoon_ocr1_5_2b: float
-
-    def for_engine(self, engine_name: str) -> float:
-        """คืน timeout สำหรับ engine ที่ระบุ — raise KeyError ถ้าไม่รู้จัก."""
-        mapping = {
-            "tesseract5": self.tesseract5,
-            "typhoon_ocr1_5_2b": self.typhoon_ocr1_5_2b,
-        }
-        if engine_name not in mapping:
-            raise KeyError(f"ไม่รู้จัก engine '{engine_name}' ใน stage_timeout config")
-        return mapping[engine_name]
-
-
-@dataclass(frozen=True, slots=True)
-class EscalationConfig:
-    """Budget/circuit-breaker สำหรับ selective escalation ไป stage 2."""
-
-    max_typhoon_seconds_per_run: float
-    max_consecutive_typhoon_failures: int
-    min_stage1_quality_for_skip: float
-
-
-@dataclass(frozen=True, slots=True)
-class OcrConfig:
-    max_stages_per_region: int
-    per_page_time_budget_seconds: float
-    crop_cache_max_entries_per_document: int
-    stage_order: tuple[str, ...]
-    adjudicate_iou_threshold: float
-    confidence_tie_epsilon: float
-    stage_timeout: StageTimeoutConfig
-    escalation: EscalationConfig
-    typhoon: TyphoonConfig
-
-    def timeout_for(self, engine_name: str) -> float:
-        """Shortcut — คืน hard timeout สำหรับ engine ที่ระบุ."""
-        return self.stage_timeout.for_engine(engine_name)
-
-
-@dataclass(frozen=True, slots=True)
-class PreprocessConfig:
-    skew_degrees_threshold: float
-    min_dpi: int
-    contrast_score_threshold: float
-
-
-@dataclass(frozen=True, slots=True)
 class PageQualityConfig:
     weight_extracted_char_count: float
     weight_out_of_charset_ratio: float
@@ -134,39 +63,6 @@ class RetrievalConfig:
     fusion_lexical_weight: float
     fusion_dense_weight: float
     fusion_rrf_k: int
-    dense_p95_latency_budget_seconds: float
-    phrase_boost_multiplier: float
-    rerank_depth: int
-    maxsim_enabled: bool
-    maxsim_status: str
-
-
-@dataclass(frozen=True, slots=True)
-class EvidenceConfig:
-    max_hops: int
-    max_nodes_per_request: int
-    max_nodes_per_hop: int
-    evidence_time_budget_seconds: float
-
-
-@dataclass(frozen=True, slots=True)
-class AnswerConfig:
-    answer_time_budget_seconds: float
-    max_evidence_units: int
-    model_path: str
-    request_timeout_seconds: float
-    max_versions_per_request: int
-
-
-@dataclass(frozen=True, slots=True)
-class QuestionRouterConfig:
-    max_question_chars: int
-    api_max_question_chars: int
-    retriever_max_question_chars: int
-    min_confidence: float
-    classification_budget_ms: int
-    structured_path_budget_ms: int
-    max_route_escalations: int
 
 
 @dataclass(frozen=True, slots=True)
@@ -212,6 +108,8 @@ class ApiConfig:
     host: str
     port: int
     max_documents_per_response: int
+    request_timeout_seconds: float
+    max_question_chars: int
 
 
 @dataclass(frozen=True, slots=True)
@@ -243,16 +141,10 @@ class KatragConfig:
     """ค่าตั้งค่าทั้งหมดของ process (frozen)."""
 
     project_root: Path
-    halt: HaltConfig
-    ocr: OcrConfig
-    preprocess: PreprocessConfig
     page_quality: PageQualityConfig
     page_route: PageRouteConfig
     thai: ThaiConfig
     retrieval: RetrievalConfig
-    evidence: EvidenceConfig
-    answer: AnswerConfig
-    question_router: QuestionRouterConfig
     memory: MemoryConfig
     evaluation: EvaluationConfig
     dataset: DatasetConfig
@@ -341,13 +233,6 @@ def _require_range(
         )
 
 
-def _str_tuple(section: Mapping[str, Any], key: str, section_name: str) -> tuple[str, ...]:
-    raw = section.get(key)
-    if not isinstance(raw, list) or not all(isinstance(item, str) for item in raw):
-        raise ConfigError("ค่าตั้งค่าต้องเป็นรายการของสตริง", section=section_name, key=key)
-    return tuple(raw)
-
-
 def _str_frozenset(data: Mapping[str, Any], key: str, path: Path) -> frozenset[str]:
     raw = data.get(key)
     if not isinstance(raw, list) or not all(isinstance(item, str) for item in raw):
@@ -382,65 +267,6 @@ def load_config(project_root: str | Path | None = None) -> KatragConfig:
     value_sets_data = _read_toml(value_sets_path)
     engines_data = _read_toml(engines_path)
     lexicon_data = _read_toml(lexicon_path)
-
-    halt_raw = _section(data, "halt", katrag_path)
-    halt = HaltConfig(
-        tau=_get(halt_raw, "tau", float, "halt"),
-        l_min=_get(halt_raw, "l_min", int, "halt"),
-        oscillation_patience=_get(halt_raw, "oscillation_patience", int, "halt"),
-    )
-
-    ocr_raw = _section(data, "ocr", katrag_path)
-    typhoon_raw = _section(data, "ocr.typhoon", katrag_path)
-    typhoon = TyphoonConfig(
-        model_id=_get(typhoon_raw, "model_id", str, "ocr.typhoon"),
-        max_new_tokens=_get(typhoon_raw, "max_new_tokens", int, "ocr.typhoon"),
-        repetition_penalty=_get(typhoon_raw, "repetition_penalty", float, "ocr.typhoon"),
-        no_repeat_ngram_size=_get(typhoon_raw, "no_repeat_ngram_size", int, "ocr.typhoon"),
-        image_max_dimension_px=_get(typhoon_raw, "image_max_dimension_px", int, "ocr.typhoon"),
-        known_institution_name=_get(typhoon_raw, "known_institution_name", str, "ocr.typhoon"),
-        require_cuda=_get(typhoon_raw, "require_cuda", bool, "ocr.typhoon"),
-    )
-
-    stage_timeout_raw = _section(data, "ocr.stage_timeout", katrag_path)
-    stage_timeout = StageTimeoutConfig(
-        tesseract5=_get(stage_timeout_raw, "tesseract5", float, "ocr.stage_timeout"),
-        typhoon_ocr1_5_2b=_get(stage_timeout_raw, "typhoon_ocr1_5_2b", float, "ocr.stage_timeout"),
-    )
-
-    escalation_raw = _section(data, "ocr.escalation", katrag_path)
-    escalation = EscalationConfig(
-        max_typhoon_seconds_per_run=_get(
-            escalation_raw, "max_typhoon_seconds_per_run", float, "ocr.escalation"
-        ),
-        max_consecutive_typhoon_failures=_get(
-            escalation_raw, "max_consecutive_typhoon_failures", int, "ocr.escalation"
-        ),
-        min_stage1_quality_for_skip=_get(
-            escalation_raw, "min_stage1_quality_for_skip", float, "ocr.escalation"
-        ),
-    )
-
-    ocr = OcrConfig(
-        max_stages_per_region=_get(ocr_raw, "max_stages_per_region", int, "ocr"),
-        per_page_time_budget_seconds=_get(ocr_raw, "per_page_time_budget_seconds", float, "ocr"),
-        crop_cache_max_entries_per_document=_get(
-            ocr_raw, "crop_cache_max_entries_per_document", int, "ocr"
-        ),
-        stage_order=_str_tuple(ocr_raw, "stage_order", "ocr"),
-        adjudicate_iou_threshold=_get(ocr_raw, "adjudicate_iou_threshold", float, "ocr"),
-        confidence_tie_epsilon=_get(ocr_raw, "confidence_tie_epsilon", float, "ocr"),
-        stage_timeout=stage_timeout,
-        escalation=escalation,
-        typhoon=typhoon,
-    )
-
-    preprocess_raw = _section(data, "preprocess", katrag_path)
-    preprocess = PreprocessConfig(
-        skew_degrees_threshold=_get(preprocess_raw, "skew_degrees_threshold", float, "preprocess"),
-        min_dpi=_get(preprocess_raw, "min_dpi", int, "preprocess"),
-        contrast_score_threshold=_get(preprocess_raw, "contrast_score_threshold", float, "preprocess"),
-    )
 
     pq_raw = _section(data, "page_quality", katrag_path)
     page_quality = PageQualityConfig(
@@ -478,45 +304,6 @@ def load_config(project_root: str | Path | None = None) -> KatragConfig:
         fusion_lexical_weight=_get(retrieval_raw, "fusion_lexical_weight", float, "retrieval"),
         fusion_dense_weight=_get(retrieval_raw, "fusion_dense_weight", float, "retrieval"),
         fusion_rrf_k=_get(retrieval_raw, "fusion_rrf_k", int, "retrieval"),
-        dense_p95_latency_budget_seconds=_get(
-            retrieval_raw, "dense_p95_latency_budget_seconds", float, "retrieval"
-        ),
-        phrase_boost_multiplier=_get(retrieval_raw, "phrase_boost_multiplier", float, "retrieval"),
-        rerank_depth=_get(retrieval_raw, "rerank_depth", int, "retrieval"),
-        maxsim_enabled=_get(retrieval_raw, "maxsim_enabled", bool, "retrieval"),
-        maxsim_status=_get(retrieval_raw, "maxsim_status", str, "retrieval"),
-    )
-
-    evidence_raw = _section(data, "evidence", katrag_path)
-    evidence = EvidenceConfig(
-        max_hops=_get(evidence_raw, "max_hops", int, "evidence"),
-        max_nodes_per_request=_get(evidence_raw, "max_nodes_per_request", int, "evidence"),
-        max_nodes_per_hop=_get(evidence_raw, "max_nodes_per_hop", int, "evidence"),
-        evidence_time_budget_seconds=_get(
-            evidence_raw, "evidence_time_budget_seconds", float, "evidence"
-        ),
-    )
-
-    answer_raw = _section(data, "answer", katrag_path)
-    answer = AnswerConfig(
-        answer_time_budget_seconds=_get(answer_raw, "answer_time_budget_seconds", float, "answer"),
-        max_evidence_units=_get(answer_raw, "max_evidence_units", int, "answer"),
-        model_path=_get(answer_raw, "model_path", str, "answer"),
-        request_timeout_seconds=_get(answer_raw, "request_timeout_seconds", float, "answer"),
-        max_versions_per_request=_get(answer_raw, "max_versions_per_request", int, "answer"),
-    )
-
-    router_raw = _section(data, "router.question", katrag_path)
-    question_router = QuestionRouterConfig(
-        max_question_chars=_get(router_raw, "max_question_chars", int, "router.question"),
-        api_max_question_chars=_get(router_raw, "api_max_question_chars", int, "router.question"),
-        retriever_max_question_chars=_get(
-            router_raw, "retriever_max_question_chars", int, "router.question"
-        ),
-        min_confidence=_get(router_raw, "min_confidence", float, "router.question"),
-        classification_budget_ms=_get(router_raw, "classification_budget_ms", int, "router.question"),
-        structured_path_budget_ms=_get(router_raw, "structured_path_budget_ms", int, "router.question"),
-        max_route_escalations=_get(router_raw, "max_route_escalations", int, "router.question"),
     )
 
     memory_raw = _section(data, "memory", katrag_path)
@@ -566,6 +353,8 @@ def load_config(project_root: str | Path | None = None) -> KatragConfig:
         host=_get(api_raw, "host", str, "api"),
         port=_get(api_raw, "port", int, "api"),
         max_documents_per_response=_get(api_raw, "max_documents_per_response", int, "api"),
+        request_timeout_seconds=_get(api_raw, "request_timeout_seconds", float, "api"),
+        max_question_chars=_get(api_raw, "max_question_chars", int, "api"),
     )
 
     synonym_raw = value_sets_data.get("category_synonym", {})
@@ -593,16 +382,10 @@ def load_config(project_root: str | Path | None = None) -> KatragConfig:
 
     config = KatragConfig(
         project_root=root,
-        halt=halt,
-        ocr=ocr,
-        preprocess=preprocess,
         page_quality=page_quality,
         page_route=page_route,
         thai=thai,
         retrieval=retrieval,
-        evidence=evidence,
-        answer=answer,
-        question_router=question_router,
         memory=memory,
         evaluation=evaluation,
         dataset=dataset,
@@ -618,92 +401,6 @@ def load_config(project_root: str | Path | None = None) -> KatragConfig:
 
 def _validate(config: KatragConfig) -> None:
     """ตรวจช่วงค่าที่ requirements กำหนดไว้อย่างชัดเจน."""
-    # ── ช่วงค่าที่ requirements ระบุเป็นตัวเลขตรง ๆ ──
-    _require_range(config.evidence.max_hops, section="evidence", key="max_hops", minimum=1, maximum=5)
-    _require_range(
-        config.retrieval.rerank_depth, section="retrieval", key="rerank_depth", minimum=20, maximum=40
-    )
-    _require_range(
-        config.retrieval.phrase_boost_multiplier,
-        section="retrieval",
-        key="phrase_boost_multiplier",
-        minimum=1.00,
-        maximum=3.00,
-    )
-    _require_range(
-        config.answer.answer_time_budget_seconds,
-        section="answer",
-        key="answer_time_budget_seconds",
-        minimum=10,
-        maximum=180,
-    )
-
-    # ── halter: patience และ l_min ต้องมีความหมาย ──
-    if config.halt.l_min < 1:
-        raise ConfigError("l_min ต้องไม่น้อยกว่า 1", section="halt", key="l_min", value=config.halt.l_min)
-    if config.halt.oscillation_patience < 1:
-        raise ConfigError(
-            "oscillation_patience ต้องไม่น้อยกว่า 1",
-            section="halt",
-            key="oscillation_patience",
-            value=config.halt.oscillation_patience,
-        )
-    if config.halt.tau <= 0:
-        raise ConfigError("tau ต้องมากกว่า 0", section="halt", key="tau", value=config.halt.tau)
-
-    # ── OCR ──
-    if config.ocr.max_stages_per_region != len(config.ocr.stage_order):
-        raise ConfigError(
-            "max_stages_per_region ต้องเท่ากับจำนวน stage ใน stage_order",
-            section="ocr",
-            max_stages_per_region=config.ocr.max_stages_per_region,
-            stage_order=list(config.ocr.stage_order),
-        )
-    _require_range(
-        config.ocr.adjudicate_iou_threshold,
-        section="ocr",
-        key="adjudicate_iou_threshold",
-        minimum=0.0,
-        maximum=1.0,
-    )
-
-    # ── OCR: per-engine timeout ต้องเป็นบวก ──
-    if config.ocr.stage_timeout.tesseract5 <= 0:
-        raise ConfigError(
-            "stage_timeout.tesseract5 ต้องมากกว่า 0",
-            section="ocr.stage_timeout",
-            key="tesseract5",
-            value=config.ocr.stage_timeout.tesseract5,
-        )
-    if config.ocr.stage_timeout.typhoon_ocr1_5_2b <= 0:
-        raise ConfigError(
-            "stage_timeout.typhoon_ocr1_5_2b ต้องมากกว่า 0",
-            section="ocr.stage_timeout",
-            key="typhoon_ocr1_5_2b",
-            value=config.ocr.stage_timeout.typhoon_ocr1_5_2b,
-        )
-
-    # ── OCR: escalation budget/circuit-breaker ──
-    if config.ocr.escalation.max_typhoon_seconds_per_run <= 0:
-        raise ConfigError(
-            "max_typhoon_seconds_per_run ต้องมากกว่า 0",
-            section="ocr.escalation",
-            key="max_typhoon_seconds_per_run",
-        )
-    if config.ocr.escalation.max_consecutive_typhoon_failures < 1:
-        raise ConfigError(
-            "max_consecutive_typhoon_failures ต้องไม่น้อยกว่า 1",
-            section="ocr.escalation",
-            key="max_consecutive_typhoon_failures",
-        )
-    _require_range(
-        config.ocr.escalation.min_stage1_quality_for_skip,
-        section="ocr.escalation",
-        key="min_stage1_quality_for_skip",
-        minimum=0.0,
-        maximum=1.0,
-    )
-
     # ── page quality: น้ำหนักต้องรวมได้ 1.0 เพื่อให้คะแนนอยู่ในช่วง 0-1 ──
     weight_sum = (
         config.page_quality.weight_extracted_char_count
@@ -749,70 +446,6 @@ def _validate(config: KatragConfig) -> None:
             key="fusion_output_max",
             value=config.retrieval.fusion_output_max,
         )
-    if config.retrieval.rerank_depth > config.retrieval.fusion_output_max:
-        raise ConfigError(
-            "rerank_depth ต้องไม่เกิน fusion_output_max",
-            section="retrieval",
-            rerank_depth=config.retrieval.rerank_depth,
-            fusion_output_max=config.retrieval.fusion_output_max,
-        )
-    if not config.retrieval.maxsim_enabled and config.retrieval.maxsim_status != "pending_ablation":
-        raise ConfigError(
-            "เมื่อ maxsim ปิด สถานะต้องเป็น pending_ablation ตามข้อกำหนด",
-            section="retrieval",
-            key="maxsim_status",
-            value=config.retrieval.maxsim_status,
-        )
-
-    # ── evidence ──
-    if config.evidence.max_nodes_per_hop > config.evidence.max_nodes_per_request:
-        raise ConfigError(
-            "max_nodes_per_hop ต้องไม่เกิน max_nodes_per_request",
-            section="evidence",
-        )
-    if config.evidence.evidence_time_budget_seconds <= 0:
-        raise ConfigError(
-            "evidence_time_budget_seconds ต้องมากกว่า 0",
-            section="evidence",
-            key="evidence_time_budget_seconds",
-        )
-
-    # ── question router: ขอบเขตความยาวคำถามสามชั้นต้องเรียงถูก ──
-    if not (
-        config.question_router.max_question_chars
-        <= config.question_router.retriever_max_question_chars
-        <= config.question_router.api_max_question_chars
-    ):
-        raise ConfigError(
-            "ขอบเขตความยาวคำถามต้องเรียงจาก router <= retriever <= api",
-            section="router.question",
-            router=config.question_router.max_question_chars,
-            retriever=config.question_router.retriever_max_question_chars,
-            api=config.question_router.api_max_question_chars,
-        )
-    _require_range(
-        config.question_router.min_confidence,
-        section="router.question",
-        key="min_confidence",
-        minimum=0.0,
-        maximum=1.0,
-    )
-
-    # ── answer: งบสร้างคำตอบต้องไม่เกินเพดานของคำขอ ──
-    if config.answer.answer_time_budget_seconds > config.answer.request_timeout_seconds:
-        raise ConfigError(
-            "answer_time_budget_seconds ต้องไม่เกิน request_timeout_seconds",
-            section="answer",
-            answer_budget=config.answer.answer_time_budget_seconds,
-            request_timeout=config.answer.request_timeout_seconds,
-        )
-    if config.answer.max_versions_per_request < 1:
-        raise ConfigError(
-            "max_versions_per_request ต้องไม่น้อยกว่า 1",
-            section="answer",
-            key="max_versions_per_request",
-        )
-
     # ── memory ──
     if config.memory.max_resident_page_images < 1:
         raise ConfigError(
@@ -876,11 +509,22 @@ def _validate(config: KatragConfig) -> None:
             key="max_documents_per_response",
             value=config.api.max_documents_per_response,
         )
+    if config.api.request_timeout_seconds <= 0:
+        raise ConfigError(
+            "request_timeout_seconds ต้องมากกว่า 0",
+            section="api",
+            key="request_timeout_seconds",
+            value=config.api.request_timeout_seconds,
+        )
+    if config.api.max_question_chars < 1:
+        raise ConfigError(
+            "max_question_chars ต้องไม่น้อยกว่า 1",
+            section="api",
+            key="max_question_chars",
+            value=config.api.max_question_chars,
+        )
 
     # ── ค่าที่ต้องอยู่ในชุดค่าปิด ──
-    for stage in config.ocr.stage_order:
-        if not stage:
-            raise ConfigError("ชื่อ stage ใน stage_order ต้องไม่ว่าง", section="ocr")
     unknown_synonym_targets = {
         target
         for target in config.value_sets.category_synonym.values()

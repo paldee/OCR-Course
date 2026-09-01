@@ -418,7 +418,24 @@ def create_app(
 # Default app instance
 # ══════════════════════════════════════════════════════════════════════
 
-app = create_app()
+def _app_kwargs_from_config() -> dict[str, Any]:
+    """อ่านค่า [api] จาก katrag.toml — fallback เป็นค่า DEFAULT ถ้าโหลดไม่ได้."""
+    try:
+        from katrag.config import load_config
+
+        api = load_config().api
+        return {
+            "host": api.host,
+            "port": api.port,
+            "max_documents": api.max_documents_per_response,
+            "request_timeout_seconds": api.request_timeout_seconds,
+            "max_question_chars": api.max_question_chars,
+        }
+    except Exception:
+        return {}
+
+
+app = create_app(**_app_kwargs_from_config())
 
 
 # ══════════════════════════════════════════════════════════════════════

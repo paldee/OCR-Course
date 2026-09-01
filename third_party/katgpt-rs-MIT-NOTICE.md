@@ -17,12 +17,20 @@
 
 ## อัลกอริทึมที่นำมาเขียนใหม่
 
-| ไฟล์ในโปรเจกต์นี้ | อ้างอิงแนวคิดจาก | หมายเหตุ |
+> **สถานะปัจจุบัน (2026-08-31): พอร์ตทั้งหมดถูกถอดออกจากโค้ดเบสแล้ว**
+> ทั้งสี่โมดูลอยู่หลัง feature flag ที่ปิดตลอด และไม่เคยต่อสายเข้าเส้นทางจริงของ
+> การตอบคำถาม จึงถูกลบพร้อมรอบเคลียร์โค้ดตาย ดูรายละเอียดและผลการทดลองที่
+> `docs/removed_subsystems.md` หัวข้อ "katgpt-rs ports"
+>
+> notice ฉบับนี้ยังคงอยู่เพื่อบันทึกที่มาตามเงื่อนไข MIT ของช่วงที่โค้ดเคยอยู่ใน
+> ประวัติ git และเพื่อความโปร่งใสของการอ้างอิงแนวคิด
+
+| ไฟล์ที่เคยอยู่ในโปรเจกต์นี้ | อ้างอิงแนวคิดจาก | สถานะ |
 |-------------------|------------------|---------|
-| `katrag/common/halter.py` | `crates/katgpt-core/src/gain_cost_halt.rs` (`GainCostLoopHalter::halt_decision`) | เขียนใหม่เป็น Python; เปลี่ยนสัญญาณเป็นคะแนนคุณภาพ OCR และ evidence coverage |
-| `katrag/common/maxsim.py` | `crates/katgpt-types/src/simd/maxsim.rs` (`maxsim_score`, `maxsim_score_packed`) | เขียนใหม่เป็น NumPy batched matmul |
-| `katrag/common/phrase_boost.py` | `crates/katgpt-pruners/src/phrase_boost.rs` | ใช้เฉพาะแนวคิด domain lexicon boost; ไม่ใช้ cache ที่ไม่มีขอบเขตของต้นทาง |
-| `katrag/common/compute_path.py` | `crates/katgpt-pruners/src/percept_router.rs` (`ComputePath`) | ใช้เฉพาะแนวคิดสามเส้นทาง fast/standard/deep |
+| `katrag/common/halter.py` | `crates/katgpt-core/src/gain_cost_halt.rs` (`GainCostLoopHalter::halt_decision`) | ถอดออกแล้ว — เขียนใหม่เป็น Python; เปลี่ยนสัญญาณเป็นคะแนนคุณภาพ OCR และ evidence coverage |
+| `katrag/common/maxsim.py` | `crates/katgpt-types/src/simd/maxsim.rs` (`maxsim_score`, `maxsim_score_packed`) | ถอดออกแล้ว — เขียนใหม่เป็น NumPy batched matmul |
+| `katrag/common/phrase_boost.py` | `crates/katgpt-pruners/src/phrase_boost.rs` | ถอดออกแล้ว — ใช้เฉพาะแนวคิด domain lexicon boost; ไม่ใช้ cache ที่ไม่มีขอบเขตของต้นทาง |
+| `katrag/common/compute_path.py` | `crates/katgpt-pruners/src/percept_router.rs` (`ComputePath`) | ถอดออกก่อนหน้านี้ — ใช้เฉพาะแนวคิดสามเส้นทาง fast/standard/deep |
 
 ## MIT License (ฉบับเต็มของ katgpt-rs)
 

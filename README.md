@@ -107,7 +107,7 @@ When running `katrag serve`:
        ▼
   ┌───────────────────────────────────────────────────────────────┐
   │                     Common Layer                                │
-  │  net_guard │ halter │ memory │ hashing │ normalize │ types    │
+  │  net_guard │ memory │ hashing │ normalize │ scratch │ types    │
   └───────────────────────────────────────────────────────────────┘
 ```
 
@@ -116,14 +116,13 @@ When running `katrag serve`:
 ```
 katrag/
 ├── cli/           # CLI commands and demo
-├── common/        # Shared utilities (net_guard, hashing, memory monitor)
-├── ingest/        # Document scanning, text extraction, OCR cascade
-│   ├── fields/    # Structured field extraction (credits, prerequisites)
-│   └── ocr/       # Multi-stage OCR with halter
-├── store/         # SQLite provenance store + schema
-├── index/         # Lexical (FTS5) + dense (ONNX) retrieval indices
-├── query/         # Question routing, evidence planning, answer generation
-├── eval/          # Evaluation harness + gold set management
+├── common/        # Shared utilities (net_guard, hashing, memory monitor, normalize)
+├── ingest/        # Scan, text extraction, Tesseract OCR, chunking, course/prereq population
+│   └── ocr/       # OCR preflight (engine + weight verification)
+├── store/         # SQLite provenance store + schema + integrity checks
+├── index/         # Lexical (FTS5) + dense (BGE-M3) retrieval indices
+├── query/         # pipeline.py orchestrator + structured query + hybrid/semantic retrieval + Typhoon LLM
+├── eval/          # OCR CER/field eval, QA eval, gold set builder, report generators
 ├── api/           # FastAPI REST endpoints
 ├── config.py      # Frozen configuration loader
 └── errors.py      # Error taxonomy
@@ -131,8 +130,15 @@ katrag/
 
 ### Pipeline Flow
 
-1. **Preflight** — Verify OCR weights and engine availability
-2. **Ingest** — Extract text page-by-page (streaming, resumable, memory-bounded)
-3. **Index** — Build FTS5 lexical index + ONNX dense embeddings
-4. **Query** — Route questions → retrieve → plan evidence → generate answer → validate citations
-5. **Evaluate** — Compute metrics against gold set, check reproducibility
+1. **Preflight** — Verify OCR engine availability and weights
+2. **Ingest** — Extract text page-by-page (streaming, resumable, memory-bounded); Tesseract for
+   image-only pages; then chunk and populate `course` / `prerequisite` tables
+3. **Index** — Build FTS5 lexical index + BGE-M3 dense embeddings
+4. **Query** — `pipeline.py`: resolve program → scope question → structured query →
+   hybrid retrieve (RRF + adaptive cutoff) → build context → Typhoon LLM → resolve citations
+5. **Evaluate** — OCR CER vs text layer, field accuracy vs teacher GT, QA + citation metrics
+
+> Subsystems that were designed and built but never wired into the live path (OCR cascade,
+> multi-hop evidence planner, citation validator, table extractor, and the `katgpt-rs` ports)
+> have been removed from the codebase. Their design, line counts, and measured results are
+> recorded in [`docs/removed_subsystems.md`](docs/removed_subsystems.md).
