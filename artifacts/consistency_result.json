@@ -1,0 +1,202 @@
+{
+  "ok": true,
+  "course_total": 1419,
+  "version_total": 13,
+  "error_count": 0,
+  "warning_count": 14,
+  "rules": [
+    {
+      "rule": "CHK1",
+      "title": "หน่วยกิตรวมของแผน = หน่วยกิตที่ประกาศ",
+      "catches": "แผนตกหล่นไปทั้งภาคเรียน หรือมีวิชาจากหน้าอื่นปนเข้ามา",
+      "severity": "warning",
+      "checked": 7,
+      "finding_count": 3,
+      "error_count": 0,
+      "warning_count": 3,
+      "pass_rate": 0.5714,
+      "passed": false,
+      "findings": [
+        {
+          "rule": "CHK1",
+          "version": "AIT/2566(current)",
+          "code": "",
+          "severity": "warning",
+          "detail": "หน่วยกิตวิชาบังคับรวม 627 > เกณฑ์จบที่ประกาศ 120 หน่วยกิต (213 วิชาถูกจัดเป็นบังคับ) — เป็นไปไม่ได้ตามโครงสร้าง มักหมายถึงวิชาเลือกถูกจัดประเภทเป็นบังคับ"
+        },
+        {
+          "rule": "CHK1",
+          "version": "IT/2560(old)",
+          "code": "",
+          "severity": "warning",
+          "detail": "หน่วยกิตวิชาบังคับรวม 274 > เกณฑ์จบที่ประกาศ 130 หน่วยกิต (92 วิชาถูกจัดเป็นบังคับ) — เป็นไปไม่ได้ตามโครงสร้าง มักหมายถึงวิชาเลือกถูกจัดประเภทเป็นบังคับ"
+        },
+        {
+          "rule": "CHK1",
+          "version": "IT/2565(current)",
+          "code": "",
+          "severity": "warning",
+          "detail": "หน่วยกิตวิชาบังคับรวม 313 > เกณฑ์จบที่ประกาศ 129 หน่วยกิต (114 วิชาถูกจัดเป็นบังคับ) — เป็นไปไม่ได้ตามโครงสร้าง มักหมายถึงวิชาเลือกถูกจัดประเภทเป็นบังคับ"
+        }
+      ]
+    },
+    {
+      "rule": "CHK2",
+      "title": "ทุกรหัสในแผน มีคำอธิบายรายวิชา",
+      "catches": "รหัสผิดหลัก หรือหมวดคำอธิบายไม่ครบ",
+      "severity": "warning",
+      "checked": 322,
+      "finding_count": 3,
+      "error_count": 0,
+      "warning_count": 3,
+      "pass_rate": 0.9907,
+      "passed": false,
+      "findings": [
+        {
+          "rule": "CHK2",
+          "version": "BIT/2560(old)",
+          "code": "06036088",
+          "severity": "warning",
+          "detail": "06036088 การคิดอย่างสร้างสรรค์ — ไม่พบคำอธิบายรายวิชาในเล่ม"
+        },
+        {
+          "rule": "CHK2",
+          "version": "DSBA/2560(old)",
+          "code": "90304004",
+          "severity": "warning",
+          "detail": "90304004 การเขียนรายงาน — ไม่พบคำอธิบายรายวิชาในเล่ม"
+        },
+        {
+          "rule": "CHK2",
+          "version": "DSBA/2560(old)",
+          "code": "90401012",
+          "severity": "warning",
+          "detail": "90401012 ความรู้เบื้องต้นทางการตลาด — ไม่พบคำอธิบายรายวิชาในเล่ม"
+        }
+      ]
+    },
+    {
+      "rule": "CHK3",
+      "title": "รหัสวิชาเป็นตัวเลข 8 หลัก",
+      "catches": "OCR อ่านตัวอักษรปนเข้ามาในรหัส",
+      "severity": "error",
+      "checked": 1419,
+      "finding_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "pass_rate": 1.0,
+      "passed": true,
+      "findings": []
+    },
+    {
+      "rule": "CHK4",
+      "title": "หน่วยกิตในแผน = หน่วยกิตในคำอธิบาย",
+      "catches": "ตัวเลขหน่วยกิตผิดในแหล่งใดแหล่งหนึ่ง",
+      "severity": "error",
+      "checked": 670,
+      "finding_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "pass_rate": 1.0,
+      "passed": true,
+      "findings": []
+    },
+    {
+      "rule": "CHK5",
+      "title": "วิชาบังคับก่อน อยู่ภาคที่มาก่อนจริง",
+      "catches": "prerequisite ผิดตัว, ชั้นปี/ภาคผิด, หรือเล่มเขียนผิด",
+      "severity": "error",
+      "checked": 48,
+      "finding_count": 2,
+      "error_count": 0,
+      "warning_count": 2,
+      "pass_rate": 0.9583,
+      "passed": false,
+      "findings": [
+        {
+          "rule": "CHK5",
+          "version": "IT/2560(old)",
+          "code": "90201012",
+          "severity": "warning",
+          "detail": "90201012 (ปี 1 ภาค 2) ระบุว่าต้องผ่าน 90201002 แต่ 90201002 อยู่ปี 1 ภาค 2 — ภาคเดียวกัน (อาจเป็นวิชาเรียนร่วมภาคที่เล่มจัดไว้เอง)"
+        },
+        {
+          "rule": "CHK5",
+          "version": "IT/2560(old)",
+          "code": "06016321",
+          "severity": "warning",
+          "detail": "06016321 (ปี 2 ภาค 2) ระบุว่าต้องผ่าน 06016306 แต่ 06016306 อยู่ปี 2 ภาค 2 — ภาคเดียวกัน (อาจเป็นวิชาเรียนร่วมภาคที่เล่มจัดไว้เอง)"
+        }
+      ]
+    },
+    {
+      "rule": "CHK6",
+      "title": "ไม่มีวิชาซ้ำในภาคเรียนเดียวกัน",
+      "catches": "ตารางแผนถูกอ่านซ้ำสองรอบ",
+      "severity": "error",
+      "checked": 322,
+      "finding_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "pass_rate": 1.0,
+      "passed": true,
+      "findings": []
+    },
+    {
+      "rule": "CHK7",
+      "title": "หน่วยกิตต่อภาคอยู่ระหว่าง 9-22",
+      "catches": "บางวิชาตกหล่น หรือมีวิชาจากหน้าอื่นปนเข้ามา",
+      "severity": "warning",
+      "checked": 45,
+      "finding_count": 6,
+      "error_count": 0,
+      "warning_count": 6,
+      "pass_rate": 0.8667,
+      "passed": false,
+      "findings": [
+        {
+          "rule": "CHK7",
+          "version": "AIT/2566(current)",
+          "code": "",
+          "severity": "warning",
+          "detail": "ปี 2 ภาค 2 รวม 25 หน่วยกิต (9 วิชา) — เกินเกณฑ์"
+        },
+        {
+          "rule": "CHK7",
+          "version": "IT/2560(old)",
+          "code": "",
+          "severity": "warning",
+          "detail": "ปี 2 ภาค 2 รวม 30 หน่วยกิต (10 วิชา) — เกินเกณฑ์"
+        },
+        {
+          "rule": "CHK7",
+          "version": "IT/2560(old)",
+          "code": "",
+          "severity": "warning",
+          "detail": "ปี 3 ภาค 1 รวม 36 หน่วยกิต (12 วิชา) — เกินเกณฑ์"
+        },
+        {
+          "rule": "CHK7",
+          "version": "IT/2560(old)",
+          "code": "",
+          "severity": "warning",
+          "detail": "ปี 3 ภาค 2 รวม 31 หน่วยกิต (11 วิชา) — เกินเกณฑ์"
+        },
+        {
+          "rule": "CHK7",
+          "version": "IT/2565(current)",
+          "code": "",
+          "severity": "warning",
+          "detail": "ปี 2 ภาค 2 รวม 30 หน่วยกิต (10 วิชา) — เกินเกณฑ์"
+        },
+        {
+          "rule": "CHK7",
+          "version": "IT/2565(current)",
+          "code": "",
+          "severity": "warning",
+          "detail": "ปี 3 ภาค 1 รวม 27 หน่วยกิต (9 วิชา) — เกินเกณฑ์"
+        }
+      ]
+    }
+  ]
+}

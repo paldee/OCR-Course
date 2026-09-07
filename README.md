@@ -66,8 +66,12 @@ katrag ingest --fresh    # discard previous progress
 # Build search indices
 katrag index
 
-# Run evaluation harness
+# Run evaluation harness (needs teacher ground truth)
 katrag evaluate
+
+# Check extracted data for internal consistency (CHK1-CHK7, no ground truth needed)
+katrag consistency
+katrag consistency --fail-on-error   # exit 1 on error-level findings (for CI)
 
 # Start API server (binds to 127.0.0.1:8000)
 katrag serve
@@ -137,6 +141,10 @@ katrag/
 4. **Query** — `pipeline.py`: resolve program → scope question → structured query →
    hybrid retrieve (RRF + adaptive cutoff) → build context → Typhoon LLM → resolve citations
 5. **Evaluate** — OCR CER vs text layer, field accuracy vs teacher GT, QA + citation metrics
+6. **Consistency** — CHK1-CHK7 cross-field rules that verify the extracted data agrees with
+   itself (credits printed in two places must match, prerequisites must precede the course
+   that requires them, no duplicate course in one term, …). Needs no answer key, so it covers
+   all 13 curriculum versions and doubles as a regression guard for ingest changes
 
 > Subsystems that were designed and built but never wired into the live path (OCR cascade,
 > multi-hop evidence planner, citation validator, table extractor, and the `katgpt-rs` ports)

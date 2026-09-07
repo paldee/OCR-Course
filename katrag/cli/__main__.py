@@ -7,7 +7,8 @@ Commands:
     katrag preflight  — ตรวจ weight files + engine readiness
     katrag ingest     — สแกนเอกสารและประมวลผลทุกหน้า
     katrag index      — สร้าง FTS5 + dense index
-    katrag evaluate   — รัน evaluation harness
+    katrag evaluate   — รัน evaluation harness (ต้องมี ground truth)
+    katrag consistency— ตรวจความสอดคล้องของข้อมูลที่สกัดมา (CHK1-CHK7, ไม่ต้องมีเฉลย)
     katrag serve      — เริ่ม API server (127.0.0.1)
     katrag demo       — แสดง end-to-end demo
 """
@@ -230,6 +231,24 @@ def cmd_evaluate(args: argparse.Namespace) -> int:
         return 0
 
 
+def cmd_consistency(args: argparse.Namespace) -> int:
+    """ตรวจความสอดคล้องของข้อมูลที่สกัดมา (CHK1-CHK7).
+
+    ต่างจาก `evaluate` ที่ต้องมี ground truth — กฎชุดนี้ตรวจว่าข้อมูลสอดคล้อง
+    กันเองในเอกสารหรือไม่ จึงใช้ได้กับทุกหลักสูตรในฐานข้อมูล
+    """
+    from katrag.common.net_guard import enforce_offline
+    from katrag.eval.consistency_check import main as consistency_main
+
+    with enforce_offline():
+        argv: list[str] = []
+        if args.db:
+            argv += ["--db", args.db]
+        if args.fail_on_error:
+            argv.append("--fail-on-error")
+        return consistency_main(argv)
+
+
 def cmd_serve(args: argparse.Namespace) -> int:
     """เริ่ม API server — binds to 127.0.0.1 (R19.2)."""
     from katrag.common.net_guard import global_guard
@@ -280,6 +299,20 @@ def build_parser() -> argparse.ArgumentParser:
     # evaluate
     subparsers.add_parser("evaluate", help="run evaluation harness")
 
+    # consistency
+    consistency_parser = subparsers.add_parser(
+        "consistency",
+        help="check extracted data for internal consistency (CHK1-CHK7, no ground truth needed)",
+    )
+    consistency_parser.add_argument(
+        "--db", default=None, help="path to sqlite database (default: artifacts/katrag.sqlite3)"
+    )
+    consistency_parser.add_argument(
+        "--fail-on-error",
+        action="store_true",
+        help="exit 1 when an error-level finding is present",
+    )
+
     # serve
     subparsers.add_parser("serve", help="start API server (127.0.0.1)")
 
@@ -299,6 +332,7 @@ _COMMANDS = {
     "ingest": cmd_ingest,
     "index": cmd_index,
     "evaluate": cmd_evaluate,
+    "consistency": cmd_consistency,
     "serve": cmd_serve,
     "demo": cmd_demo,
 }
