@@ -30,7 +30,13 @@ _PREREQ_KW = re.compile(r"วิชาบังคับก่อน|PREREQUISIT
 _NONE_MARKERS = ["ไม่มี", "none", "-"]
 
 # "ไม่มี"/"NONE" ที่ตามหลัง keyword ทันที = ประกาศว่าไม่มีวิชาบังคับก่อน
-_NONE_AFTER_KW = re.compile(r"\s*:?\s*(?:ไม่มี|none)\b", re.IGNORECASE)
+#
+# ห้ามปิดท้ายด้วย `\b`: "ไม่มี" ลงท้ายด้วยสระ ี (U+0E35) ซึ่งเป็น combining mark
+# ที่ Python ไม่นับเป็น word character จึงไม่เกิด word boundary กับช่องว่างที่ตามมา
+# ทำให้ตัวตรวจไม่ทำงานกับคำไทยเลย (ส่วน "None" อังกฤษ match ได้ปกติ) — บั๊กนี้
+# ปล่อยให้ zone ไหลไปกลืนรหัสวิชาถัดไป แล้วเก็บรหัสนั้นเป็น prerequisite ผิด ๆ
+# ใช้ negative lookahead กันคำอังกฤษที่ยาวกว่าแทน เช่น "nonetheless"
+_NONE_AFTER_KW = re.compile(r"\s*:?\s*(?:ไม่มี|none)(?![a-zA-Z])", re.IGNORECASE)
 
 # ความยาวสูงสุดของ prereq zone (ตัวอักษร) — กันไม่ให้ zone กินรหัสของวิชาถัดไป
 _ZONE_MAX_CHARS = 200
