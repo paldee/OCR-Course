@@ -83,6 +83,41 @@ class QAResult:
             return 1.0
         return len(self.check_hit) / total
 
+    # ── การวัดสองมิติ (แยก "กลไกดึงข้อมูล" ออกจาก "คำตอบถูก") ──
+
+    @property
+    def retrieval_status(self) -> str:
+        """มิติ 1 — กลไกดึงข้อมูลทำงานถูกไหม (แทน 'SQL รันผ่าน' ของ Text-to-SQL).
+
+        ระบบเราไม่ได้ให้ LLM สร้าง SQL — structured path ใช้ SQL ที่เขียนตายตัว
+        จึงรันผ่านเสมอ (100% ไม่มีความหมาย) มิติที่มีความหมายกับสถาปัตยกรรม RAG
+        คือ "ดึงหน้าหลักฐานที่ถูกต้องมาได้ไหม"
+
+        คืนค่า:
+          "error"      — เรียก API ไม่สำเร็จ (กลไกล้มจริง)
+          "structured" — ตอบจากตารางที่ validate แล้ว (ไม่ต้องมี citation)
+          "hit"        — ดึงหน้าหลักฐานที่อยู่ใน gold_set มาได้อย่างน้อย 1 หน้า
+          "miss"       — คืน citation แต่ไม่มีหน้าใดตรง gold_set
+          "no_gold"    — ยังไม่มีหน้าหลักฐานใน gold_set ให้เทียบ (วัดไม่ได้)
+        """
+        if self.error:
+            return "error"
+        if self.answered_from == "structured":
+            return "structured"
+        if not self.expected_pages:
+            return "no_gold"
+        return "hit" if (self.cite_recall or 0.0) > 0 else "miss"
+
+    @property
+    def retrieval_ok(self) -> bool:
+        """มิติ 1 ผ่าน: กลไกทำงานถูก (structured หรือ ดึงหน้าถูกอย่างน้อย 1)."""
+        return self.retrieval_status in ("structured", "hit")
+
+    @property
+    def retrieval_measurable(self) -> bool:
+        """มิติ 1 วัดได้ (ตัด no_gold ที่ยังไม่มีเฉลยหน้าออก)."""
+        return self.retrieval_status in ("hit", "miss", "structured", "error")
+
 
 # ══════════════════════════════════════════════════════════════════════
 # Runner
@@ -198,8 +233,61 @@ def build_report(results: list[QAResult]) -> str:
     A("คะแนนจริงตามใบเสนอโครงการต้องให้ **ผู้ตรวจกาช่อง** ว่าคำตอบถูก + อ้างอิงถูก")
     A("")
 
-    # ── สรุป ──
     levels = ["easy", "medium", "hard"]
+
+    # ══════════════════════════════════════════════════════════════════
+    # การวัดสองมิติ — แยก "กลไกดึงข้อมูล" ออกจาก "คำตอบถูก"
+    # ══════════════════════════════════════════════════════════════════
+    A("## การวัดผลสองมิติ")
+    A("")
+    A("แยกวัดสองด้านเพื่อวินิจฉัยได้ว่าพลาดตรงไหน — กลไกดึงข้อมูลผิด หรือ LLM ตอบผิด")
+    A("")
+    A("| มิติ | Text-to-SQL ทั่วไป | ระบบนี้ (RAG) วัดอะไรแทน |")
+    A("|---|---|---|")
+    A("| 1. กลไกทำงาน | SQL รันผ่าน | **Retrieval hit** — ดึงหน้าหลักฐานถูกไหม |")
+    A("| 2. คำตอบถูก | ตรงเฉลย | **Answer accuracy** — auto-screen + ผู้ตรวจกา |")
+    A("")
+    A("> ระบบนี้ไม่ได้ให้ LLM สร้าง SQL — เส้นทาง structured ใช้ SQL ที่เขียนตายตัว "
+      "จึงรันผ่านเสมอ (100% ไม่มีความหมาย) จึงวัด **retrieval hit** แทน ซึ่งสะท้อนว่า "
+      "กลไกค้นหลักฐานทำงานถูกจริงหรือไม่")
+    A("")
+
+    # ── มิติ 1: retrieval ──
+    n_hit = sum(1 for r in results if r.retrieval_status == "hit")
+    n_struct_r = sum(1 for r in results if r.retrieval_status == "structured")
+    n_miss = sum(1 for r in results if r.retrieval_status == "miss")
+    n_nogold = sum(1 for r in results if r.retrieval_status == "no_gold")
+    n_err_r = sum(1 for r in results if r.retrieval_status == "error")
+    n_measurable = sum(1 for r in results if r.retrieval_measurable)
+    n_ok = sum(1 for r in results if r.retrieval_ok)
+    rate = f"{n_ok}/{n_measurable}" if n_measurable else "—"
+    pct = f" ({n_ok / n_measurable * 100:.0f}%)" if n_measurable else ""
+    A("### มิติ 1 — Retrieval hit rate")
+    A("")
+    A(f"**{rate}{pct}** ของข้อที่วัดได้ (กลไกดึงข้อมูลทำงานถูก)")
+    A("")
+    A("| สถานะ | จำนวน | ความหมาย |")
+    A("|---|---:|---|")
+    A(f"| hit | {n_hit} | ดึงหน้าหลักฐานที่อยู่ใน gold_set มาได้ ≥ 1 หน้า |")
+    A(f"| structured | {n_struct_r} | ตอบจากตารางที่ validate แล้ว (ไม่ต้องมี citation) |")
+    A(f"| miss | {n_miss} | คืน citation แต่ไม่มีหน้าใดตรง gold_set |")
+    A(f"| no_gold | {n_nogold} | ยังไม่มีหน้าหลักฐานใน gold_set ให้เทียบ (ตัดออกจากตัวหาร) |")
+    A(f"| error | {n_err_r} | เรียก API ไม่สำเร็จ |")
+    A("")
+
+    # ── มิติ 2: answer accuracy ──
+    A("### มิติ 2 — Answer accuracy (auto-screening)")
+    A("")
+    npass_all = sum(1 for r in results if r.auto_pass)
+    A(f"**{npass_all}/{len(results)}** ผ่าน auto-screening "
+      "(มีคำสำคัญครบ + ไม่ติดคำต้องห้าม)")
+    A("")
+    A("> auto-screening เป็นการคัดกรองเบื้องต้นด้วย substring เท่านั้น "
+      "คะแนน accuracy จริงต้องให้ผู้ตรวจกาช่องในตารางท้ายรายงาน "
+      "(`คำตอบถูก` AND `อ้างอิงถูก`)")
+    A("")
+
+    # ── สรุป ──
     A("## สรุปผล auto-screening")
     A("")
     A("| ระดับ | จำนวนข้อ | auto pass | คำสำคัญที่พบ (เฉลี่ย) | เวลาเฉลี่ย |")
@@ -301,6 +389,8 @@ def build_report(results: list[QAResult]) -> str:
             A(f"- หลักสูตรที่เลือก: `{r.item.program or '(ไม่ระบุ)'}`")
             A(f"- เวลา: {r.elapsed:.2f}s | citations: {r.citations} | "
               f"versions: {', '.join(r.versions) or '—'}")
+            A(f"- retrieval (มิติ 1): `{r.retrieval_status}` | "
+              f"auto-screen (มิติ 2): `{'PASS' if r.auto_pass else 'ตรวจมือ'}`")
             if r.item.check:
                 A(f"- คำสำคัญที่ต้องมี: พบ {len(r.check_hit)}/{len(r.item.check)} "
                   f"{'(ขาด: ' + ', '.join(r.check_miss) + ')' if r.check_miss else ''}")
@@ -363,6 +453,8 @@ def main() -> None:
             "check_miss": r.check_miss,
             "forbid_hit": r.forbid_hit,
             "answered_from": r.answered_from,
+            "retrieval_status": r.retrieval_status,
+            "retrieval_ok": r.retrieval_ok,
             "cited_pages": [{"document_id": d, "page": p} for d, p in r.cited_pages],
             "expected_pages": [{"document_id": d, "page": p} for d, p in r.expected_pages],
             "citation_precision": r.cite_precision,
@@ -376,8 +468,11 @@ def main() -> None:
     )
 
     npass = sum(1 for r in results if r.auto_pass)
+    n_measurable = sum(1 for r in results if r.retrieval_measurable)
+    n_ok = sum(1 for r in results if r.retrieval_ok)
     print()
-    print(f"auto pass {npass}/{len(results)}")
+    print(f"มิติ 1 retrieval hit : {n_ok}/{n_measurable} (ข้อที่วัดได้)")
+    print(f"มิติ 2 auto pass     : {npass}/{len(results)}")
     print(f"report -> {args.report}")
     print(f"json   -> {args.json}")
 
