@@ -119,6 +119,9 @@ class EvidenceHit:
     curriculum_year: int
     edition_status: str
     score: float
+    #: ข้อความจาก chunk อื่น *ในหน้าเดียวกัน* ที่ถูก dedupe ทิ้งไป — เก็บไว้ต่อท้าย
+    #: context เพื่อไม่ให้คำตอบขาดเมื่อข้อมูลกระจายหลาย chunk ในหน้าเดียว
+    neighbor_text: str = ""
 
     @property
     def version_label(self) -> str:
@@ -268,7 +271,8 @@ def retrieve_evidence(
     """ค้นหลักฐานจาก chunk แล้วกรองให้เหลือเฉพาะที่เกี่ยวจริง."""
     hits = _raw_search(conn, question, dense_index=dense_index, limit=limit)
     hits = _dedupe_by_page(hits)
-    return _apply_cutoff(hits)
+    hits = _apply_cutoff(hits)
+    return _expand_page_neighbors(conn, hits)
 
 
 def _raw_search(
@@ -338,6 +342,35 @@ def _apply_cutoff(hits: list[EvidenceHit]) -> list[EvidenceHit]:
     return kept if len(kept) >= MIN_EVIDENCE else hits[:MIN_EVIDENCE]
 
 
+def _expand_page_neighbors(
+    conn: sqlite3.Connection, hits: list[EvidenceHit]
+) -> list[EvidenceHit]:
+    """ดึง chunk อื่น *ในหน้าเดียวกัน* กับหลักฐานที่เลือก มาเก็บใน neighbor_text.
+
+    ทำไมต้องมี: `_dedupe_by_page` เก็บ chunk แรกของแต่ละหน้าเพื่อกัน citation ซ้ำ
+    แต่บางหน้ามีข้อมูลกระจายหลาย chunk (เช่นตารางโครงสร้างหลักสูตร DSBA หน้า 15
+    ที่ "กลุ่มวิชาเลือกเสรี 6 หน่วยกิต" อยู่ chunk หนึ่ง และ "กลุ่มวิชาชีพเฉพาะด้าน
+    12 หน่วยกิต" อยู่อีก chunk) การเก็บ chunk เดียวทำให้ LLM เห็นแค่ครึ่งเดียวแล้ว
+    ตอบผิด (ต้นเหตุ H5 ตอบ 6 แทน 12)
+
+    การขยายนี้ไม่แตะ index/citation — เพิ่มเฉพาะข้อความที่ build_context จะต่อท้าย
+    ให้ LLM เห็นครบ ส่วน citation ยังชี้หน้าเดิม (หนึ่งหน้าต่อหนึ่ง citation)
+    """
+    if not hits:
+        return hits
+    conn.row_factory = sqlite3.Row
+    for h in hits:
+        rows = conn.execute(
+            "SELECT text FROM chunk WHERE document_id=? AND page_number=? "
+            "AND chunk_id != ? AND COALESCE(is_boilerplate, 0) = 0 "
+            "ORDER BY chunk_id",
+            (h.document_id, h.page_number, h.chunk_id),
+        ).fetchall()
+        if rows:
+            h.neighbor_text = "\n".join(r["text"].strip() for r in rows if r["text"])
+    return hits
+
+
 # ══════════════════════════════════════════════════════════════════════
 # ขั้นที่ 5-6: ประกอบ context และสร้างคำตอบ
 # ══════════════════════════════════════════════════════════════════════
@@ -353,8 +386,14 @@ def build_context(structured: StructuredOutcome, hits: Sequence[EvidenceHit]) ->
     for i, hit in enumerate(hits, 1):
         heading = hit.heading or "ไม่มีหัวข้อ"
         ver = f"{hit.program} {hit.curriculum_year}".strip()
+        # รวมข้อความของ chunk หลัก + chunk อื่นในหน้าเดียวกัน (neighbor) เพื่อไม่ให้
+        # ข้อมูลที่กระจายหลาย chunk ในหน้าเดียวขาดหาย จากนั้นตัดที่เพดานเดียว
+        # (เพดาน 900 ครอบคลุมหน้าโครงสร้างหลักสูตรที่มีหลายกลุ่มวิชาในหน้าเดียว)
+        body = hit.text.strip()
+        if hit.neighbor_text:
+            body = f"{body}\n{hit.neighbor_text.strip()}"
         parts.append(
-            f"[{i}] ({heading} — {ver}, หน้า {hit.page_number}):\n{hit.text[:500].strip()}"
+            f"[{i}] ({heading} — {ver}, หน้า {hit.page_number}):\n{body[:900].strip()}"
         )
     return "\n\n".join(parts)
 
