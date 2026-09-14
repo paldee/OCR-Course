@@ -44,14 +44,14 @@ EASY: list[QAItem] = [
         question="วิชาแคลคูลัส 2 มีกี่หน่วยกิต",
         expected="3 หน่วยกิต (3-0-6)",
         reference="ตารางรายวิชา DSBA 2565",
-        check=("3",),
+        check=("แคลคูลัส", "3"),
     ),
     QAItem(
         qid="E3", level="easy", program="DSBA",
         question="วิชาการสร้างคลังข้อมูลเรียนปีไหน เทอมอะไร",
         expected="ปีที่ 3 ภาคการศึกษาที่ 1",
         reference="แผนการศึกษา DSBA 2565",
-        check=("3",),
+        check=("คลังข้อมูล", "3"),
     ),
     QAItem(
         qid="E4", level="easy", program="IT",

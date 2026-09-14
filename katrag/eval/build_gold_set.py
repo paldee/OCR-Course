@@ -26,6 +26,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from katrag.eval.qa_questions import ALL_QUESTIONS, QAItem
+from katrag.query.retriever import extract_keywords
 from katrag.query.structured_query import (
     detect_program,
     detect_semester,
@@ -178,6 +179,23 @@ def expected_pages(conn: sqlite3.Connection, item: QAItem) -> list[tuple[str, in
             # คำที่ไม่ใช่ชื่อวิชา (เช่น "แขนง", "หน่วยกิต") → ค้นใน chunk
             for pg in _pages_for_keyword(conn, version_id, token, limit=20):
                 score[pg] = score.get(pg, 0) + 1
+
+    # ── ชั้น 3 (fallback): keyword จาก *ตัวคำถาม* เมื่อชั้น 1-2 ยังหาหน้าไม่ได้ ──
+    # บางคำถามมี check เป็นตัวเลขล้วน ("3", "2560") ซึ่งชั้น 2 ตัดทิ้ง จึง derive ไม่ได้
+    # ทางแก้ที่ไม่เป็น self-check: ดึง content keyword จากคำถาม (input ของผู้ใช้
+    # ไม่ใช่คำตอบของระบบ) ด้วย extract_keywords ตัวเดียวกับที่ retrieval ใช้จริง
+    # ให้น้ำหนักต่ำกว่าชั้น 2 (course-name match) เพราะกว้างกว่า
+    if not primary and not score:
+        for kw in extract_keywords(item.question, program):
+            if len(kw) < 3 or kw.isdigit():
+                continue
+            pages_by_course = _pages_for_course_name(conn, version_id, kw)
+            if pages_by_course:
+                for pg in pages_by_course:
+                    score[pg] = score.get(pg, 0) + 2
+            else:
+                for pg in _pages_for_keyword(conn, version_id, kw, limit=20):
+                    score[pg] = score.get(pg, 0) + 1
 
     ranked_secondary = sorted(score.items(), key=lambda kv: (-kv[1], kv[0]))
 
