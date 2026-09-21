@@ -412,7 +412,7 @@
       "code_recall": 0.8271,
       "code_precision": 0.5419,
       "code_f1": 0.6548,
-      "field_macro_accuracy": 0.5606,
+      "field_macro_accuracy": 0.6642,
       "fields": {
         "name_th": {
           "matched": 158,
@@ -445,9 +445,9 @@
           "accuracy": 0.9212
         },
         "type": {
-          "matched": 118,
+          "matched": 289,
           "compared": 330,
-          "accuracy": 0.3576
+          "accuracy": 0.8758
         }
       },
       "category_recall": {
