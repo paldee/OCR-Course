@@ -870,3 +870,95 @@ def try_program_name(conn: sqlite3.Connection, question: str) -> StructuredResul
         version_label=version_label or "หลักสูตร",
         intent="program_name", version_id=vid,
     )
+
+
+# ══════════════════════════════════════════════════════════════════════
+# เกณฑ์สำเร็จการศึกษา / เกียรตินิยม (ตาราง `rule`)
+# ══════════════════════════════════════════════════════════════════════
+
+_RULE_KIND_LABEL = {
+    "graduation": "เกณฑ์การสำเร็จการศึกษา",
+    "honors": "เกณฑ์เกียรตินิยม",
+    "dismissal": "เกณฑ์การพ้นสภาพ",
+    "probation": "เกณฑ์ภาคทัณฑ์",
+    "grading": "เกณฑ์การให้คะแนน",
+}
+
+_ATTRIBUTE_LABEL = {
+    "min_total_credits": "หน่วยกิตขั้นต่ำที่ต้องเรียนตลอดหลักสูตร",
+    "min_gpa": "เกรดเฉลี่ยสะสมขั้นต่ำ",
+    "min_gpa_honors_1_gold": "เกรดเฉลี่ยขั้นต่ำสำหรับเกียรตินิยมอันดับ 1 เหรียญทอง",
+}
+
+_GRADUATION_KW = ("จบการศึกษา", "สำเร็จการศึกษา", "เกณฑ์การจบ", "เกณฑ์จบ")
+_HONORS_KW = ("เกียรตินิยม",)
+
+
+def detect_rule_intent(question: str) -> str | None:
+    """ตรวจว่าคำถามถามเกณฑ์ที่มีอยู่ในตาราง `rule` — คืน rule_kind หรือ None.
+
+    ครอบเฉพาะ 'graduation' และ 'honors' เพราะเป็นสองประเภทเดียวที่ populate_rules
+    ใส่ข้อมูลไว้จริง (ยืนยันด้วย provenance ในเล่ม + ตรงกับ teacher GT)
+    """
+    if any(kw in question for kw in _HONORS_KW):
+        return "honors"
+    if any(kw in question for kw in _GRADUATION_KW):
+        return "graduation"
+    return None
+
+
+def try_rule_answer(conn: sqlite3.Connection, question: str) -> StructuredResult:
+    """ตอบคำถามเกณฑ์สำเร็จการศึกษา/เกียรตินิยมจากตาราง `rule`.
+
+    ต่างจาก intent อื่นที่ตอบจาก course/plan_slot — rule table เก็บเกณฑ์ระดับ
+    หลักสูตร (ไม่ใช่รายวิชา) ที่ provenance ยืนยันแล้วว่ามีตัวเลขปรากฏจริงในเล่ม
+    (ดู katrag/ingest/populate_rules.py สำหรับที่มาและขอบเขตที่ยืนยันแล้ว)
+    """
+    conn.row_factory = sqlite3.Row
+    rule_kind = detect_rule_intent(question)
+    if rule_kind is None:
+        return StructuredResult(False, "", "", "none")
+
+    program = detect_program(question)
+    if program is None:
+        return StructuredResult(False, "", "", "none")
+
+    version_id = _resolve_version_for_rule(conn, program)
+    if version_id is None:
+        return StructuredResult(False, "", "", "none")
+
+    rows = conn.execute(
+        "SELECT rule_kind, attribute, comparator, value_numeric, value_text "
+        "FROM rule WHERE version_id=? AND rule_kind=? ORDER BY attribute",
+        (version_id, rule_kind),
+    ).fetchall()
+    if not rows:
+        return StructuredResult(False, "", "", "none")
+
+    label = _RULE_KIND_LABEL.get(rule_kind, rule_kind)
+    lines = [f"{label} ({program}):"]
+    for r in rows:
+        attr_label = _ATTRIBUTE_LABEL.get(r["attribute"], r["attribute"])
+        value = r["value_numeric"] if r["value_numeric"] is not None else r["value_text"]
+        lines.append(f"  - {attr_label} {r['comparator']} {value}")
+
+    return StructuredResult(
+        matched=True, context="\n".join(lines),
+        version_label=f"{program} (rule)", intent="rule",
+        version_id=version_id,
+    )
+
+
+def _resolve_version_for_rule(conn: sqlite3.Connection, program: str) -> int | None:
+    """เลือก version 'current' ที่มีจำนวนวิชามากสุด — สอดคล้องกับ
+    populate_rules._resolve_current_version และ build_gold_set._resolve_version
+    เพื่อไม่ให้ query คนละที่เห็นข้อมูลของคนละเวอร์ชัน (ปัญหา IT มี 3 current)
+    """
+    row = conn.execute(
+        "SELECT cv.version_id FROM curriculum_version cv "
+        "LEFT JOIN course c ON c.version_id = cv.version_id "
+        "WHERE cv.program=? AND cv.edition_status='current' "
+        "GROUP BY cv.version_id ORDER BY COUNT(c.course_id) DESC, cv.curriculum_year DESC LIMIT 1",
+        (program,),
+    ).fetchone()
+    return row[0] if row else None

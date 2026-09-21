@@ -39,12 +39,14 @@ from katrag.query.structured_query import (
     detect_prerequisite_intent,
     detect_program,
     detect_program_name_intent,
+    detect_rule_intent,
     detect_year,
     source_pages_for_codes,
     try_cross_version_diff,
     try_plan_summary,
     try_prerequisite,
     try_program_name,
+    try_rule_answer,
     try_structured_answer,
 )
 from katrag.query.topic_semantic import (
@@ -70,7 +72,7 @@ MIN_EVIDENCE = 3
 #: reformat (กันวิชาเลือกตกหล่นและกันคำตอบถูกตัดกลาง)
 DIRECT_INTENTS = frozenset({
     "year_sem", "all_courses", "plan_summary", "cross_version",
-    "topic_courses", "topic_semantic", "prerequisite",
+    "topic_courses", "topic_semantic", "prerequisite", "rule",
 })
 
 #: คำที่บ่งชี้ว่าเป็นคำถามเชิงวิเคราะห์ (ต้องให้ LLM ให้เหตุผล ไม่ใช่ list ข้อมูล)
@@ -243,6 +245,16 @@ def run_structured(
 
 def _dispatch_intent(conn: sqlite3.Connection, question: str):
     """เลือก structured handler ตาม intent ของคำถาม."""
+    # เกณฑ์สำเร็จการศึกษา/เกียรตินิยม — คำเฉพาะเจาะจง เช็กก่อน intent อื่นได้
+    # เพราะไม่มีคำถามรายวิชาข้อไหนใช้คำ "สำเร็จการศึกษา/เกียรตินิยม" ปนอยู่
+    if detect_rule_intent(question) is not None:
+        sr = try_rule_answer(conn, question)
+        if sr.matched:
+            return sr
+        # ไม่มี rule ให้ตอบ (เช่นหลักสูตรที่ไม่มีข้อมูลในตาราง) → ปล่อยลง
+        # retrieval ปกติ ไม่ fallback เข้า try_structured_answer เพราะคำถามนี้
+        # ไม่ใช่คำถามรายวิชา จะยิ่งตอบผิดประเภท
+        return sr
     if detect_program_name_intent(question):
         sr = try_program_name(conn, question)
         return sr if sr.matched else try_structured_answer(conn, question)
