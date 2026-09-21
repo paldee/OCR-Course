@@ -408,6 +408,109 @@ def evaluate_program(
     return result
 
 
+def evaluate_general_education(
+    conn: sqlite3.Connection, gt_root: Path, gt_rel: str = "general_education_ground_truth.json"
+) -> ProgramResult | None:
+    """วัด field-level ของวิชาศึกษาทั่วไป (gen-ed) เทียบ teacher GT.
+
+    ต่างจาก `evaluate_program`: gen-ed GT ไม่ผูกกับหลักสูตรเดียว วิชาแต่ละตัว
+    (เช่น 90641001 โรงเรียนสร้างเสน่ห์) ปรากฏเป็น row แยกกันใน `course` ของ
+    ทุก curriculum_version ที่ current พร้อมกัน (คนละ version_id ต่อหลักสูตร)
+    ก่อนหน้านี้ตัวเลขนี้ไม่เคยถูกวัดเลย — GT_TARGETS เดิมมีแค่ 4 ไฟล์
+    academic_plan ที่ query เฉพาะรหัสในแผนการเรียน ไม่ครอบ gen-ed catalog
+    """
+    gt_path = gt_root / gt_rel
+    if not gt_path.is_file():
+        return None
+
+    gt = load_gt(gt_path)
+    gt_courses_raw = gt.get("courses", [])
+
+    gt_index: dict[str, dict] = {}
+    gt_categories: dict[str, list[str]] = defaultdict(list)
+    for c in gt_courses_raw:
+        code = norm_code(c.get("code"))
+        if not code or code.startswith("หมายเหตุ") or "x" in code.lower():
+            continue
+        if code not in gt_index:
+            gt_index[code] = c
+        gt_categories[str(c.get("category") or "(ไม่ระบุหมวด)")].append(code)
+
+    if not gt_index:
+        return None
+
+    # ── รวมข้อมูลที่สกัดได้ของรหัสเดียวกันจากทุก version (gen-ed ใช้ร่วมกัน) ──
+    # ถ้า version ต่างกันให้ type/category ต่างกัน (บั๊กที่รู้ตัวแล้ว — 305 วิชา
+    # gen-ed นอกแผนถูกติดป้าย 'บังคับ' ผิดในบางหลักสูตร) ถือว่า "ไม่ตรง GT" ถ้า
+    # *ทุก* แถวที่พบผิด — ไม่ปัดให้ผ่านง่ายเกินไปด้วยการหยิบแถวที่ถูกแถวเดียว
+    rows = conn.execute(
+        "SELECT c.code, c.name_th, c.name_en, c.credits_raw, c.year, c.semester, "
+        "c.category, c.type, c.version_id, c.provenance_id FROM course c "
+        "JOIN curriculum_version cv ON cv.version_id = c.version_id "
+        "WHERE cv.edition_status='current' AND (c.code LIKE '90%' OR c.code LIKE '96%')"
+    ).fetchall()
+    ext_by_code: dict[str, list[sqlite3.Row]] = defaultdict(list)
+    for r in rows:
+        code = norm_code(r["code"])
+        if code:
+            ext_by_code[code].append(r)
+
+    gt_codes = set(gt_index)
+    ext_codes = set(ext_by_code)
+    matched = gt_codes & ext_codes
+
+    result = ProgramResult(
+        program="วิชาศึกษาทั่วไป (gen-ed, ทุกหลักสูตรรวมกัน)",
+        gt_file=gt_rel,
+        version_label="ทุก curriculum_version ที่ current",
+        gt_total=len(gt_codes),
+        extracted_total=len(ext_codes),
+        matched_codes=len(matched),
+        gt_only_codes=sorted(gt_codes - ext_codes),
+        extracted_only_codes=sorted(ext_codes - gt_codes),
+    )
+
+    for fname, _label in FIELD_SPECS:
+        result.fields[fname] = FieldStat(name=fname)
+
+    for code in sorted(matched):
+        g = gt_index[code]
+        # วิชาเดียวกันอาจมีหลายแถว (คนละหลักสูตร) — ถือว่า field นั้นถูก
+        # เฉพาะเมื่อ *ทุก* แถวตรงกับ GT (ไม่ปัดให้ผ่านง่ายด้วยแถวที่ถูกแถวเดียว)
+        for r_ext in ext_by_code[code]:
+            pairs = [
+                ("name_th", norm_text(g.get("name_th")), norm_text(r_ext["name_th"])),
+                ("name_en", norm_text(g.get("name_en")), norm_text(r_ext["name_en"])),
+                ("credits", norm_credits(g.get("credits")), norm_credits(r_ext["credits_raw"])),
+            ]
+            gtype = norm_text(g.get("type"))
+            if gtype:
+                pairs.append(("type", gtype, norm_text(r_ext["type"] or "")))
+            gcat = norm_text(g.get("category"))
+            if gcat:
+                pairs.append(("category", gcat, norm_text(r_ext["category"] or "")))
+
+            for fname, gval, eval_ in pairs:
+                stat = result.fields[fname]
+                if gval == "":
+                    continue
+                stat.compared += 1
+                if gval == eval_:
+                    stat.matched += 1
+                    continue
+                if eval_ and _edit_distance(gval, eval_) <= NEAR_MISS_MAX_EDITS:
+                    stat.near_miss += 1
+                if len(stat.mismatches) < 8:
+                    stat.mismatches.append((code, gval, eval_))
+
+    for cat, codes in gt_categories.items():
+        uniq = {c for c in codes if c in gt_codes}
+        found = len(uniq & ext_codes)
+        result.category_recall[cat] = (found, len(uniq))
+
+    return result
+
+
 # ══════════════════════════════════════════════════════════════════════
 # Report
 # ══════════════════════════════════════════════════════════════════════
@@ -614,6 +717,9 @@ def run(db_path: Path, gt_root: Path) -> tuple[list[PageLevelResult], list[Progr
             r = evaluate_program(conn, gt_root, gt_rel, program, year)
             if r:
                 prog_results.append(r)
+        ged = evaluate_general_education(conn, gt_root)
+        if ged:
+            prog_results.append(ged)
         return page_results, prog_results
     finally:
         conn.close()
