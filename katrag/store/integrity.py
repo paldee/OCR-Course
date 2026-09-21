@@ -20,7 +20,7 @@ from katrag.errors import StoreAccessError
 
 SCHEMA_FILE: Final = Path(__file__).with_name("schema.sql")
 
-#: ตารางฐานทั้งหมดที่ schema ต้องมี (19 ตาราง) — ใช้ตรวจความครบถ้วน (R21.2)
+#: ตารางฐานทั้งหมดที่ schema ต้องมี (20 ตาราง) — ใช้ตรวจความครบถ้วน (R21.2)
 BASE_TABLES: Final[tuple[str, ...]] = (
     "curriculum_version",
     "document",
@@ -34,6 +34,7 @@ BASE_TABLES: Final[tuple[str, ...]] = (
     "course_field_provenance",
     "plan_slot",
     "rule",
+    "person",
     "chunk",
     "chunk_embedding",
     "review_issue",

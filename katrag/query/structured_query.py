@@ -962,3 +962,95 @@ def _resolve_version_for_rule(conn: sqlite3.Connection, program: str) -> int | N
         (program,),
     ).fetchone()
     return row[0] if row else None
+
+
+# ══════════════════════════════════════════════════════════════════════
+# person — คำถามอาจารย์ผู้รับผิดชอบ/ประจำ/ผู้สอน (ตาราง person)
+# ══════════════════════════════════════════════════════════════════════
+
+#: version ที่ตาราง person มีข้อมูลจริง (ตรงกับ populate_person._STRUCTURED_VERSIONS
+#: + _RESPONSIBLE_ONLY_VERSIONS — hardcode เพราะ resolve ปกติ (จำนวนวิชามากสุด)
+#: จะได้ version ที่ไม่มีข้อมูลอาจารย์เลยสำหรับ IT ซึ่งมี 3 current พร้อมกัน)
+_PERSON_VERSIONS: dict[str, int] = {
+    "AIT": 1, "AITBA": 8, "IT": 13, "DSBA": 5, "BIT": 3,
+}
+
+#: หลักสูตรที่เล่มไม่มี role อื่นนอกจาก responsible (ใช้อธิบายบริบทตอนตอบ
+#: role ที่ไม่มีข้อมูล — ดู populate_person.py หัวไฟล์สำหรับที่มา)
+_RESPONSIBLE_ONLY_PROGRAMS = frozenset({"DSBA", "BIT"})
+
+_PERSON_ROLE_LABEL = {
+    "responsible": "อาจารย์ผู้รับผิดชอบหลักสูตร",
+    "regular": "อาจารย์ประจำหลักสูตร",
+    "teaching_regular": "อาจารย์ผู้สอนที่เป็นอาจารย์ประจำ",
+}
+
+_PERSON_KW = ("อาจารย์ผู้รับผิดชอบ", "อาจารย์ประจำหลักสูตร", "อาจารย์ผู้สอน", "อาจารย์ประจำ")
+
+
+def detect_person_intent(question: str) -> bool:
+    """ตรวจว่าคำถามถามรายชื่ออาจารย์ (ผู้รับผิดชอบ/ประจำ/ผู้สอน) หรือไม่."""
+    if not any(kw in question for kw in _PERSON_KW):
+        return False
+    return any(w in question for w in ("มีใคร", "รายชื่อ", "ชื่ออะไร", "กี่คน", "ใครบ้าง"))
+
+
+def _detect_person_role(question: str) -> str:
+    """แยกบทบาทที่ถาม — ต้องเช็ค 'ผู้รับผิดชอบ' และ 'ผู้สอน' ก่อน 'ประจำ' เฉย ๆ
+    เพราะ 'อาจารย์ประจำหลักสูตร' (regular) เป็นคำที่ไม่ทับซ้อนกับอีกสองคำ แต่
+    ถ้าตรวจ 'อาจารย์ประจำ' แบบกว้างก่อนจะจับ regular ผิดทุกกรณี (default เมื่อ
+    ไม่ระบุชัดคือ responsible เพราะเป็นกลุ่มที่ทุกหลักสูตรมีข้อมูลแน่นอน)
+    """
+    if "ผู้รับผิดชอบ" in question:
+        return "responsible"
+    if "ผู้สอน" in question:
+        return "teaching_regular"
+    if "ประจำหลักสูตร" in question or "ประจำ" in question:
+        return "regular"
+    return "responsible"
+
+
+def try_person_answer(conn: sqlite3.Connection, question: str) -> StructuredResult:
+    """ตอบคำถามรายชื่ออาจารย์จากตาราง `person` (สกัดจาก chunk.heading มคอ.2
+    หมวดที่ 5 — ดู katrag/ingest/populate_person.py สำหรับที่มา/ขอบเขต).
+
+    DSBA/BIT เล่มไม่มี sub-heading แยก role อื่นนอกจาก responsible — ถ้าถาม
+    role อื่น ตอบตามข้อมูลที่มีจริง พร้อมอธิบายบริบทว่าเล่มไม่ได้แยกไว้ต่างหาก
+    (ตกลงกับผู้ใช้แล้วว่า 'ตอบตามข้อมูลที่มีจริง' ดีกว่าไม่ตอบเลยหรือเดาให้ครบ)
+    """
+    conn.row_factory = sqlite3.Row
+    if not detect_person_intent(question):
+        return StructuredResult(False, "", "", "none")
+
+    program = detect_program(question)
+    if program is None:
+        return StructuredResult(False, "", "", "none")
+
+    version_id = _PERSON_VERSIONS.get(program)
+    if version_id is None:
+        return StructuredResult(False, "", "", "none")
+
+    role = _detect_person_role(question)
+    rows = conn.execute(
+        "SELECT sequence_no, name_raw FROM person "
+        "WHERE version_id=? AND role=? ORDER BY sequence_no",
+        (version_id, role),
+    ).fetchall()
+
+    role_label = _PERSON_ROLE_LABEL[role]
+    if not rows:
+        if program in _RESPONSIBLE_ONLY_PROGRAMS and role != "responsible":
+            ctx = (
+                f"เอกสารหลักสูตร {program} (มคอ.2) ระบุเฉพาะ 'อาจารย์ผู้รับผิดชอบ"
+                f"หลักสูตร' เท่านั้น ไม่ได้แยกรายชื่อ '{role_label}' ไว้ต่างหาก "
+                f"จึงไม่มีข้อมูลสำหรับคำถามนี้โดยตรง (ถ้าต้องการรายชื่ออาจารย์"
+                f"ผู้รับผิดชอบหลักสูตร ถามใหม่ได้)"
+            )
+            return StructuredResult(True, ctx, program, "person")
+        return StructuredResult(False, "", "", "none")
+
+    lines = [f"{role_label} หลักสูตร {program} มีจำนวน {len(rows)} คน ได้แก่:"]
+    for r in rows:
+        lines.append(f"  {r['sequence_no']}. {r['name_raw']}")
+
+    return StructuredResult(True, "\n".join(lines), f"{program} (person)", "person", version_id=version_id)

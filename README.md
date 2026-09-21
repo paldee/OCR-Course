@@ -105,7 +105,7 @@ When running `katrag serve`:
        ▼          ▼        ▼       ▼        ▼       ▼
   ┌───────────────────────────────────────────────────────────────┐
   │                    Provenance Store (SQLite)                    │
-  │  19 tables + 1 FTS5 virtual table — schema.sql                │
+  │  20 tables + 1 FTS5 virtual table — schema.sql                │
   └───────────────────────────────────────────────────────────────┘
        │
        ▼

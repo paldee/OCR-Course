@@ -35,6 +35,7 @@ from katrag.query.retriever import search as lexical_search
 from katrag.query.semantic_retriever import hybrid_search
 from katrag.query.structured_query import (
     detect_cross_version_intent,
+    detect_person_intent,
     detect_plan_summary_intent,
     detect_prerequisite_intent,
     detect_program,
@@ -43,6 +44,7 @@ from katrag.query.structured_query import (
     detect_year,
     source_pages_for_codes,
     try_cross_version_diff,
+    try_person_answer,
     try_plan_summary,
     try_prerequisite,
     try_program_name,
@@ -72,7 +74,7 @@ MIN_EVIDENCE = 3
 #: reformat (กันวิชาเลือกตกหล่นและกันคำตอบถูกตัดกลาง)
 DIRECT_INTENTS = frozenset({
     "year_sem", "all_courses", "plan_summary", "cross_version",
-    "topic_courses", "topic_semantic", "prerequisite", "rule",
+    "topic_courses", "topic_semantic", "prerequisite", "rule", "person",
 })
 
 #: คำที่บ่งชี้ว่าเป็นคำถามเชิงวิเคราะห์ (ต้องให้ LLM ให้เหตุผล ไม่ใช่ list ข้อมูล)
@@ -254,6 +256,14 @@ def _dispatch_intent(conn: sqlite3.Connection, question: str):
         # ไม่มี rule ให้ตอบ (เช่นหลักสูตรที่ไม่มีข้อมูลในตาราง) → ปล่อยลง
         # retrieval ปกติ ไม่ fallback เข้า try_structured_answer เพราะคำถามนี้
         # ไม่ใช่คำถามรายวิชา จะยิ่งตอบผิดประเภท
+        return sr
+    # คำถามอาจารย์ผู้รับผิดชอบ/ประจำ/ผู้สอน — เช็กก่อน intent อื่นได้เพราะ
+    # ไม่มีคำถามรายวิชาข้อไหนใช้คำ "อาจารย์ผู้รับผิดชอบ/ประจำหลักสูตร" ปนอยู่
+    if detect_person_intent(question):
+        sr = try_person_answer(conn, question)
+        # ไม่มีข้อมูล person เลย (เช่นหลักสูตรที่ไม่อยู่ใน _PERSON_VERSIONS)
+        # → ปล่อยลง retrieval ปกติ ไม่ fallback เข้า try_structured_answer
+        # เพราะคำถามนี้ไม่ใช่คำถามรายวิชา
         return sr
     if detect_program_name_intent(question):
         sr = try_program_name(conn, question)

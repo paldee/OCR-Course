@@ -219,6 +219,22 @@ CREATE TABLE IF NOT EXISTS rule (
   UNIQUE (version_id, rule_kind, attribute)
 );
 
+-- 12b ------------------------------------------------------------- person
+-- อาจารย์ประจำหลักสูตร (มคอ.2 หมวดที่ 5) — สกัดจาก chunk.heading รูปแบบ
+-- "N. คำนำหน้า ชื่อ สกุล" ที่สม่ำเสมอทั้ง 5 หลักสูตร แทนการรื้อ table_cell
+-- extractor ที่ถูกลบไปแล้ว (ดู docs/removed_subsystems.md)
+CREATE TABLE IF NOT EXISTS person (
+  person_id     INTEGER PRIMARY KEY,
+  version_id    INTEGER NOT NULL REFERENCES curriculum_version(version_id),
+  role          TEXT    NOT NULL CHECK (role IN
+                  ('responsible','regular','teaching_regular')),
+  sequence_no   INTEGER NOT NULL CHECK (sequence_no >= 1),
+  name_raw      TEXT    NOT NULL CHECK (length(trim(name_raw)) > 0),
+  provenance_id INTEGER NOT NULL REFERENCES provenance(provenance_id),
+  UNIQUE (version_id, role, sequence_no)
+);
+CREATE INDEX IF NOT EXISTS ix_person_version ON person(version_id, role);
+
 -- 13 -------------------------------------------------------------- chunk
 CREATE TABLE IF NOT EXISTS chunk (
   chunk_id       INTEGER PRIMARY KEY,
