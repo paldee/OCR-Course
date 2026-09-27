@@ -1,56 +1,95 @@
 /**
- * KatRAG Web UI — vanilla JS frontend
+ * Jingjok-Thorius Web UI — vanilla JS frontend
  *
  * Features:
  * - ส่งคำถามผ่าน POST /ask
- * - แสดงคำตอบพร้อม citations
- * - คลิก citation → GET /pages/{citation_id} แสดงหน้าเอกสาร + bbox overlay
- * - แสดง curriculum version และสถานะการตรวจ
+ * - แสดงคำตอบพร้อม citations (แบบ chip คลิกได้)
+ * - คลิก citation → GET /pages/{citation_id} แสดงหน้าเอกสาร
+ * - หัวข้อยอดฮิต (quick questions) — คลิกแล้วถามทันที
+ * - คัดลอกคำตอบ / อ่านออกเสียง / ให้ feedback
  */
 
 "use strict";
 
-const API_BASE = "";  // same origin — served by FastAPI
+const API_BASE = ""; // same origin — served by FastAPI
+const MAX_CHARS = 800;
 
 // ── DOM Elements ─────────────────────────────────────────────────────
 
 const form = document.getElementById("ask-form");
+const programSelect = document.getElementById("program-select");
 const questionInput = document.getElementById("question-input");
 const charCount = document.getElementById("char-count");
 const askBtn = document.getElementById("ask-btn");
+const clearBtn = document.getElementById("clear-btn");
+const quickQuestions = document.getElementById("quick-questions");
 const loading = document.getElementById("loading");
 const errorDisplay = document.getElementById("error-display");
 const answerSection = document.getElementById("answer-section");
 const answerText = document.getElementById("answer-text");
+const echoedQuestion = document.getElementById("echoed-question");
 const versionBadge = document.getElementById("version-badge");
 const timeBadge = document.getElementById("time-badge");
+const validationStatus = document.getElementById("validation-status");
 const removedCount = document.getElementById("removed-count");
 const unsupportedCount = document.getElementById("unsupported-count");
 const citationsList = document.getElementById("citations-list");
+const sqlDetails = document.getElementById("sql-details");
+const sqlCode = document.getElementById("sql-code");
+const sqlSources = document.getElementById("sql-sources");
+const sqlTime = document.getElementById("sql-time");
+const copyBtn = document.getElementById("copy-btn");
+const speakBtn = document.getElementById("speak-btn");
+const feedbackUp = document.getElementById("feedback-up");
+const feedbackDown = document.getElementById("feedback-down");
 const pageViewer = document.getElementById("page-viewer");
 const closeViewer = document.getElementById("close-viewer");
 const viewerTitle = document.getElementById("viewer-title");
 const viewerCanvas = document.getElementById("viewer-canvas");
 const viewerInfo = document.getElementById("viewer-info");
 
+const PROGRAM_ICONS = { IT: "💻", DSBA: "📊", AIT: "🤖", AITBA: "🎓", BIT: "🏫" };
+
 // ── Character counter ────────────────────────────────────────────────
 
-questionInput.addEventListener("input", () => {
+function updateCharCount() {
     const len = questionInput.value.length;
-    charCount.textContent = `${len} / 2000`;
-});
+    charCount.textContent = `${len} / ${MAX_CHARS}`;
+}
+questionInput.addEventListener("input", updateCharCount);
+
+// ── Quick questions ──────────────────────────────────────────────────
+
+if (quickQuestions) {
+    quickQuestions.addEventListener("click", (e) => {
+        const chip = e.target.closest(".quick-chip");
+        if (!chip) return;
+        questionInput.value = chip.dataset.question || chip.textContent.trim();
+        updateCharCount();
+        form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event("submit", { cancelable: true }));
+    });
+}
+
+// ── Clear ────────────────────────────────────────────────────────────
+
+if (clearBtn) {
+    clearBtn.addEventListener("click", () => {
+        questionInput.value = "";
+        updateCharCount();
+        hideElement(errorDisplay);
+        hideElement(answerSection);
+        questionInput.focus();
+    });
+}
 
 // ── Form submission ──────────────────────────────────────────────────
 
-form.addEventListener("submit", async (e) => {
+form.addEventListener("submit", async(e) => {
     e.preventDefault();
 
     const question = questionInput.value.trim();
     if (!question) return;
 
-    // หลักสูตรเป็นค่าบังคับ — ข้อมูลรายวิชา/แผนเรียนต่างกันทุกหลักสูตร
-    // ถ้าไม่เลือก คำถามจะกำกวมและระบบตอบผิดหลักสูตรได้
-    const programSelect = document.getElementById("program-select");
     const selectedProgram = programSelect ? programSelect.value : "";
     if (!selectedProgram) {
         showError("กรุณาเลือกหลักสูตรก่อนถาม");
@@ -58,11 +97,12 @@ form.addEventListener("submit", async (e) => {
         return;
     }
 
-    // Reset UI
     hideElement(errorDisplay);
     hideElement(answerSection);
     showElement(loading);
     askBtn.disabled = true;
+
+    const startedAt = performance.now();
 
     try {
         const response = await fetch(`${API_BASE}/ask`, {
@@ -74,18 +114,17 @@ form.addEventListener("submit", async (e) => {
         if (!response.ok) {
             const errData = await response.json().catch(() => null);
             if (response.status === 422 && errData && errData.detail) {
-                const msgs = errData.detail.map(
-                    (d) => `${d.loc.join(".")}: ${d.msg}`
-                );
+                const msgs = errData.detail.map((d) => `${d.loc.join(".")}: ${d.msg}`);
                 throw new Error(`Validation error:\n${msgs.join("\n")}`);
             }
-            throw new Error(
-                errData?.detail || `HTTP ${response.status}: ${response.statusText}`
-            );
+            throw new Error((errData && errData.detail) || `HTTP ${response.status}: ${response.statusText}`);
         }
 
         const data = await response.json();
-        renderAnswer(data);
+        if (typeof data.total_time_seconds !== "number") {
+            data.total_time_seconds = (performance.now() - startedAt) / 1000;
+        }
+        renderAnswer(data, question, selectedProgram);
     } catch (err) {
         showError(err.message || "เกิดข้อผิดพลาด");
     } finally {
@@ -96,124 +135,215 @@ form.addEventListener("submit", async (e) => {
 
 // ── Render answer ────────────────────────────────────────────────────
 
-function renderAnswer(data) {
-    // Answer text — คำตอบจาก LLM มักมี markdown (**ตัวหนา**, รายการ -, หัวข้อ)
-    // render แบบปลอดภัย: escape HTML ก่อนเสมอ แล้วค่อยแปลง markdown ชุดจำกัด
-    answerText.innerHTML = renderMarkdown(data.answer || "(ไม่มีคำตอบ)");
+function renderAnswer(data, question, selectedProgram) {
+    echoedQuestion.textContent = question;
 
-    // Version badge
+    answerText.innerHTML = renderAnswerHtml(data.answer || "(ไม่มีคำตอบ)");
+
+    // Version / program badge
+    const icon = PROGRAM_ICONS[selectedProgram] || "";
     if (data.versions_resolved && data.versions_resolved.length > 0) {
-        versionBadge.textContent = data.versions_resolved.join(", ");
-        showElement(versionBadge);
+        versionBadge.textContent = `${icon} ${data.versions_resolved.join(", ")}`.trim();
     } else {
-        versionBadge.textContent = "ทุกเวอร์ชัน";
-        showElement(versionBadge);
+        versionBadge.textContent = `${icon} ${selectedProgram || "ทุกเวอร์ชัน"}`.trim();
     }
 
     // Time badge
-    timeBadge.textContent = `${data.total_time_seconds.toFixed(2)}s`;
+    timeBadge.textContent = `⏱ ${data.total_time_seconds.toFixed(2)}s`;
 
-    // Validation status
-    removedCount.textContent = `ลบ: ${data.citations_removed} รายการ`;
-    unsupportedCount.textContent = `ไม่รองรับ: ${data.unsupported_claims} รายการ`;
+    // Validation status — only show chips that are non-zero
+    let anyStatus = false;
+    if (data.citations_removed > 0) {
+        removedCount.textContent = `ลบ: ${data.citations_removed} รายการ`;
+        showElement(removedCount);
+        anyStatus = true;
+    } else {
+        hideElement(removedCount);
+    }
+    if (data.unsupported_claims > 0) {
+        unsupportedCount.textContent = `ไม่รองรับ: ${data.unsupported_claims} รายการ`;
+        showElement(unsupportedCount);
+        anyStatus = true;
+    } else {
+        hideElement(unsupportedCount);
+    }
+    validationStatus.classList.toggle("hidden", !anyStatus);
+    if (anyStatus) validationStatus.classList.add("flex");
 
-    // Citations
+    // Citations — rendered as small clickable chips
     citationsList.innerHTML = "";
     if (data.citations && data.citations.length > 0) {
         data.citations.forEach((cite) => {
-            const li = document.createElement("li");
-            li.setAttribute("role", "button");
-            li.setAttribute("tabindex", "0");
-            li.setAttribute("aria-label", `ดูอ้างอิง ${cite.citation_id}`);
-            li.innerHTML = `
-                <span class="citation-id">[${cite.citation_id}]</span>
-                <span>${cite.heading}</span>
-                <span class="citation-meta">— ${cite.document_id} หน้า ${cite.page}</span>
-            `;
-            li.addEventListener("click", () => openPageViewer(cite.citation_id));
-            li.addEventListener("keydown", (e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    openPageViewer(cite.citation_id);
-                }
-            });
-            citationsList.appendChild(li);
+            const chip = document.createElement("button");
+            chip.type = "button";
+            chip.className = "inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-kmitl-50 border border-kmitl-200 text-kmitl-accent font-medium hover:bg-kmitl-100 transition";
+            chip.setAttribute("aria-label", `ดูอ้างอิง ${cite.citation_id}`);
+            chip.innerHTML = `<span class="font-bold">[${cite.citation_id}]</span> ${cite.document_id} หน้า ${cite.page}`;
+            chip.addEventListener("click", () => openPageViewer(cite.citation_id));
+            citationsList.appendChild(chip);
         });
     } else {
-        const li = document.createElement("li");
-        li.textContent = "ไม่มี citation";
-        li.style.color = "var(--text-muted)";
-        citationsList.appendChild(li);
+        const span = document.createElement("span");
+        span.textContent = "ไม่มี citation";
+        span.className = "text-kmitl-dark/30";
+        citationsList.appendChild(span);
     }
+
+    // SQL box — only shown when this answer was backed by a SQL query
+    const sqlText = data.sql || data.sql_query || "";
+    if (sqlDetails && sqlText) {
+        sqlCode.innerHTML = highlightSql(sqlText);
+        sqlDetails.open = false;
+
+        const sources = Array.isArray(data.sources) ? data.sources.join(", ") : (data.sources || "");
+        sqlSources.textContent = sources ? `แหล่งข้อมูล: ${sources}` : "";
+        sqlTime.textContent = `ใช้เวลา ${data.total_time_seconds.toFixed(1)} วินาที`;
+
+        showElement(sqlDetails);
+    } else if (sqlDetails) {
+        hideElement(sqlDetails);
+    }
+
+    // Reset feedback button state for the new answer
+    [feedbackUp, feedbackDown].forEach((btn) => {
+        if (!btn) return;
+        btn.classList.remove("bg-kmitl-100", "border-kmitl-primary");
+        btn.dataset.selected = "";
+    });
 
     showElement(answerSection);
 }
 
+// ── Copy / speak / feedback ─────────────────────────────────────────
+
+if (copyBtn) {
+    copyBtn.addEventListener("click", async() => {
+        const text = answerText.innerText.trim();
+        try {
+            await navigator.clipboard.writeText(text);
+            const original = copyBtn.innerHTML;
+            copyBtn.innerHTML = "✅ คัดลอกแล้ว";
+            setTimeout(() => { copyBtn.innerHTML = original; }, 1500);
+        } catch (err) {
+            showError("คัดลอกไม่สำเร็จ กรุณาคัดลอกด้วยตนเอง");
+        }
+    });
+}
+
+let currentUtterance = null;
+if (speakBtn && "speechSynthesis" in window) {
+    speakBtn.addEventListener("click", () => {
+        if (window.speechSynthesis.speaking) {
+            window.speechSynthesis.cancel();
+            speakBtn.textContent = "🔊";
+            return;
+        }
+        const text = answerText.innerText.trim();
+        if (!text) return;
+        currentUtterance = new SpeechSynthesisUtterance(text);
+        currentUtterance.lang = "th-TH";
+        currentUtterance.onend = () => { speakBtn.textContent = "🔊"; };
+        speakBtn.textContent = "⏹";
+        window.speechSynthesis.speak(currentUtterance);
+    });
+} else if (speakBtn) {
+    speakBtn.disabled = true;
+    speakBtn.classList.add("opacity-40", "cursor-not-allowed");
+}
+
+function sendFeedback(helpful) {
+    // Optional — ignored silently if the backend doesn't implement this endpoint yet.
+    fetch(`${API_BASE}/feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: echoedQuestion.textContent, helpful }),
+    }).catch(() => {});
+}
+
+[
+    [feedbackUp, true],
+    [feedbackDown, false],
+].forEach(([btn, helpful]) => {
+    if (!btn) return;
+    btn.addEventListener("click", () => {
+        const already = btn.dataset.selected === "1";
+        [feedbackUp, feedbackDown].forEach((b) => {
+            b.classList.remove("bg-kmitl-100", "border-kmitl-primary");
+            b.dataset.selected = "";
+        });
+        if (!already) {
+            btn.classList.add("bg-kmitl-100", "border-kmitl-primary");
+            btn.dataset.selected = "1";
+            sendFeedback(helpful);
+        }
+    });
+});
+
 // ── Page viewer ──────────────────────────────────────────────────────
 
 async function openPageViewer(citationId) {
-    showElement(pageViewer);
+    pageViewer.classList.remove("hidden");
+    pageViewer.classList.add("flex");
     viewerTitle.textContent = `กำลังโหลด ${citationId}...`;
     viewerInfo.textContent = "";
 
-    // Hide canvas, reset text viewer
-    viewerCanvas.style.display = "none";
+    viewerCanvas.classList.add("hidden");
     const existingText = document.getElementById("viewer-text-content");
-    if (existingText) existingText.style.display = "none";
+    if (existingText) existingText.classList.add("hidden");
 
     try {
         const response = await fetch(`${API_BASE}/pages/${encodeURIComponent(citationId)}`);
-
         if (!response.ok) {
-            if (response.status === 404) {
-                throw new Error(`ไม่พบ citation: ${citationId}`);
-            }
+            if (response.status === 404) throw new Error(`ไม่พบ citation: ${citationId}`);
             throw new Error(`HTTP ${response.status}`);
         }
-
         const data = await response.json();
-        renderPageWithBbox(data);
+        renderPageContent(data);
     } catch (err) {
         viewerTitle.textContent = "เกิดข้อผิดพลาด";
         viewerInfo.textContent = err.message;
     }
 }
 
-function renderPageWithBbox(data) {
+function renderPageContent(data) {
     viewerTitle.textContent = `${data.citation_id} — ${data.heading}`;
     viewerInfo.textContent = `เอกสาร: ${data.document_id} | หน้า: ${data.page}`;
 
-    // แสดงเนื้อหาข้อความแทน canvas จำลอง — ใช้ประโยชน์ได้จริง
-    viewerCanvas.style.display = "none";
+    viewerCanvas.classList.add("hidden");
 
-    // สร้าง/อัป text content element
     let textEl = document.getElementById("viewer-text-content");
     if (!textEl) {
         textEl = document.createElement("div");
         textEl.id = "viewer-text-content";
-        textEl.style.cssText = "white-space:pre-wrap;font-size:14px;line-height:1.6;padding:16px;max-height:400px;overflow-y:auto;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin-top:8px;";
+        textEl.className = "whitespace-pre-wrap text-sm leading-relaxed p-4 max-h-[400px] overflow-y-auto bg-kmitl-50 border border-kmitl-200 rounded-xl mt-2";
         viewerCanvas.parentNode.insertBefore(textEl, viewerCanvas.nextSibling);
     }
-    textEl.style.display = "block";
+    textEl.classList.remove("hidden");
     textEl.textContent = data.chunk_text || `(ไม่มีเนื้อหาข้อความ — หน้า ${data.page})`;
 }
 
-// ── Close viewer ─────────────────────────────────────────────────────
-
-closeViewer.addEventListener("click", () => hideElement(pageViewer));
-document.querySelector(".page-viewer-backdrop")?.addEventListener("click", () =>
-    hideElement(pageViewer)
-);
+closeViewer.addEventListener("click", () => hidePageViewer());
+const backdrop = document.querySelector(".page-viewer-backdrop");
+if (backdrop) backdrop.addEventListener("click", () => hidePageViewer());
 document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && !pageViewer.classList.contains("hidden")) {
-        hideElement(pageViewer);
-    }
+    if (e.key === "Escape" && !pageViewer.classList.contains("hidden")) hidePageViewer();
 });
 
-// ── Minimal markdown renderer ────────────────────────────────────────
-// รองรับเฉพาะ subset ที่ LLM ใช้จริง: หัวข้อ #, ตัวหนา **, ตัวเอียง *,
-// inline code `, รายการ - / •, และเว้นบรรทัด
+function hidePageViewer() {
+    pageViewer.classList.add("hidden");
+    pageViewer.classList.remove("flex");
+}
+
+// ── Markdown → styled answer HTML ────────────────────────────────────
+// รองรับ subset ที่ LLM ใช้จริง: หัวข้อ #, ตัวหนา **, ตัวเอียง *,
+// inline code `, รายการ - / •, เว้นบรรทัด
 // escape HTML ก่อนเสมอ เพราะข้อความคำตอบเป็น untrusted (ป้องกัน XSS)
+//
+// โครงสร้างผลลัพธ์:
+//   - heading แรก (ถ้ามี) แสดงเป็นหัวข้อใหญ่นอกกล่อง
+//   - เนื้อหาที่เหลือห่อด้วยกล่อง callout สีส้มอ่อน
+//   - heading ย่อย (h4/h5) ที่ตามด้วย list ติดกัน จะถูกจัดเป็นกริดหลายคอลัมน์
+//     (ตัวอย่าง: "เทอม 1" / "เทอม 2" จะเรียงข้างกันบนจอกว้าง)
 
 function escapeHtml(text) {
     const div = document.createElement("div");
@@ -222,71 +352,123 @@ function escapeHtml(text) {
 }
 
 function renderInline(text) {
-    // text ถูก escape มาแล้ว — ปลอดภัยที่จะใส่ tag
     return text
         .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
         .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>")
         .replace(/`([^`]+)`/g, "<code>$1</code>");
 }
 
-function renderMarkdown(raw) {
-    const lines = escapeHtml(raw).split("\n");
-    const html = [];
-    let inList = false;
+// Plain-text SQL → escaped HTML with keywords picked out in a lighter shade.
+// Not a real parser — just a readability pass for the debug box.
+const SQL_KEYWORDS = /\b(SELECT|FROM|WHERE|JOIN|LEFT|RIGHT|INNER|OUTER|ON|GROUP BY|ORDER BY|HAVING|LIMIT|AS|AND|OR|NOT|IN|IS|NULL|DISTINCT|UNION|ALL|CASE|WHEN|THEN|ELSE|END|COALESCE|SUM|COUNT|AVG|MIN|MAX)\b/g;
 
-    const closeList = () => {
-        if (inList) {
-            html.push("</ul>");
-            inList = false;
+function highlightSql(raw) {
+    return escapeHtml(raw).replace(SQL_KEYWORDS, (m) => `<span class="sql-kw">${m}</span>`);
+}
+
+// Parse raw markdown into a flat list of block objects.
+function parseBlocks(raw) {
+    const lines = escapeHtml(raw).split("\n");
+    const blocks = [];
+    let currentList = null;
+
+    const flushList = () => {
+        if (currentList) {
+            blocks.push(currentList);
+            currentList = null;
         }
     };
 
     for (const line of lines) {
         const trimmed = line.trim();
 
-        if (trimmed === "") {
-            closeList();
-            continue;
-        }
+        if (trimmed === "") { flushList(); continue; }
 
-        // หัวข้อ: #, ##, ###
-        const heading = trimmed.match(/^(#{1,3})\s+(.*)$/);
+        const heading = trimmed.match(/^(#{1,4})\s+(.*)$/);
         if (heading) {
-            closeList();
-            const level = heading[1].length + 2; // #→h3, ##→h4, ###→h5
-            html.push(`<h${level}>${renderInline(heading[2])}</h${level}>`);
+            flushList();
+            blocks.push({ type: "heading", level: heading[1].length, text: renderInline(heading[2]) });
             continue;
         }
 
-        // รายการ: -, *, • ตามด้วยช่องว่าง
         const bullet = trimmed.match(/^[-*•]\s+(.*)$/);
         if (bullet) {
-            if (!inList) {
-                html.push("<ul class=\"md-list\">");
-                inList = true;
-            }
-            html.push(`<li>${renderInline(bullet[1])}</li>`);
+            if (!currentList) currentList = { type: "list", items: [] };
+            currentList.items.push(renderInline(bullet[1]));
             continue;
         }
 
-        // ย่อหน้าปกติ
-        closeList();
-        html.push(`<p>${renderInline(trimmed)}</p>`);
+        flushList();
+        blocks.push({ type: "paragraph", text: renderInline(trimmed) });
     }
-    closeList();
-    return html.join("");
+    flushList();
+    return blocks;
+}
+
+function blockToHtml(block) {
+    if (block.type === "heading") {
+        const level = Math.min(block.level + 2, 5); // #→h3, ##→h4, ###/####→h5
+        return `<h${level}>${block.text}</h${level}>`;
+    }
+    if (block.type === "list") {
+        return `<ul>${block.items.map((i) => `<li>${i}</li>`).join("")}</ul>`;
+    }
+    return `<p>${block.text}</p>`;
+}
+
+function renderAnswerHtml(raw) {
+    const blocks = parseBlocks(raw);
+    if (blocks.length === 0) return "";
+
+    let html = "";
+    let i = 0;
+
+    // First heading (if present) renders as the big standalone title.
+    if (blocks[i] && blocks[i].type === "heading") {
+        html += `<h3>${blocks[i].text}</h3>`;
+        i++;
+    }
+
+    const rest = blocks.slice(i);
+    if (rest.length === 0) return html;
+
+    // Group the remainder: consecutive (sub-heading + list) pairs become
+    // "columns"; everything else (intro paragraphs, standalone lists) stays
+    // in normal flow inside the callout box.
+    let calloutInner = "";
+    let columnGroup = [];
+
+    const flushColumns = () => {
+        if (columnGroup.length === 0) return;
+        if (columnGroup.length === 1) {
+            calloutInner += columnGroup[0];
+        } else {
+            calloutInner += `<div class="answer-columns">${columnGroup.map((c) => `<div>${c}</div>`).join("")}</div>`;
+        }
+        columnGroup = [];
+    };
+
+    for (let j = 0; j < rest.length; j++) {
+        const block = rest[j];
+        const next = rest[j + 1];
+        if (block.type === "heading" && block.level >= 2 && next && next.type === "list") {
+            columnGroup.push(blockToHtml(block) + blockToHtml(next));
+            j++; // consume the list too
+            continue;
+        }
+        flushColumns();
+        calloutInner += blockToHtml(block);
+    }
+    flushColumns();
+
+    html += `<div class="answer-callout">${calloutInner}</div>`;
+    return html;
 }
 
 // ── Utility ──────────────────────────────────────────────────────────
 
-function showElement(el) {
-    el.classList.remove("hidden");
-}
-
-function hideElement(el) {
-    el.classList.add("hidden");
-}
-
+function showElement(el) { el.classList.remove("hidden"); }
+function hideElement(el) { el.classList.add("hidden"); }
 function showError(message) {
     errorDisplay.textContent = message;
     showElement(errorDisplay);

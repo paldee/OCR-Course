@@ -1,99 +1,212 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jingjok-Thorius — Curriculum Q&amp;A</title>
+
+    <!-- Tailwind CDN must load before the config script below -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        kmitl: {
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            200: '#fed7aa',
+                            300: '#fdba74',
+                            400: '#fb923c',
+                            500: '#f97316',
+                            600: '#ea580c',
+                            primary: '#FF6600',
+                            deep: '#E65100',
+                            accent: '#C43D00',
+                            dark: '#1f1309',
+                        }
+                    },
+                    fontFamily: {
+                        prompt: ['Prompt', 'sans-serif'],
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'glass': '0 8px 32px 0 rgba(234, 88, 12, 0.12)',
+                        'glass-hover': '0 12px 40px 0 rgba(234, 88, 12, 0.22)',
+                        'glow': '0 0 25px rgba(255, 102, 0, 0.45)',
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body>
-    <header class="header">
-        <h1>Jingjok-Thorius</h1>
-        <p class="subtitle">ระบบถาม-ตอบหลักสูตร IT KMITL</p>
+
+<body class="text-kmitl-dark">
+
+    <!-- Header -->
+    <header class="max-w-3xl mx-auto pt-12 pb-6 px-6 text-center">
+        <img src="images/Logo.png" alt="Jingjok-Thorius" class="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-4 rounded-2xl bg-white shadow-glass p-3 object-contain animate-float">
+        <h1 class="font-extrabold uppercase leading-tight tracking-normal text-[clamp(1.6rem,7vw,2.75rem)] break-words">
+            <span class="text-kmitl-accent">JINGJOK-</span><span class="text-kmitl-primary">THORIUS</span>
+        </h1>
+        <p class="mt-2.5 text-sm font-bold text-kmitl-accent">ระบบถาม-ตอบหลักสูตร IT KMITL</p>
     </header>
 
-    <main class="container">
-        <!-- Question input -->
-        <section class="ask-section">
+    <main class="max-w-3xl mx-auto px-5 pb-20 flex flex-col gap-5">
+
+        <!-- Ask section -->
+        <section class="glass-card circuit-bg rounded-3xl shadow-glass p-5 sm:p-7">
             <form id="ask-form" aria-label="ฟอร์มถามคำถาม">
-                <div class="program-selector">
-                    <label for="program-select">หลักสูตรของคุณ:</label>
-                    <select id="program-select" required aria-describedby="program-hint">
-                        <option value="" disabled selected>— เลือกหลักสูตร —</option>
-                        <option value="IT">IT — เทคโนโลยีสารสนเทศ</option>
-                        <option value="DSBA">DSBA — วิทยาการข้อมูลและการวิเคราะห์เชิงธุรกิจ</option>
-                        <option value="AIT">AIT — เทคโนโลยีปัญญาประดิษฐ์</option>
-                        <option value="AITBA">AITBA — ป.โท/เอก ปัญญาประดิษฐ์ทางธุรกิจ</option>
-                        <option value="BIT">BIT — เทคโนโลยีสารสนเทศทางธุรกิจ (หลักสูตรเก่า)</option>
-                    </select>
+
+                <!-- Program selector + realtime badge -->
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-lg" aria-hidden="true">🎓</span>
+                        <label for="program-select" class="font-semibold text-sm sm:text-base text-kmitl-dark">เลือกหลักสูตรที่สนใจ:</label>
+                        <div class="relative">
+                            <select id="program-select" required class="appearance-none pl-4 pr-9 py-2 rounded-full border border-kmitl-200 bg-kmitl-50 text-kmitl-dark text-sm font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-kmitl-400">
+                                <option value="" disabled selected>— เลือกหลักสูตร —</option>
+                                <option value="IT">💻 IT — เทคโนโลยีสารสนเทศ</option>
+                                <option value="DSBA">📊 DSBA — วิทยาการข้อมูลและการวิเคราะห์เชิงธุรกิจ</option>
+                                <option value="AIT">🤖 AIT — เทคโนโลยีปัญญาประดิษฐ์</option>
+                                <option value="AITBA">🎓 AITBA — ป.โท/เอก ปัญญาประดิษฐ์ทางธุรกิจ</option>
+                                <option value="BIT">🏫 BIT — เทคโนโลยีสารสนเทศทางธุรกิจ (หลักสูตรเก่า)</option>
+                            </select>
+                            <svg class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-kmitl-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                        </div>
+                    </div>
+                    <div class="hidden sm:flex items-center gap-1.5 text-xs text-kmitl-accent/80">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-pulse-glow absolute inline-flex h-full w-full rounded-full bg-kmitl-primary opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-kmitl-primary"></span>
+                        </span>
+                    </div>
                 </div>
+
+                <!-- Quick questions -->
+                <div class="mb-4">
+                    <p class="flex items-center gap-1.5 text-sm font-semibold text-kmitl-dark mb-2.5">
+                        <span aria-hidden="true">💡</span> หัวข้อยอดฮิตที่รุ่นน้องถามบ่อย (คลิกเพื่อถามทันที):
+                    </p>
+                    <div class="flex flex-wrap gap-2" id="quick-questions">
+                        <button type="button" class="quick-chip" data-question="ปี 1 เรียนกี่หน่วยกิต?">ปี 1 เรียนกี่หน่วยกิต?</button>
+                        <button type="button" class="quick-chip" data-question="เรียนวิชาอะไรบ้าง?">เรียนวิชาอะไรบ้าง?</button>
+                        <button type="button" class="quick-chip" data-question="มีวิชาที่ต้องเรียนต่อกันไหม?">มีวิชาที่ต้องเรียนต่อกันไหม?</button>
+                    </div>
+                </div>
+
+                <!-- Textarea -->
                 <label for="question-input" class="sr-only">คำถาม</label>
-                <textarea
-                    id="question-input"
-                    placeholder="พิมพ์คำถามเกี่ยวกับหลักสูตร... (1-2000 อักขระ)"
-                    maxlength="2000"
-                    rows="3"
-                    required
-                    aria-describedby="char-count"
-                ></textarea>
-                <div class="input-footer">
-                    <span id="char-count" class="char-count">0 / 2000</span>
-                    <button type="submit" id="ask-btn">ถาม</button>
+                <textarea id="question-input" placeholder="พิมพ์คำถามเกี่ยวกับหลักสูตร วิชาเรียน ค่าเทอม การรับสมัคร หรือการจบการศึกษา..." maxlength="800" rows="3" required aria-describedby="char-count" class="w-full resize-y min-h-[90px] rounded-2xl border border-kmitl-200 bg-white/70 px-4 py-3 text-sm text-kmitl-dark placeholder:text-kmitl-dark/35 focus:outline-none focus:ring-2 focus:ring-kmitl-400 focus:border-transparent"></textarea>
+
+                <!-- Footer: counter + actions -->
+                <div class="flex flex-wrap items-center justify-between gap-3 mt-3">
+                    <div class="text-xs text-kmitl-dark/40">
+                        <span id="char-count">0 / 800</span> · กด Shift + Enter เพื่อขึ้นบรรทัดใหม่
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <button type="button" id="clear-btn" class="flex items-center gap-1 text-sm text-kmitl-accent/80 hover:text-kmitl-accent">
+                            🧹 ล้าง
+                        </button>
+                        <button type="submit" id="ask-btn" class="flex items-center gap-2 bg-gradient-to-r from-kmitl-primary to-kmitl-deep text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow-glow hover:shadow-glass-hover transition disabled:opacity-60 disabled:cursor-not-allowed">
+                            ถามจิ้งจก Thorius
+                            <svg class="w-4 h-4 -rotate-45" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+                        </button>
+                    </div>
                 </div>
             </form>
         </section>
 
         <!-- Loading indicator -->
-        <div id="loading" class="loading hidden" aria-live="polite" aria-busy="true">
-            <div class="spinner"></div>
+        <div id="loading" class="hidden flex items-center justify-center gap-3 py-6 text-sm text-kmitl-accent" aria-live="polite" aria-busy="true">
+            <span class="w-5 h-5 border-2 border-kmitl-200 border-t-kmitl-primary rounded-full animate-spin-slow"></span>
             <span>กำลังค้นหาคำตอบ...</span>
         </div>
 
         <!-- Error display -->
-        <div id="error-display" class="error hidden" role="alert"></div>
+        <div id="error-display" class="hidden rounded-2xl border border-red-200 bg-red-50 text-red-700 text-sm px-5 py-4 whitespace-pre-wrap" role="alert"></div>
 
         <!-- Answer section -->
-        <section id="answer-section" class="answer-section hidden" aria-label="คำตอบ">
-            <div class="answer-header">
-                <h2>คำตอบ</h2>
-                <div class="meta">
-                    <span id="version-badge" class="badge version-badge"></span>
-                    <span id="time-badge" class="badge time-badge"></span>
+        <section id="answer-section" class="hidden glass-card rounded-3xl shadow-glass p-5 sm:p-7" aria-label="คำตอบ">
+
+            <div class="flex flex-wrap items-start justify-between gap-4 mb-1">
+                <div class="flex items-start gap-3">
+                    <span class="shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-kmitl-primary to-kmitl-deep text-white flex items-center justify-center text-base font-bold shadow-glow">%</span>
+                    <div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h2 class="font-bold text-kmitl-dark">คำตอบจาก Jingjok-Thorius</h2>
+                            <span id="version-badge" class="text-xs px-2 py-0.5 rounded-full bg-kmitl-100 text-kmitl-accent font-medium"></span>
+                            <span id="time-badge" class="text-xs px-2 py-0.5 rounded-full bg-kmitl-50 text-kmitl-dark/40 font-medium"></span>
+                        </div>
+                        <p class="text-xs text-kmitl-dark/40 mt-0.5">คำถาม: "<span id="echoed-question"></span>"</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" id="copy-btn" class="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border border-kmitl-200 text-kmitl-accent hover:bg-kmitl-50 transition">
+                        📋 คัดลอก
+                    </button>
                 </div>
             </div>
-            <div id="answer-text" class="answer-text"></div>
 
-            <!-- Validation status -->
-            <div id="validation-status" class="validation-status">
-                <span id="removed-count" class="status-item removed"></span>
-                <span id="unsupported-count" class="status-item unsupported"></span>
+            <div id="answer-text" class="prose-answer mt-4"></div>
+
+            <!-- Validation status (only shown when non-zero) -->
+            <div id="validation-status" class="hidden flex flex-wrap gap-2 mt-4">
+                <span id="removed-count" class="hidden text-xs font-semibold px-3 py-1 rounded-full bg-red-50 text-red-600"></span>
+                <span id="unsupported-count" class="hidden text-xs font-semibold px-3 py-1 rounded-full bg-amber-50 text-amber-700"></span>
             </div>
 
-            <!-- Citations list -->
-            <div id="citations-section" class="citations-section">
-                <h3>อ้างอิง</h3>
-                <ul id="citations-list" class="citations-list"></ul>
+            <!-- Citations -->
+            <div id="citations-section" class="mt-5 pt-4 border-t border-kmitl-100">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <p class="flex flex-wrap items-center gap-1.5 text-xs text-kmitl-dark/50">
+                        <span aria-hidden="true">🔖</span> แหล่งข้อมูล:
+                        <span id="citations-list" class="flex flex-wrap gap-1.5"></span>
+                    </p>
+                </div>
             </div>
+
+            <!-- SQL used (collapsible — only shown when the answer came from a SQL query) -->
+            <details id="sql-details" class="hidden mt-5 pt-4 border-t border-kmitl-100">
+                <summary class="flex items-center gap-1.5 text-sm font-semibold text-kmitl-accent cursor-pointer select-none">
+                    <svg class="sql-chevron w-3 h-3 shrink-0 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg> SQL ที่ใช้
+                </summary>
+                <div class="mt-3 rounded-2xl bg-kmitl-dark overflow-hidden">
+                    <pre class="p-4 text-xs sm:text-sm text-white/90 font-mono overflow-x-auto leading-relaxed"><code id="sql-code"></code></pre>
+                    <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 border-t border-white/10 text-[11px] text-kmitl-200">
+                        <span id="sql-sources"></span>
+                        <span id="sql-time"></span>
+                    </div>
+                </div>
+            </details>
         </section>
 
         <!-- Page viewer overlay -->
-        <div id="page-viewer" class="page-viewer hidden" role="dialog" aria-label="ดูหน้าเอกสาร">
-            <div class="page-viewer-backdrop"></div>
-            <div class="page-viewer-content">
-                <button id="close-viewer" class="close-btn" aria-label="ปิด">&times;</button>
-                <h3 id="viewer-title"></h3>
-                <div id="viewer-canvas-wrapper" class="canvas-wrapper">
-                    <canvas id="viewer-canvas"></canvas>
+        <div id="page-viewer" class="hidden fixed inset-0 z-50 items-center justify-center p-5" role="dialog" aria-label="ดูหน้าเอกสาร">
+            <div class="page-viewer-backdrop absolute inset-0 bg-kmitl-dark/50 backdrop-blur-sm"></div>
+            <div class="relative w-full max-w-lg max-h-[85vh] overflow-y-auto p-7 glass-card !bg-white rounded-3xl shadow-glass-hover">
+                <button id="close-viewer" aria-label="ปิด" class="absolute top-4 right-4 w-8 h-8 rounded-full border border-kmitl-200 bg-kmitl-50 text-kmitl-dark/60 hover:text-kmitl-dark hover:border-kmitl-primary flex items-center justify-center text-lg">&times;</button>
+                <h3 id="viewer-title" class="font-bold text-kmitl-dark pr-10 mb-1"></h3>
+                <div id="viewer-info" class="text-xs text-kmitl-dark/50 mb-2"></div>
+                <div id="viewer-canvas-wrapper" class="mt-2">
+                    <canvas id="viewer-canvas" class="max-w-full rounded-xl hidden"></canvas>
                 </div>
-                <div id="viewer-info" class="viewer-info"></div>
             </div>
         </div>
     </main>
 
-    <footer class="footer">
+    <footer class="text-center text-xs text-kmitl-dark/30 pb-10">
         <p>Jingjok-Thorius v0.1.0 — loopback only (127.0.0.1:8000)</p>
     </footer>
 
     <script src="main.js"></script>
 </body>
+
 </html>

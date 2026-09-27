@@ -1,458 +1,254 @@
-/* KatRAG Web UI — minimal style */
+/* ============================================================
+   Jingjok-Thorius — Curriculum Q&A
+   Companion stylesheet for the Tailwind (CDN) utility classes
+   used in index.html. Tailwind config (colors/fonts/shadows)
+   lives inline in index.html <head>, right above the CDN script
+   that needs it — keep the two in sync if you change either.
+   ============================================================ */
 
-:root {
-    --primary: #2563eb;
-    --primary-hover: #1d4ed8;
-    --bg: #f8fafc;
-    --surface: #ffffff;
-    --text: #1e293b;
-    --text-muted: #64748b;
-    --border: #e2e8f0;
-    --error: #dc2626;
-    --success: #16a34a;
-    --warning: #d97706;
-    --radius: 8px;
-    --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+/* ── Base ───────────────────────────────────────────────── */
 
 body {
-    font-family: "Sarabun", "Segoe UI", system-ui, -apple-system, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.6;
+    font-family: 'Prompt', 'Inter', sans-serif;
+    background: radial-gradient(circle at 15% 15%, rgba(255, 102, 0, 0.1) 0%, transparent 40%), radial-gradient(circle at 85% 75%, rgba(254, 215, 170, 0.2) 0%, transparent 45%), #FFFBF7;
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
 }
 
-/* ── Header ─────────────────────────────────────────────────────── */
 
-.header {
-    background: var(--primary);
-    color: white;
-    padding: 1.5rem 2rem;
-    text-align: center;
+/* ── Reusable surfaces ──────────────────────────────────── */
+
+.glass-card {
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.95);
 }
 
-.header h1 {
-    font-size: 1.75rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
+.circuit-bg {
+    background-image: radial-gradient(rgba(249, 115, 22, 0.12) 1px, transparent 1px);
+    background-size: 24px 24px;
 }
 
-.subtitle {
-    opacity: 0.85;
-    font-size: 0.9rem;
-    margin-top: 0.25rem;
+
+/* ── Animations ─────────────────────────────────────────── */
+
+@keyframes floatLizard {
+    0%,
+    100% {
+        transform: translateY(0px) rotate(0deg);
+    }
+    50% {
+        transform: translateY(-8px) rotate(1.5deg);
+    }
 }
 
-/* ── Container ──────────────────────────────────────────────────── */
-
-.container {
-    max-width: 800px;
-    margin: 2rem auto;
-    padding: 0 1rem;
-    flex: 1;
-    width: 100%;
+.animate-float {
+    animation: floatLizard 4s ease-in-out infinite;
 }
 
-/* ── Ask section ────────────────────────────────────────────────── */
-
-.ask-section {
-    background: var(--surface);
-    border-radius: var(--radius);
-    padding: 1.5rem;
-    box-shadow: var(--shadow);
-    border: 1px solid var(--border);
+@keyframes pulseGlow {
+    0%,
+    100% {
+        opacity: 0.4;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(1.08);
+    }
 }
 
-.program-selector {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.75rem;
-    flex-wrap: wrap;
-}
-
-.program-selector label {
-    font-weight: 600;
-    color: var(--text);
-    white-space: nowrap;
-}
-
-#program-select {
-    flex: 1;
-    min-width: 200px;
-    padding: 0.5rem 0.75rem;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--surface);
-    color: var(--text);
-    font-size: 0.95rem;
-    cursor: pointer;
-}
-
-#program-select:focus {
-    outline: none;
-    border-color: var(--primary);
-}
-
-#question-input {
-    width: 100%;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 0.75rem 1rem;
-    font-size: 1rem;
-    font-family: inherit;
-    resize: vertical;
-    min-height: 80px;
-    transition: border-color 0.2s;
-}
-
-#question-input:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-}
-
-.input-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 0.75rem;
-}
-
-.char-count {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-}
-
-#ask-btn {
-    background: var(--primary);
-    color: white;
-    border: none;
-    border-radius: var(--radius);
-    padding: 0.6rem 1.5rem;
-    font-size: 0.95rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-#ask-btn:hover {
-    background: var(--primary-hover);
-}
-
-#ask-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-/* ── Loading ────────────────────────────────────────────────────── */
-
-.loading {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 1rem;
-    margin-top: 1rem;
-    color: var(--text-muted);
-}
-
-.spinner {
-    width: 20px;
-    height: 20px;
-    border: 3px solid var(--border);
-    border-top-color: var(--primary);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
+.animate-pulse-glow {
+    animation: pulseGlow 3s ease-in-out infinite;
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
-/* ── Error ──────────────────────────────────────────────────────── */
-
-.error {
-    background: #fef2f2;
-    color: var(--error);
-    border: 1px solid #fecaca;
-    border-radius: var(--radius);
-    padding: 0.75rem 1rem;
-    margin-top: 1rem;
-    font-size: 0.9rem;
+.animate-spin-slow {
+    animation: spin 0.8s linear infinite;
 }
 
-/* ── Answer section ─────────────────────────────────────────────── */
 
-.answer-section {
-    background: var(--surface);
-    border-radius: var(--radius);
-    padding: 1.5rem;
-    margin-top: 1.5rem;
-    box-shadow: var(--shadow);
-    border: 1px solid var(--border);
+/* ── Scrollbar ──────────────────────────────────────────── */
+
+::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
 }
 
-.answer-header {
-    display: flex;
-    justify-content: space-between;
+::-webkit-scrollbar-track {
+    background: #fdf2e9;
+    border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #fdba74;
+    border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #fb923c;
+}
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #fdba74 #fdf2e9;
+}
+
+
+/* ── Quick-question chip ────────────────────────────────── */
+
+.quick-chip {
+    display: inline-flex;
     align-items: center;
-    margin-bottom: 1rem;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
-
-.answer-header h2 {
-    font-size: 1.2rem;
-}
-
-.meta {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.badge {
-    font-size: 0.75rem;
-    padding: 0.2rem 0.6rem;
-    border-radius: 12px;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    font-size: 13px;
     font-weight: 500;
+    background: #ffffff;
+    border: 1px solid #fed7aa;
+    color: #7a3410;
+    transition: all .15s ease;
+    cursor: pointer;
 }
 
-.version-badge {
-    background: #dbeafe;
-    color: #1e40af;
+.quick-chip:hover {
+    background: #fff7ed;
+    border-color: #fb923c;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px -4px rgba(234, 88, 12, 0.25);
 }
 
-.time-badge {
-    background: #f0fdf4;
-    color: #166534;
-}
 
-.answer-text {
-    font-size: 1rem;
-    line-height: 1.8;
-    word-wrap: break-word;
-}
+/* ── Answer content (rendered from Markdown by main.js) ─── */
 
-/* ── Markdown ที่ render จากคำตอบ ─────────────────────────────────── */
-.answer-text p {
-    margin: 0 0 0.6rem 0;
-}
-.answer-text p:last-child {
-    margin-bottom: 0;
-}
-.answer-text h3,
-.answer-text h4,
-.answer-text h5 {
-    margin: 0.8rem 0 0.4rem 0;
-    line-height: 1.4;
-    color: var(--text);
-}
-.answer-text h3 { font-size: 1.15rem; }
-.answer-text h4 { font-size: 1.05rem; }
-.answer-text h5 { font-size: 1rem; }
-.answer-text strong {
+.prose-answer h3,
+.prose-answer h4,
+.prose-answer h5 {
     font-weight: 700;
-    color: var(--text);
-}
-.answer-text em {
-    font-style: italic;
-}
-.answer-text code {
-    font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
-    font-size: 0.9em;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 0.05rem 0.3rem;
-}
-.answer-text ul.md-list {
-    margin: 0.3rem 0 0.7rem 0;
-    padding-left: 1.4rem;
-}
-.answer-text ul.md-list li {
-    margin: 0.2rem 0;
 }
 
-/* ── Validation status ──────────────────────────────────────────── */
-
-.validation-status {
-    display: flex;
-    gap: 1rem;
-    margin-top: 1rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid var(--border);
-    font-size: 0.85rem;
+.prose-answer h3 {
+    font-size: 1.15rem;
+    margin: 0 0 12px;
+    color: #1f1309;
 }
 
-.status-item.removed {
-    color: var(--warning);
+.prose-answer h4,
+.prose-answer h5 {
+    color: #C43D00;
 }
 
-.status-item.unsupported {
-    color: var(--error);
-}
-
-/* ── Citations ──────────────────────────────────────────────────── */
-
-.citations-section {
-    margin-top: 1.25rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--border);
-}
-
-.citations-section h3 {
+.prose-answer h4 {
     font-size: 1rem;
-    margin-bottom: 0.5rem;
+    margin: 0 0 8px;
 }
 
-.citations-list {
+.prose-answer h5 {
+    font-size: 0.95rem;
+    margin: 0 0 6px;
+}
+
+.prose-answer p {
+    margin: 0 0 10px;
+    line-height: 1.7;
+    color: #3a2a1a;
+}
+
+.prose-answer ul {
+    margin: 0 0 4px;
+    padding-left: 18px;
+}
+
+.prose-answer li {
+    margin-bottom: 6px;
+    line-height: 1.6;
+    color: #3a2a1a;
+}
+
+.prose-answer strong {
+    color: #1f1309;
+    font-weight: 700;
+}
+
+.prose-answer code {
+    padding: 2px 6px;
+    font-size: 0.9em;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 5px;
+}
+
+
+/* ── Answer callout box + auto-column layout ───────────────
+   Wraps everything after the answer's first heading. When the
+   content has multiple sub-heading + list pairs (e.g. "เทอม 1"
+   / "เทอม 2"), main.js groups them into .answer-columns so they
+   sit side-by-side on wider screens and stack on mobile.        */
+
+.answer-callout {
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 16px;
+    padding: 16px 18px;
+    margin-top: 4px;
+}
+
+.answer-columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    margin-top: 10px;
+}
+
+.answer-columns>div:not(:last-child) {
+    border-bottom: 1px dashed #fed7aa;
+    padding-bottom: 14px;
+}
+
+@media (min-width: 640px) {
+    .answer-columns>div:not(:last-child) {
+        border-bottom: none;
+        border-right: 1px dashed #fed7aa;
+        padding-bottom: 0;
+        padding-right: 18px;
+    }
+}
+
+
+/* ── SQL box (collapsible <details>) ───────────────────── */
+
+#sql-details summary {
     list-style: none;
 }
 
-.citations-list li {
-    padding: 0.5rem 0.75rem;
-    border-radius: var(--radius);
-    margin-bottom: 0.4rem;
-    cursor: pointer;
-    transition: background 0.15s;
-    font-size: 0.9rem;
-    border: 1px solid transparent;
+#sql-details summary::-webkit-details-marker {
+    display: none;
 }
 
-.citations-list li:hover {
-    background: #f1f5f9;
-    border-color: var(--border);
+#sql-details[open] .sql-chevron {
+    transform: rotate(180deg);
 }
 
-.citation-id {
+#sql-code .sql-kw {
+    color: #fdba74;
     font-weight: 600;
-    color: var(--primary);
-    margin-right: 0.5rem;
 }
 
-.citation-meta {
-    color: var(--text-muted);
-    font-size: 0.8rem;
-}
 
-/* ── Page viewer overlay ────────────────────────────────────────── */
+/* ── Utility ────────────────────────────────────────────── */
 
-.page-viewer {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
 
-.page-viewer-backdrop {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.6);
-}
-
-.page-viewer-content {
-    position: relative;
-    background: var(--surface);
-    border-radius: var(--radius);
-    padding: 1.5rem;
-    max-width: 90vw;
-    max-height: 90vh;
-    overflow: auto;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-}
-
-.close-btn {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.75rem;
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: var(--text-muted);
-    line-height: 1;
-}
-
-.close-btn:hover {
-    color: var(--text);
-}
-
-.canvas-wrapper {
-    margin-top: 1rem;
-    position: relative;
-    display: inline-block;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-#viewer-canvas {
-    display: block;
-    max-width: 100%;
-}
-
-.viewer-info {
-    margin-top: 0.75rem;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-}
-
-/* ── Footer ─────────────────────────────────────────────────────── */
-
-.footer {
-    text-align: center;
-    padding: 1rem;
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    border-top: 1px solid var(--border);
-}
-
-/* ── Utility ────────────────────────────────────────────────────── */
+/* !important so this always wins even when an element also
+   carries a display utility (e.g. "hidden flex") — main.js
+   toggles the two together to show/hide flex containers. */
 
 .hidden {
     display: none !important;
-}
-
-.sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-}
-
-/* ── Responsive ─────────────────────────────────────────────────── */
-
-@media (max-width: 640px) {
-    .container {
-        padding: 0 0.5rem;
-    }
-
-    .answer-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .page-viewer-content {
-        max-width: 95vw;
-        padding: 1rem;
-    }
 }
