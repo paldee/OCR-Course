@@ -10,7 +10,8 @@
 /* ── Base ───────────────────────────────────────────────── */
 
 body {
-    font-family: 'Prompt', 'Inter', sans-serif;
+    /* Sarabun = ฟอนต์ไทย "มีหัว" มาตรฐานราชการ อ่านง่าย, Inter fallback สำหรับตัวเลข/อังกฤษ */
+    font-family: 'Sarabun', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background: radial-gradient(circle at 15% 15%, rgba(255, 102, 0, 0.1) 0%, transparent 40%), radial-gradient(circle at 85% 75%, rgba(254, 215, 170, 0.2) 0%, transparent 45%), #FFFBF7;
     min-height: 100vh;
 }

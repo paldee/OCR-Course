@@ -11,7 +11,8 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Sarabun = Thai font "มีหัว" (มาตรฐานราชการ อ่านง่าย); Inter = fallback สำหรับตัวเลข/อังกฤษ -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 
     <script>
@@ -34,7 +35,7 @@
                         }
                     },
                     fontFamily: {
-                        prompt: ['Prompt', 'sans-serif'],
+                        sarabun: ['Sarabun', 'sans-serif'],
                         inter: ['Inter', 'sans-serif'],
                     },
                     boxShadow: {
@@ -96,9 +97,9 @@
                         <span aria-hidden="true">💡</span> หัวข้อยอดฮิตที่รุ่นน้องถามบ่อย (คลิกเพื่อถามทันที):
                     </p>
                     <div class="flex flex-wrap gap-2" id="quick-questions">
-                        <button type="button" class="quick-chip" data-question="ปี 1 เรียนกี่หน่วยกิต?">ปี 1 เรียนกี่หน่วยกิต?</button>
-                        <button type="button" class="quick-chip" data-question="เรียนวิชาอะไรบ้าง?">เรียนวิชาอะไรบ้าง?</button>
-                        <button type="button" class="quick-chip" data-question="มีวิชาที่ต้องเรียนต่อกันไหม?">มีวิชาที่ต้องเรียนต่อกันไหม?</button>
+                        <button type="button" class="quick-chip" data-question="หลักสูตร DSBA 2565 ต้องเรียนครบกี่หน่วยกิตจึงจะสำเร็จการศึกษา">หลักสูตร DSBA 2565 ต้องเรียนครบกี่หน่วยกิต</button>
+                        <button type="button" class="quick-chip" data-question="วิชา Data Warehousing ต้องผ่านวิชาใดก่อน และวิชานั้นเรียนปีไหน">Data Warehousing ต้องผ่านวิชาใดก่อน</button>
+                        <button type="button" class="quick-chip" data-question="หากต้องการจบ DSBA ภายใน 3.5 ปี ควรวางแผนอย่างไร">อยากจบ DSBA ภายใน 3.5 ปี</button>
                     </div>
                 </div>
 

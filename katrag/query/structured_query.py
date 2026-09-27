@@ -727,9 +727,37 @@ def _format_early_grad(
 
 
 def detect_cross_version_intent(question: str) -> bool:
-    """ตรวจว่าเป็นคำถามเทียบหลักสูตรเก่า-ใหม่."""
-    has_compare = any(w in question for w in ["เก่า", "ใหม่", "เปรียบเทียบ", "ต่างกัน", "แตกต่าง", "หายไป", "เพิ่มเข้ามา", "ตัดออก"])
-    return has_compare
+    """ตรวจว่าเป็นคำถามเทียบหลักสูตรเก่า-ใหม่.
+
+    จับสามรูปแบบ:
+    1. คำเปรียบเทียบตรง ๆ (เปรียบเทียบ/ต่างกัน/เก่า/ใหม่ ฯลฯ)
+    2. Set-difference phrasing ("แต่ไม่มี/ไม่มีใน/แต่ไม่อยู่") — คำถาม M4
+       ที่ถามว่า "วิชาที่มีใน 2560 แต่ไม่มีใน 2565" เข้าข่ายนี้
+    3. อ้างปีหลักสูตร 2 ปีในคำถามเดียว (พ.ศ. 2555-2570) — เช่น "2560 กับ 2565"
+       เป็นสัญญาณชัดว่ากำลังเทียบเวอร์ชัน
+    """
+    has_compare = any(w in question for w in [
+        "เก่า", "ใหม่", "เปรียบเทียบ", "ต่างกัน", "แตกต่าง",
+        "หายไป", "เพิ่มเข้ามา", "ตัดออก",
+    ])
+    if has_compare:
+        return True
+
+    # "แต่ไม่มี" / "ไม่มีใน" / "แต่ไม่อยู่" — set-difference phrasing
+    set_diff_patterns = [
+        "แต่ไม่มี", "แต่ไม่อยู่", "แต่ไม่ได้มี",
+        "ไม่มีใน", "ไม่อยู่ใน", "ไม่ได้อยู่ใน",
+        "ที่หาย", "ที่ตัด", "ที่เพิ่ม",
+    ]
+    if any(p in question for p in set_diff_patterns):
+        return True
+
+    # ตรวจปี พ.ศ. 2 ปีในคำถาม (25xx สองครั้ง) — เช่น "2560 กับ 2565"
+    years = re.findall(r"\b25[5-7]\d\b", question)
+    if len(set(years)) >= 2:
+        return True
+
+    return False
 
 
 def try_cross_version_diff(conn: sqlite3.Connection, question: str) -> StructuredResult:
