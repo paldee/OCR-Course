@@ -251,6 +251,16 @@ def try_structured_answer(conn: sqlite3.Connection, question: str) -> Structured
     if not course_intent:
         return StructuredResult(False, "", "", "none")
 
+    # คำถามภาพรวมของหลักสูตร (เช่น "มีกี่แขนง/กี่โมดูล/กี่สาขา") ไม่ใช่ topic search
+    # แม้จะมีคำว่า "วิชา" ประกอบก็ตาม (เช่น "กี่แขนงวิชา") — เพราะไม่ได้ถามหาชื่อ
+    # รายวิชา แต่ถามจำนวน specialization ให้ตกไป retrieval + LLM ตอบจากเอกสาร
+    _META_COUNT_PATTERNS = (
+        "กี่แขนง", "มีแขนง", "กี่โมดูล", "มีโมดูล", "กี่สาขา", "มีสาขา",
+        "กี่กลุ่มวิชา", "กี่แนว", "กี่หมวดวิชา", "กี่ track", "กี่ทาง",
+    )
+    if any(p in question for p in _META_COUNT_PATTERNS):
+        return StructuredResult(False, "", "", "none")
+
     # ── กรณี: ระบุปี+เทอม → query course ตามชั้นปี/ภาค ──
     if year_level is not None:
         params: list = [version_id, year_level]

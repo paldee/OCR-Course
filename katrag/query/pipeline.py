@@ -195,11 +195,53 @@ def resolve_program(question: str, selected: str) -> tuple[str, str]:
     return selected.strip().upper(), "selected"
 
 
+# คำเทียบเคียง (synonym) ในเอกสารหลักสูตร — คำที่ผู้ใช้ถามอาจไม่ตรงกับคำในเล่ม
+# เช่น ผู้ใช้ถาม "แขนง" แต่หลักสูตร IT 2565 ใช้คำ "โมดูล/กลุ่มวิชา"
+# หรือถาม "หมวดวิชาเฉพาะเลือก" แต่หลักสูตร DSBA เขียน "กลุ่มวิชาชีพเฉพาะด้าน"
+#
+# ทำสองอย่างพร้อมกัน:
+# 1. retrieval semantic search จับ chunk ที่ใช้คำใดคำหนึ่งได้ (เพราะ text เห็นทั้งคู่)
+# 2. LLM ตีความว่าคำในคำถามกับคำในหลักฐาน = เรื่องเดียวกัน (ไม่ตอบ "ไม่มีข้อมูล")
+_QUESTION_SYNONYMS: dict[str, tuple[str, ...]] = {
+    # E3 case — IT 2565 เอกสารใช้ "โมดูล/กลุ่มวิชา" แต่ผู้ใช้มักถามว่า "แขนง"
+    "แขนง": ("โมดูล", "กลุ่มวิชา", "สาขา"),
+    # M2 case — DSBA เอกสารเรียก "กลุ่มวิชาชีพเฉพาะด้าน" แต่ผู้ใช้ถาม "หมวดวิชาเฉพาะเลือก"
+    "หมวดวิชาเฉพาะเลือก": ("กลุ่มวิชาชีพเฉพาะด้าน", "วิชาชีพเลือก", "วิชาเฉพาะเลือก"),
+    "วิชาเฉพาะเลือก": ("กลุ่มวิชาชีพเฉพาะด้าน", "วิชาชีพเลือก"),
+    "หมวดวิชาเลือก": ("กลุ่มวิชาชีพเฉพาะด้าน", "วิชาเลือกเสรี"),
+}
+
+
+def _expand_synonyms(question: str) -> str:
+    """เพิ่ม hint คำเทียบเคียงต่อท้ายคำถาม เมื่อคำถามใช้คำที่หลักสูตรอาจเขียนต่างกัน.
+
+    รูปแบบ hint: "(เอกสารอาจใช้คำ: a / b / c)" — สั้น ๆ ไม่รบกวนความหมายเดิม
+    ทำให้ทั้ง embedding retrieval และ LLM เห็นทั้ง 2 คำในบริบทเดียวกัน
+    """
+    hints: list[str] = []
+    seen: set[str] = set()
+    for term, syns in _QUESTION_SYNONYMS.items():
+        if term in question:
+            for s in syns:
+                if s not in question and s not in seen:
+                    hints.append(s)
+                    seen.add(s)
+    if not hints:
+        return question
+    return f"{question} (เอกสารอาจใช้คำ: {' / '.join(hints)})"
+
+
 def scope_question(question: str, program: str) -> str:
-    """ผนวกชื่อหลักสูตรเข้าคำถาม ถ้ายังไม่มี — ให้ทุกขั้นถัดไปเห็นบริบทเดียวกัน."""
-    if program and program not in question.upper():
-        return f"หลักสูตร {program}: {question}"
-    return question
+    """ผนวกชื่อหลักสูตร + คำเทียบเคียง เพื่อให้ retrieval/LLM เห็นบริบทเดียวกัน.
+
+    ลำดับ:
+    1. prepend "หลักสูตร X:" (ถ้ายังไม่ได้ระบุ)
+    2. append hint คำเทียบเคียง (เมื่อคำถามใช้ term ที่เอกสารเขียนต่างกัน)
+    """
+    scoped = question
+    if program and program not in scoped.upper():
+        scoped = f"หลักสูตร {program}: {scoped}"
+    return _expand_synonyms(scoped)
 
 
 # ══════════════════════════════════════════════════════════════════════
