@@ -278,6 +278,7 @@ def create_app(
                 for c in result.citations
             ]
             versions_resolved = result.versions_resolved
+            sql_query = result.sql_query
             # เก็บ citation ไว้ให้ GET /pages/{citation_id} เรียกดูได้
             for c in result.citations:
                 app.state.citations_store[c.citation_id] = {
@@ -294,6 +295,7 @@ def create_app(
             answer_text = f"เกิดข้อผิดพลาด: {type(exc).__name__}: {exc}"
             citations = []
             versions_resolved = []
+            sql_query = ""
 
         elapsed = time.time() - start_time
 
@@ -325,6 +327,7 @@ def create_app(
             citations_removed=0,
             unsupported_claims=0,
             total_time_seconds=round(elapsed, 4),
+            sql_query=sql_query,
         )
 
     # ── GET /documents (R19.1) ────────────────────────────────────────

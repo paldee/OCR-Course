@@ -169,6 +169,7 @@ class AnswerResult:
     versions_resolved: list[str] = field(default_factory=list)
     program: str = ""
     program_source: str = ""
+    sql_query: str = ""  # SQL statements ที่รันจริง (ต่อกันด้วย separator สำหรับแสดงใน UI)
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -611,6 +612,29 @@ def answer_question(
     scoped = scope_question(question, program)
 
     conn = sqlite3.connect(str(db_path))
+
+    # จับ SQL ที่รันจริงระหว่างตอบคำถาม เพื่อโชว์ใน UI (ปุ่ม "ดูคำสั่ง SQL")
+    # เฉพาะ SELECT ที่ยาวพอสมควร ไม่นับ PRAGMA และ COUNT ตัวเล็ก
+    executed_sqls: list[str] = []
+
+    def _capture_sql(statement: str) -> None:
+        s = statement.strip()
+        if not s:
+            return
+        # กรองเฉพาะ SELECT ที่มีความหมายสำหรับผู้ใช้
+        upper = s.upper()
+        if not upper.startswith("SELECT"):
+            return
+        # ข้าม COUNT-only ตัวเล็ก (มักเป็น lookup ภายใน)
+        if "COUNT(*)" in upper and len(s) < 90:
+            return
+        # ไม่ซ้ำกับตัวก่อนหน้าติดกัน
+        if executed_sqls and executed_sqls[-1] == s:
+            return
+        executed_sqls.append(s)
+
+    conn.set_trace_callback(_capture_sql)
+
     try:
         structured = run_structured(
             conn, scoped, course_index=course_index, llm=llm
@@ -622,6 +646,7 @@ def answer_question(
                 answer=NO_RESULT_ANSWER,
                 program=program,
                 program_source=program_source,
+                sql_query=_format_captured_sql(executed_sqls),
             )
 
         context = build_context(structured, hits)
@@ -630,6 +655,7 @@ def answer_question(
         )
         citations = resolve_citations(conn, structured, hits)
     finally:
+        conn.set_trace_callback(None)
         conn.close()
 
     return AnswerResult(
@@ -638,7 +664,53 @@ def answer_question(
         versions_resolved=_collect_versions(structured, hits),
         program=program,
         program_source=program_source,
+        sql_query=_format_captured_sql(executed_sqls),
     )
+
+
+def _format_captured_sql(sqls: list[str]) -> str:
+    """จัดรูป SQL ที่จับได้ให้อ่านง่ายสำหรับ UI.
+
+    คืนตัวแรกที่ยาว (มักเป็น query หลักที่ให้คำตอบ) หรือรวมทั้งหมด
+    ถ้ามีหลาย query สำคัญ คั่นด้วยเส้นแบ่งเพื่ออ่านง่าย
+    """
+    if not sqls:
+        return ""
+
+    # เลือก query "หลัก" — ยาวที่สุด 3 อันดับแรก (มักเป็นตัวที่ดึงข้อมูลจริง)
+    ranked = sorted(sqls, key=len, reverse=True)
+    top = ranked[:3]
+    # เรียงกลับตามลำดับที่รันจริง เพื่อคงลำดับเชิงตรรกะ
+    top_ordered = [s for s in sqls if s in top]
+
+    parts: list[str] = []
+    for i, s in enumerate(top_ordered):
+        formatted = _pretty_sql(s)
+        if len(top_ordered) > 1:
+            parts.append(f"-- Query {i + 1}\n{formatted}")
+        else:
+            parts.append(formatted)
+    return "\n\n".join(parts)
+
+
+def _pretty_sql(sql: str) -> str:
+    """จัด SQL หนึ่งบรรทัดยาวให้ขึ้นบรรทัดใหม่ตาม keyword หลัก อ่านง่ายขึ้น."""
+    # ลบ whitespace ซ้ำ
+    import re as _re
+
+    s = _re.sub(r"\s+", " ", sql).strip()
+    # ขึ้นบรรทัดใหม่ก่อน keyword หลัก
+    keywords = [
+        "SELECT ", "FROM ", "WHERE ", "GROUP BY ", "ORDER BY ",
+        "HAVING ", "LIMIT ", "LEFT JOIN ", "RIGHT JOIN ",
+        "INNER JOIN ", "JOIN ", "AND ", "OR ",
+    ]
+    for kw in keywords:
+        s = s.replace(" " + kw, "\n" + kw)
+    # SELECT ตัวแรกไม่ต้องขึ้นบรรทัด
+    if s.startswith("\nSELECT"):
+        s = s[1:]
+    return s
 
 
 def _collect_versions(

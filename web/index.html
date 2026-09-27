@@ -175,12 +175,19 @@
 
             <!-- SQL used (collapsible — only shown when the answer came from a SQL query) -->
             <details id="sql-details" class="hidden mt-5 pt-4 border-t border-kmitl-100">
-                <summary class="flex items-center gap-1.5 text-sm font-semibold text-kmitl-accent cursor-pointer select-none">
-                    <svg class="sql-chevron w-3 h-3 shrink-0 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg> SQL ที่ใช้
+                <summary class="sql-summary flex items-center gap-2 px-4 py-3 rounded-xl bg-white border border-kmitl-200 cursor-pointer select-none hover:border-kmitl-primary transition">
+                    <svg class="sql-chevron w-4 h-4 shrink-0 text-kmitl-accent transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                    <svg class="w-4 h-4 shrink-0 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"/>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <span class="text-sm font-semibold text-kmitl-dark">ดูคำสั่ง SQL ที่ใช้ดึงข้อมูล</span>
                 </summary>
-                <div class="mt-3 rounded-2xl bg-kmitl-dark overflow-hidden">
-                    <pre class="p-4 text-xs sm:text-sm text-white/90 font-mono overflow-x-auto leading-relaxed"><code id="sql-code"></code></pre>
-                    <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 border-t border-white/10 text-[11px] text-kmitl-200">
+                <div class="mt-3 rounded-2xl bg-slate-800 overflow-hidden shadow-lg">
+                    <pre class="p-5 text-sm text-slate-100 font-mono overflow-x-auto leading-relaxed"><code id="sql-code"></code></pre>
+                    <div class="flex flex-wrap items-center justify-between gap-2 px-5 py-2.5 border-t border-white/10 text-[11px] text-slate-400 bg-slate-900/50">
                         <span id="sql-sources"></span>
                         <span id="sql-time"></span>
                     </div>

@@ -73,6 +73,10 @@ class AskResponse(BaseModel):
     total_time_seconds: float = Field(
         default=0.0, ge=0, description="เวลารวมทั้ง request (วินาที)"
     )
+    sql_query: str = Field(
+        default="",
+        description="SQL ที่รันจริงระหว่างตอบคำถาม (สำหรับโชว์ใน UI ปุ่ม 'ดูคำสั่ง SQL')",
+    )
 
 
 class DocumentItem(BaseModel):
