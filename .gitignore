@@ -14,6 +14,9 @@ venv/
 # ── Kiro spec เอกสาร (เก็บในเครื่อง ไม่ขึ้น repo) ──
 .kiro/
 
+# ── เอกสารสรุปสำหรับส่งอาจารย์ตรง ๆ (เก็บในเครื่อง ไม่ขึ้น repo) ──
+docs/evaluation_summary_for_instructor.md
+
 # ── Secrets ──
 .env
 
