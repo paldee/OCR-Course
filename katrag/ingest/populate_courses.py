@@ -468,6 +468,65 @@ def repair_missing_plan_courses(conn: sqlite3.Connection) -> int:
     return inserted
 
 
+#: หัวรายวิชาในหน้ารายชื่อ/คำอธิบายรายวิชา แต่ละส่วนอยู่บรรทัดของตัวเอง:
+#: รหัส / ชื่อไทย / ชื่ออังกฤษ (1-2 บรรทัด) / [วิชาบังคับก่อน / PREREQUISITE] / หน่วยกิต
+_LISTED_COURSE_RE = re.compile(
+    r"(?m)^[ \t]*(\d{8})[ \t]*\n[ \t]*([ก-๙][^\n]{2,120}?)[ \t]*\n"
+    r"[ \t]*([A-Z][A-Z0-9 ,&/()\-:.']{2,150}?(?:[ \t]*\n[ \t]*[A-Z][A-Z0-9 ,&/()\-:.']{1,80}?)?)[ \t]*\n"
+    r"(?:[ \t]*วิชาบังคับก่อน[^\n]*\n[ \t]*PREREQUISITE[^\n]*\n)?"
+    r"[ \t]*(\d{1,2})[ \t]*\([ \t]*(\d{1,2})[ \t]*-[ \t]*(\d{1,2})[ \t]*-[ \t]*(\d{1,2})[ \t]*\)"
+)
+
+
+def repair_listed_courses(conn: sqlite3.Connection) -> int:
+    """เติมวิชาที่มีหัวรายวิชาครบในเล่ม (รายชื่อวิชาหรือคำอธิบายรายวิชา) แต่ไม่มีในตาราง course.
+
+    ตัวสกัดหลักอ่านทีละ chunk หัวรายวิชาที่ถูกตัดคร่อม chunk จึงหาย — วิชาเลือกที่ไม่อยู่ในตารางแผน
+    เลยไม่ถูกเติมโดย repair_missing_plan_courses ด้วย (เช่น DSBA 2565 06026245 ระบบฐานข้อมูลแบบกระจาย,
+    IT 2565 06016454, AIT 2566 06046420) ขั้นนี้อ่านข้อความทั้งหน้า และรับเฉพาะรูปแบบที่แต่ละส่วนอยู่
+    คนละบรรทัด (ไม่รับตารางเทียบรายวิชาเก่า-ใหม่ที่วางรหัสหลายตัวในบรรทัดเดียว) ไม่ใส่ปี/ภาค
+    เพราะหน้ารายชื่อวิชาเลือกไม่ได้กำหนดปี/ภาค เฉพาะเล่มปริญญาตรี: เล่มบัณฑิตศึกษาวางวิทยานิพนธ์
+    ในแผนรายภาคด้วยหน่วยกิตต่อภาค (เช่น 6(0-18-0)) ซึ่งไม่ใช่หน่วยกิตรวมของวิชา (36 หรือ 48)
+    """
+    inserted = 0
+    for (vid,) in conn.execute("SELECT version_id FROM curriculum_version").fetchall():
+        have = {r[0] for r in conn.execute("SELECT code FROM course WHERE version_id=?", (vid,))}
+        found: dict[str, tuple] = {}
+        for doc_id, page_no, text in conn.execute(
+            "SELECT p.document_id, p.page_number, p.page_text FROM page p JOIN document d "
+            "ON d.document_id = p.document_id WHERE d.version_id = ? AND d.degree_level = 'bachelor' "
+            "ORDER BY p.page_number", (vid,)
+        ).fetchall():
+            for m in _LISTED_COURSE_RE.finditer(text or ""):
+                if m.group(1) not in have:
+                    found.setdefault(m.group(1), (doc_id, page_no, m))
+        for code, (doc_id, page_no, m) in found.items():
+            name_th = " ".join(m.group(2).split())
+            name_en = " ".join(m.group(3).split())
+            total, lec, lab, self_study = (int(m.group(i)) for i in range(4, 8))
+
+            def fit(v):
+                return v if 0 <= v <= 30 else None
+
+            prov = conn.execute(
+                """INSERT INTO provenance (document_id, page_number, x0, y0, x1, y1,
+                   span_start, span_end, extraction_method, provenance_source)
+                   VALUES (?, ?, 0.0, 0.0, 595.0, 842.0, 0, ?, 'text_layer', 'document_text')""",
+                (doc_id, page_no, len(name_th)),
+            ).lastrowid
+            conn.execute(
+                """INSERT INTO course (version_id, code, name_th, name_en,
+                   credits_total, credits_lecture, credits_lab, credits_self_study,
+                   credits_raw, year, semester, category, type,
+                   prerequisite_json, prerequisite_raw, flexible_year_semester, note, provenance_id)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, 'เลือก', '[]', '', 0, '', ?)""",
+                (vid, code, name_th, name_en, fit(total), fit(lec), fit(lab), fit(self_study),
+                 f"{total}({lec}-{lab}-{self_study})", prov),
+            )
+            inserted += 1
+    return inserted
+
+
 _FACULTY_GROUP_RE = re.compile(
     r"(?<!\d)(\d{8})\s*\|\s*กลุ่มวิชาที่กำหนดโดยคณะ\*?\s*\|\s*([ก-๙][^|]*?)\s*\|\s*([A-Z][^|]*?)\s*\|"
 )
@@ -825,6 +884,7 @@ def populate(db_path: Path | str) -> dict[str, int]:
 
     repaired = repair_continuation_pages(conn)
     missing_added = repair_missing_plan_courses(conn)
+    listed_added = repair_listed_courses(conn)
     faculty_fixed = repair_faculty_group_names(conn)
     en_filled = repair_english_names(conn)
 
@@ -834,6 +894,7 @@ def populate(db_path: Path | str) -> dict[str, int]:
     return {
         "continuation_repaired": repaired,
         "missing_plan_courses_added": missing_added,
+        "listed_courses_added": listed_added,
         "faculty_group_names_fixed": faculty_fixed,
         "english_names_filled": en_filled,
         "courses_inserted": courses_inserted,

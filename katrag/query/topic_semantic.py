@@ -305,6 +305,10 @@ def gather_candidates(
         if not _PLACEHOLDER_RE.search(f"{h.name_th} {h.name_en}")
         or _literal_match(h, kws)
     ]
+    # สหกิจศึกษาเป็นการฝึกงาน ไม่ใช่วิชาในหัวข้อ แม้ชื่อจะมีคำของหัวข้อ ("สหกิจศึกษาทางเทคโนโลยีปัญญาประดิษฐ์")
+    # — กรองเหมือนฝั่ง keyword เว้นแต่ถามถึงสหกิจเอง
+    if "สหกิจ" not in topic:
+        filtered = [h for h in filtered if not (h.name_th or "").strip().startswith("สหกิจศึกษา")]
 
     # จำกัดจำนวนต่อหลักสูตร (เรียงตาม score) กัน prompt ยาวเกิน
     by_prog: dict[str, list[CourseHit]] = {}
