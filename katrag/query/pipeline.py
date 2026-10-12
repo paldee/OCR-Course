@@ -76,6 +76,7 @@ from katrag.query.course_groups import (
     try_track,
 )
 from katrag.query.plan_variants import detect_plan_variant_intent, try_plan_variants
+from katrag.query.grad_plans import try_grad_plans
 from katrag.query.regulations import try_regulation
 from katrag.query.topic_semantic import (
     answer_topic,
@@ -103,7 +104,7 @@ DIRECT_INTENTS = frozenset({
     "topic_courses", "topic_semantic", "prerequisite", "rule", "person",
     "course_code", "doc_relation", "grad_audit", "credit_compare",
     "dependents", "semester_load", "category_credits", "plan_variant",
-    "course_lookup", "track", "regulation",
+    "course_lookup", "track", "regulation", "grad_plans",
 })
 
 ALWAYS_DIRECT_INTENTS = frozenset({
@@ -368,6 +369,11 @@ def _dispatch_intent(conn: sqlite3.Connection, question: str):
         sr = try_document_relation(conn, question)
         if sr.matched:
             return sr
+
+    # 1.5 แผนการศึกษาและหน่วยกิตของปริญญาโท/เอก (อ่านจากหัวข้อ 3.1.1/3.1.2 ของเล่ม)
+    sr = try_grad_plans(conn, question)
+    if sr.matched:
+        return sr
 
     # 2. ตรวจแผนหน่วยกิตที่ผู้ถามระบุมาเทียบเกณฑ์ที่ยืนยันแล้ว (Graduation Audit)
     if detect_graduation_audit_intent(question):
