@@ -6,6 +6,8 @@
 - ต้องผ่านอะไรมาก่อนบ้าง (นับรวมวิชาพื้นฐานของวิชานั้น) → วิชาบังคับก่อนไล่หลายชั้น
 - เก็บได้ N หน่วยกิต เกรด G จบได้ไหม → เทียบหน่วยกิตรวมของหลักสูตรและเกรดขั้นต่ำ 2.00 (ข้อ 34)
 - หลักสูตร P1 กับ P2 หน่วยกิตรวมต่างกันเท่าไร → หน่วยกิตรวมของฉบับปัจจุบันแต่ละหลักสูตร
+- ปี Y ภาค S ตามแผนรวมกี่หน่วยกิต → บรรทัด 'รวม' ของภาคในตารางแผน (+ เทียบเพดาน 9–22 ถ้าถาม)
+- ลงวิชา A พร้อมกับวิชา B ได้ไหม → ไม่ได้ ถ้าวิชาหนึ่งเป็นวิชาบังคับก่อนของอีกวิชา
 
 ตัวตรวจแต่ละแบบแคบโดยตั้งใจ ถ้าไม่ตรงรูปแบบหรือหาวิชา/ค่าไม่ได้ คืน matched=False ให้ขั้นถัดไปตอบ
 """
@@ -17,9 +19,10 @@ import re
 import sqlite3
 
 from katrag.query.structured_query import (
-    PROGRAM_CODES, StructuredResult, _course_scope_versions, _match_course_by_name, _versions_label,
+    StructuredResult, _course_scope_versions, _match_course_by_name, _versions_label,
     detect_program, detect_versions,
 )
+from katrag.query.program_codes import program_code_positions
 
 _PREFIX_RE = re.compile(r"^\s*หลักสูตร\s+[A-Za-z]+\s*[:：]\s*")
 _THAI_DIGIT = {"หนึ่ง": 1, "สอง": 2, "สาม": 3, "สี่": 4, "๑": 1, "๒": 2, "๓": 3, "๔": 4}
@@ -33,12 +36,7 @@ def _user_text(question: str) -> str:
 
 
 def _programs_in(text: str) -> list[str]:
-    up = text.upper()
-    found = []
-    for code in PROGRAM_CODES:
-        for m in re.finditer(rf"(?<![A-Z]){code}(?![A-Z])", up):
-            found.append((m.start(), code))
-    return [c for _, c in sorted(found)]
+    return [c for _, c in program_code_positions(text)]
 
 
 def _slot(r) -> str:
@@ -127,6 +125,21 @@ _SAME_TIME_RE = re.compile(
 )
 
 
+_CONCURRENT_RE = re.compile(r"พร้อมกัน|เทอมเดียวกัน|ภาคเดียวกัน|ควบคู่|ในคราวเดียว")
+
+
+def _prereq_closure(conn: sqlite3.Connection, r, depth: int = 0) -> set[str]:
+    """รหัสวิชาบังคับก่อนทุกชั้นของวิชา r."""
+    out: set[str] = set()
+    if depth > 5:
+        return out
+    for p in _prereqs(conn, r):
+        if p["code"] not in out:
+            out.add(p["code"])
+            out |= _prereq_closure(conn, p, depth + 1)
+    return out
+
+
 def try_two_courses(conn: sqlite3.Connection, question: str) -> StructuredResult:
     text = _user_text(question)
     if not _SAME_TIME_RE.search(text) or "กับ" not in text or len(_programs_in(text)) >= 2:
@@ -141,7 +154,14 @@ def try_two_courses(conn: sqlite3.Connection, question: str) -> StructuredResult
         return _NONE
     a, b = a[0], b[0]
     lines = [f"- {_name(a)} — {_slot(a)}", f"- {_name(b)} — {_slot(b)}"]
-    if a["year"] and b["year"]:
+    # วิชาหนึ่งเป็นวิชาบังคับก่อนของอีกวิชา → ลงพร้อมกันในภาคเดียวไม่ได้
+    first, then = (a, b) if a["code"] in _prereq_closure(conn, b) else (b, a) if b["code"] in _prereq_closure(conn, a) else (None, None)
+    if first is not None:
+        lines.append(f"- {then['code']} มีวิชาบังคับก่อนเป็น {first['code']} (ต้องสอบผ่าน {first['code']} ก่อนจึงลง {then['code']} ได้)")
+    if first is not None and _CONCURRENT_RE.search(text):
+        verdict = (f"ไม่ได้ — ต้องสอบผ่าน {first['code']} {first['name_th']} ก่อน "
+                   f"จึงจะลง {then['code']} {then['name_th']} ได้ จึงลงพร้อมกันในภาคเดียวกันไม่ได้")
+    elif a["year"] and b["year"]:
         if (a["year"], a["semester"]) == (b["year"], b["semester"]):
             verdict = f"เรียนปีและภาคเดียวกัน (ปีที่ {a['year']} ภาคการศึกษาที่ {a['semester']})"
         elif a["year"] == b["year"]:
@@ -313,9 +333,64 @@ def try_program_total_compare(conn: sqlite3.Connection, question: str) -> Struct
     return StructuredResult(True, "\n".join(lines), " / ".join(f[0] for f in facts), "program_compare", pages=pages)
 
 
+# ── 7. ปี Y ภาค S ตามแผนรวมกี่หน่วยกิต (และเกินเพดานภาคปกติไหม) ─────────────
+
+_SEM_ASK_RE = re.compile(r"รวม|ทั้งเทอม|ทั้งภาค|ลง(?:ทะเบียน)?(?:เรียน)?\s*กี่|กี่หน่วยกิต")
+_CEILING_RE = re.compile(r"เพดาน|เกิน|สูงสุด|มากสุด|หนักไป|ไหวไหม")
+
+
+def try_semester_total(conn: sqlite3.Connection, question: str) -> StructuredResult:
+    from katrag.query.plan_variants import _flags as plan_flags, plan_blocks, variant_totals
+    from katrag.query.structured_query import detect_semester, detect_year, semester_totals
+
+    text = _user_text(question)
+    y, s = detect_year(text), detect_semester(text)
+    if not (y and s) or "หน่วยกิต" not in text or not _SEM_ASK_RE.search(text) or "วิชา" in text:
+        return _NONE
+    if len(re.findall(r"ปี\s*(?:ที่)?\s*[1-4]", text)) > 1:
+        return _NONE
+    coop, normal, _diff = plan_flags(text)
+    if coop or normal or "อะไร" in text:
+        return _NONE  # ระบุแผน/ถามรายวิชาด้วย → ตัวตอบแผนปกติ-สหกิจแสดงรายวิชาของภาคพร้อมยอดรวม
+    program, vids = _scope(conn, question)
+    if not vids:
+        return _NONE
+    vid = vids[0]
+    blocks = variant_totals(plan_blocks(conn, vid), "default")
+    if (y, s) in blocks and blocks[(y, s)].total is not None:
+        b = blocks[(y, s)]
+        total, page, doc_id = b.total, b.pages[0] if b.pages else b.page, b.document_id
+    else:
+        st = semester_totals(conn, vid).get((y, s))
+        if not st:
+            return _NONE
+        total, page = st
+        row = conn.execute("SELECT document_id FROM document WHERE version_id=? AND degree_level='bachelor'",
+                           (vid,)).fetchone()
+        doc_id = row[0] if row else ""
+    label = _versions_label(conn, [vid])
+    plan = "แผนปกติ"
+    lines = [f"คำตอบ: ปีที่ {y} ภาคการศึกษาที่ {s} ตาม{plan}ของ {label} ลงรวม {total} หน่วยกิต",
+             f"- จากบรรทัด 'รวม' ของภาคนี้ในตารางแผนการศึกษา หน้า {page} "
+             "(รวมวิชาเลือก/ศึกษาทั่วไปที่แผนกำหนดไว้แล้ว ไม่ใช่เฉพาะวิชาบังคับ)"]
+    pages = [(doc_id, page, "ตารางแผนการศึกษา")] if doc_id else []
+    if _CEILING_RE.search(text):
+        within = 9 <= total <= 22
+        lines.append(f"- ข้อบังคับ: ภาคการศึกษาปกติลงทะเบียนได้ 9–22 หน่วยกิต → {total} หน่วยกิต "
+                     + ("อยู่ในเกณฑ์ ไม่เกินเพดาน 22" if within else
+                        "เกินเพดาน 22" if total > 22 else "ต่ำกว่าขั้นต่ำ 9 (ตามแผนกำหนดไว้แล้ว)"))
+        doc = conn.execute(
+            "SELECT d.document_id FROM document d JOIN curriculum_version cv ON cv.version_id = d.version_id "
+            "WHERE cv.program = 'AIT' AND cv.curriculum_year = 2566 AND d.degree_level = 'bachelor'"
+        ).fetchone()
+        if doc:
+            pages.append((doc[0], 82, "ข้อบังคับการศึกษาระดับปริญญาตรี (การลงทะเบียน)"))
+    return StructuredResult(True, "\n".join(lines), label, "semester_total", version_id=vid, pages=pages)
+
+
 def try_multi_hop(conn: sqlite3.Connection, question: str) -> StructuredResult:
     conn.row_factory = sqlite3.Row
-    for fn in (try_grad_check, try_program_total_compare, try_course_across_programs,
+    for fn in (try_semester_total, try_grad_check, try_program_total_compare, try_course_across_programs,
                try_two_courses, try_prereq_chain, try_can_take):
         sr = fn(conn, question)
         if sr.matched:

@@ -12,8 +12,7 @@ import re
 import sqlite3
 from dataclasses import dataclass, field
 
-
-PROGRAM_CODES = ["AITBA", "DSBA", "AIT", "BIT", "IT"]
+from katrag.query.program_codes import PROGRAM_CODES, first_program_code, program_code_positions
 
 _THAI_NUM = {"หนึ่ง": 1, "สอง": 2, "สาม": 3, "สี่": 4}
 
@@ -34,10 +33,9 @@ class StructuredResult:
 
 
 def detect_program(question: str) -> str | None:
-    upper = question.upper()
-    for code in PROGRAM_CODES:
-        if re.search(rf"(?<![A-Z]){re.escape(code)}(?![A-Z])", upper):
-            return code
+    code = first_program_code(question)
+    if code:
+        return code
     kw_map = {
         "วิทยาการข้อมูล": "DSBA", "วิเคราะห์เชิงธุรกิจ": "DSBA",
         "ปัญญาประดิษฐ์": "AIT", "เทคโนโลยีสารสนเทศ": "IT",
@@ -80,12 +78,7 @@ def detect_versions(conn: sqlite3.Connection, question: str) -> list[tuple[int, 
     ปีแต่ละตัวผูกกับชื่อหลักสูตรที่อยู่ก่อนหน้าใกล้สุด (ถ้าไม่มีใช้หลักสูตรของคำถาม)
     คืนเฉพาะคู่ (หลักสูตร, ปี) ที่มีอยู่จริงในฐานข้อมูล เรียงตามลำดับที่ปรากฏ
     """
-    upper = question.upper()
-    prog_pos: list[tuple[int, str]] = []
-    for code in PROGRAM_CODES:
-        for m in re.finditer(rf"(?<![A-Z]){re.escape(code)}(?![A-Z])", upper):
-            prog_pos.append((m.start(), code))
-    prog_pos.sort()
+    prog_pos = program_code_positions(question)
     default = detect_program(question)
 
     found: list[tuple[int, str, int]] = []

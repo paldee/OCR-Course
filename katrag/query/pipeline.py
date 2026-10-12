@@ -80,6 +80,7 @@ from katrag.query.grad_plans import try_grad_plans
 from katrag.query.faculty import try_person_education
 from katrag.query.regulations import try_regulation
 from katrag.query.multi_hop import try_multi_hop
+from katrag.query.program_codes import first_program_code, has_program_code
 from katrag.query.topic_semantic import (
     answer_topic,
     detect_program_code,
@@ -107,13 +108,13 @@ DIRECT_INTENTS = frozenset({
     "course_code", "doc_relation", "grad_audit", "credit_compare",
     "dependents", "semester_load", "category_credits", "plan_variant",
     "course_lookup", "track", "regulation", "grad_plans", "person_education",
-    "can_take", "course_compare", "cross_program_course", "prereq_chain", "grad_check", "program_compare",
+    "can_take", "course_compare", "cross_program_course", "prereq_chain", "grad_check", "program_compare", "semester_total",
 })
 
 ALWAYS_DIRECT_INTENTS = frozenset({
     "course_code", "doc_relation", "grad_audit", "prerequisite", "dependents",
     "category_credits", "plan_variant", "course_lookup", "track",
-    "can_take", "course_compare", "cross_program_course", "prereq_chain", "grad_check", "program_compare",
+    "can_take", "course_compare", "cross_program_course", "prereq_chain", "grad_check", "program_compare", "semester_total",
 })
 
 #: คำที่บ่งชี้ว่าเป็นคำถามเชิงวิเคราะห์ (ต้องให้ LLM ให้เหตุผล ไม่ใช่ list ข้อมูล)
@@ -254,10 +255,9 @@ def detect_program_named(question: str) -> str | None:
     ไม่นับชื่อไทยลอย ๆ เพราะเป็นส่วนของชื่อวิชาได้ เช่น "คณิตศาสตร์สำหรับเทคโนโลยีสารสนเทศ"
     (วิชาของ DSBA/AIT/BIT) หรือ "ปัญญาประดิษฐ์เบื้องต้น" — เดิมทำให้หลักสูตรที่ผู้ใช้เลือกถูกเปลี่ยนเงียบ ๆ
     """
-    upper = question.upper()
-    for code in ("AITBA", "DSBA", "AIT", "BIT", "IT"):
-        if re.search(rf"(?<![A-Z]){code}(?![A-Z])", upper):
-            return code
+    code = first_program_code(question)
+    if code:
+        return code
     for th, prog in _PROGRAM_TH_NAMES:
         if re.search(rf"(?:หลักสูตร|สาขาวิชา|สาขา|ปริญญา(?:ตรี|โท|เอก)?)\s*(?:วิทยาศาสตรบัณฑิต\s*)?{th}", question):
             return prog
@@ -310,7 +310,7 @@ def scope_question(question: str, program: str) -> str:
     scoped = question
     # หารหัสหลักสูตรเป็นคำ ไม่ใช่ substring — เดิม "Cybersecurity" ถูกนับว่าระบุ IT
     # แล้ว คำถามจึงไม่ถูกผูกกับหลักสูตรที่เลือก
-    if program and not re.search(rf"(?<![A-Z]){re.escape(program)}(?![A-Z])", scoped.upper()):
+    if program and not has_program_code(scoped, program):
         scoped = f"หลักสูตร {program}: {scoped}"
     return _expand_synonyms(scoped)
 

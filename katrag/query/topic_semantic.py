@@ -20,6 +20,7 @@ import sqlite3
 from dataclasses import dataclass, field
 
 from katrag.query.course_semantic import CourseHit, CourseSemanticIndex, current_version_ids
+from katrag.query.program_codes import first_program_code
 
 # ── คำถาม/คำกริยาที่ไม่ใช่ "หัวข้อวิชา" — ตัดออกก่อน embed เพื่อลด noise ──
 _QUESTION_NOISE = [
@@ -91,7 +92,6 @@ def wants_multiple(question: str) -> bool:
     """คำถามนี้ต้องการรายการหลายวิชาหรือไม่."""
     return any(m in question for m in _PLURAL_MARKERS)
 
-_PROGRAM_CODES = ["AITBA", "DSBA", "AIT", "BIT", "IT"]
 
 
 def detect_program_code(question: str) -> str | None:
@@ -100,11 +100,7 @@ def detect_program_code(question: str) -> str | None:
     ต่างจาก structured_query.detect_program ที่ map คำไทย ("ปัญญาประดิษฐ์" → AIT)
     ซึ่งผิดในบริบทนี้ เพราะ "วิชาเกี่ยวกับปัญญาประดิษฐ์" คือ *หัวข้อ* ไม่ใช่หลักสูตร
     """
-    up = question.upper()
-    for code in _PROGRAM_CODES:
-        if re.search(rf"(?<![A-Z]){re.escape(code)}(?![A-Z])", up):
-            return code
-    return None
+    return first_program_code(question)
 
 
 @dataclass

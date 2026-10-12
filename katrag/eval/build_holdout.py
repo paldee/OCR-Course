@@ -443,3 +443,119 @@ if __name__ == "__main__" and __import__("sys").argv[1:] == ["--round6"]:
                                ensure_ascii=False, indent=1), encoding="utf-8")
     from collections import Counter
     print(len(items6), "ข้อ", dict(Counter(i["level"] for i in items6)), "->", out6)
+
+
+def build_round7() -> list[dict]:
+    """ชุดที่ 7: ข้อยาก/ท้าทายแบบที่รอบ 5-6 ไม่มี (หน่วยกิตรวมของภาค, วิชาบังคับก่อนแล้วไปต่อปีที่เรียน,
+    ลงสองวิชาพร้อมกัน, แผนสหกิจ, ภาคทัณฑ์/พ้นสภาพ, ค่าขอบของเกณฑ์).
+
+    ค่าเฉลยคำนวณจากไฟล์เฉลยอาจารย์ ยกเว้นภาคทัณฑ์/พ้นสภาพ/ภาคฤดูร้อน ซึ่งเฉลยไม่มี
+    จึงใช้ข้อบังคับในเล่ม AIT 2566 ภาคผนวก (หน้า 85-95) ตรวจกับหน้าในเล่มแล้ว
+    """
+    import re as _re
+    rng = random.Random(SEED + 7000)
+    seen = set()
+    for name in ("eval_bank.json",) + tuple(f"eval_holdout{s}.json" for s in ("", "2", "3", "4", "5", "6")):
+        p = ROOT / "docs" / name
+        if p.exists():
+            seen |= {i["question"] for i in json.loads(p.read_text(encoding="utf-8"))["items"]}
+    items: list[dict] = []
+
+    def add(level, prog, question, must, expected, source):
+        if question in seen:
+            return
+        seen.add(question)
+        n = sum(1 for i in items if i["level"] == level) + 1
+        items.append({"id": f"{'QH' if level == 'ยาก' else 'QC'}{n}", "level": level, "program": prog,
+                      "question": question, "must": must, "expected": expected, "source": source})
+
+    def cred(c) -> int:
+        m = _re.match(r"\s*(\d+)", str(c.get("credits") or ""))
+        return int(m.group(1)) if m else 0
+
+    for prog, rel in PLANS:
+        courses = json.loads((GT / rel).read_text(encoding="utf-8"))["courses"]
+        src = f"teacher_gt/{rel}"
+        named = [c for c in courses if _clean(c["name_th"]) and _codes(c["code"])
+                 and (prog, _codes(c["code"])[0]) not in GT_KNOWN_ERRORS]
+        by_code = {_codes(c["code"])[0]: c for c in named}
+        slotted = [c for c in named if _fixed_slot(c)]
+        pre = {_codes(c["code"])[0]: [p for p in _codes(c.get("prerequisite")) if p in by_code] for c in named}
+        # หน่วยกิตรวมต่อภาคตามแผน (รวมแถววิชาเลือก/ศึกษาทั่วไปที่ยังไม่ระบุรหัส)
+        totals: dict[tuple[int, int], int] = {}
+        for c in courses:
+            if _fixed_slot(c) and c.get("credits") and (prog, (_codes(c["code"]) or [""])[0]) not in GT_KNOWN_ERRORS:
+                totals[_fixed_slot(c)] = totals.get(_fixed_slot(c), 0) + cred(c)
+
+        # ยาก 1: หน่วยกิตรวมทั้งภาค
+        y, s = rng.choice(sorted(totals))
+        add("ยาก", prog, f"ถ้าลงตามแผน ปี {y} เทอม {s} ทั้งเทอมรวมกี่หน่วยกิต",
+            [[str(totals[(y, s)])]], f"{totals[(y, s)]} หน่วยกิต", src)
+        # ยาก 2: วิชาบังคับก่อนของ X คืออะไร แล้ววิชานั้นอยู่ปีไหน (สองขั้น)
+        two = [c for c in slotted if any(_fixed_slot(by_code[p]) for p in pre[_codes(c["code"])[0]])]
+        for c in rng.sample(two, min(1, len(two))):
+            p = next(p for p in pre[_codes(c["code"])[0]] if _fixed_slot(by_code[p]))
+            py, ps = _fixed_slot(by_code[p])
+            add("ยาก", prog, f"วิชาที่ต้องผ่านก่อนลง{_clean(c['name_th'])} คือวิชาอะไร แล้ววิชานั้นอยู่ปีไหนเทอมไหน",
+                [[p]] + _year_alts(py, ps), f"{p} ปี {py} ภาค {ps}", src)
+        # ยาก 3: ถามวิชาบังคับก่อนและปีที่เรียนของตัววิชาในคำถามเดียว
+        en = [c for c in slotted if pre[_codes(c["code"])[0]]]
+        for c in rng.sample(en, min(1, len(en))):
+            y, s = _fixed_slot(c)
+            add("ยาก", prog, f"ก่อนจะลงวิชา{_clean(c['name_th'])} ต้องสอบผ่านวิชาอะไรมาก่อน และตัววิชานี้อยู่ในแผนปีไหน",
+                [[p] for p in pre[_codes(c["code"])[0]]] + _year_alts(y),
+                ", ".join(pre[_codes(c["code"])[0]]) + f"; ปี {y} ภาค {s}", src)
+        # ท้าทาย 1: ลงวิชาพื้นฐานกับวิชาต่อยอดพร้อมกันในเทอมเดียว
+        pairs = [(by_code[p], c) for c in named for p in pre[_codes(c["code"])[0]]]
+        for a, b in rng.sample(pairs, min(1, len(pairs))):
+            add("ท้าทาย", prog, f"เทอมเดียวกันจะลง{_clean(a['name_th'])} พร้อมกับ{_clean(b['name_th'])} เลยได้ไหม",
+                [["ไม่ได้"], [_codes(a["code"])[0]]], f"ไม่ได้ ต้องผ่าน {_codes(a['code'])[0]} ก่อน", src)
+        # ท้าทาย 2: หน่วยกิตทั้งภาคเกินเพดานภาคปกติหรือไม่
+        y, s = max(totals, key=lambda k: (totals[k], k))
+        add("ท้าทาย", prog, f"ปี {y} ภาค {s} ตามแผนต้องลงกี่หน่วยกิต เกินเพดานที่ลงได้ต่อภาคปกติไหม",
+            [[str(totals[(y, s)])], ["22"]], f"{totals[(y, s)]} หน่วยกิต ไม่เกิน 22", src)
+
+    # ยาก 4: แผนสหกิจ ออกสหกิจปีไหน
+    for prog, rel in COOP_PLANS:
+        courses = json.loads((GT / rel).read_text(encoding="utf-8"))["courses"]
+        coop = [c for c in courses if "สหกิจ" in (c.get("name_th") or "") and _fixed_slot(c)]
+        if coop:
+            y, s = _fixed_slot(coop[0])
+            add("ยาก", prog, "ถ้าเลือกแผนสหกิจศึกษา จะได้ออกไปสหกิจตอนปีไหน เทอมไหน และวิชาสหกิจกี่หน่วยกิต",
+                _year_alts(y, s) + [[str(cred(coop[0]))]], f"ปี {y} ภาค {s} {cred(coop[0])} หน่วยกิต",
+                f"teacher_gt/{rel}")
+
+    # ท้าทาย: เกณฑ์ ค่าขอบ ภาคทัณฑ์/พ้นสภาพ
+    rules = json.loads((GT / "rules_ground_truth.json").read_text(encoding="utf-8"))["programs"]
+    total = {p: next(v["value"] for c in cats if c["category"] == "เกณฑ์การสำเร็จการศึกษา"
+                     for v in c["values"] if "หน่วยกิต" in v["label"]) for p, cats in rules.items()}
+    rsrc = "teacher_gt/rules_ground_truth.json"
+    reg = "ข้อบังคับ ป.ตรี (AIT 2566 ภาคผนวก หน้า 87, 94-95)"
+    add("ท้าทาย", "IT", f"เก็บครบ {total['IT']} หน่วยกิตพอดี เกรดเฉลี่ยสะสม 2.00 พอดี จบได้ไหม",
+        [[total["IT"]], ["2.00"]], "จบได้ (ครบหน่วยกิตและไม่ต่ำกว่า 2.00)", rsrc)
+    add("ท้าทาย", "DSBA", "ตอนนี้มี 130 หน่วยกิต เกรดเฉลี่ย 3.10 จบได้ยัง",
+        [[total["DSBA"]], ["2"]], f"ยังไม่ได้ ต้องครบ {total['DSBA']} ขาด 2", rsrc)
+    add("ท้าทาย", "AIT", "จบด้วยเกรดเฉลี่ย 3.75 พอดี จะได้เกียรตินิยมอันดับ 1 เหรียญทองไหม",
+        [["3.75"], ["เหรียญทอง"]], "ได้ (>= 3.75)", rsrc)
+    add("ท้าทาย", "BIT", "เกรดเฉลี่ยสะสมตอนจบ 3.20 ยังได้เกียรตินิยมอยู่ไหม",
+        [["3.25"]], "ไม่ได้ อันดับ 2 ต้อง >= 3.25", rsrc)
+    add("ท้าทาย", "IT", "ย้ายจาก IT ไป DSBA ต้องเรียนรวมกี่หน่วยกิต มากกว่าของเดิมกี่หน่วยกิต",
+        [[total["IT"]], [total["DSBA"]]], f"DSBA {total['DSBA']} มากกว่า IT {total['IT']} อยู่ 3", rsrc)
+    add("ท้าทาย", "DSBA", "เทอมแรกได้เกรดเฉลี่ย 1.80 จะเกิดอะไรขึ้น", [["ภาคทัณฑ์"], ["2.00"]],
+        "ถูกภาคทัณฑ์ (ต่ำกว่า 2.00)", reg)
+    add("ท้าทาย", "IT", "ติดโปรอยู่ แล้วเทอมถัดมาได้เกรดเฉลี่ยประจำภาค 1.90 จะโดนรีไทร์ไหม",
+        [["พ้นสภาพ"], ["2.00"]], "พ้นสภาพ (ข้อ 43.10)", reg)
+    add("ท้าทาย", "AIT", "เกรดเฉลี่ยสะสม 0.95 ยังเรียนต่อได้ไหม", [["พ้นสภาพ"], ["1.00"]],
+        "พ้นสภาพ (ต่ำกว่า 1.00 ข้อ 43.11)", reg)
+    add("ท้าทาย", "BIT", "เหลืออีก 9 หน่วยกิตจะจบ ลงซัมเมอร์เทอมเดียวให้ครบเลยได้ไหม", [["9"]],
+        "ได้ ภาคฤดูร้อนลงได้ไม่เกิน 9", "ข้อบังคับ ป.ตรี (AIT 2566 ภาคผนวก หน้า 85)")
+    return items
+
+
+if __name__ == "__main__" and __import__("sys").argv[1:] == ["--round7"]:
+    items7 = build_round7()
+    out7 = ROOT / "docs" / "eval_holdout7.json"
+    out7.write_text(json.dumps({"_meta": "ชุดที่ไม่เคยเห็น รอบ 7 (ข้อยาก/ท้าทายแบบใหม่ที่รอบ 5-6 ไม่มี)", "items": items7},
+                               ensure_ascii=False, indent=1), encoding="utf-8")
+    from collections import Counter
+    print(len(items7), "ข้อ", dict(Counter(i["level"] for i in items7)), "->", out7)

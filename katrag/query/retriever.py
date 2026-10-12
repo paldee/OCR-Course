@@ -16,6 +16,8 @@ import re
 import sqlite3
 from dataclasses import dataclass
 
+from katrag.query.program_codes import first_program_code
+
 try:
     from pythainlp.tokenize import word_tokenize as _thai_tokenize
 
@@ -78,11 +80,9 @@ class RetrievedChunk:
 
 def detect_program(question: str) -> str | None:
     """ตรวจจับ program code จากคำถาม (case-insensitive, word boundary)."""
-    upper = question.upper()
-    for code in PROGRAM_CODES:
-        # word boundary — ไม่ match กลางคำ
-        if re.search(rf"(?<![A-Z]){re.escape(code)}(?![A-Z])", upper):
-            return code
+    code = first_program_code(question)
+    if code:
+        return code
     # fallback: keyword ภาษาไทย
     for prog, kws in PROGRAM_KEYWORDS.items():
         for kw in kws:

@@ -102,6 +102,15 @@ _RULES: list[tuple[str, tuple[str, ...], tuple[str, ...]]] = [
 _GRAD_LEVEL = ("ปริญญาโท", "ปริญญาเอก", "ป.โท", "ป.เอก", "บัณฑิตศึกษา", "มหาบัณฑิต", "ดุษฎีบัณฑิต")
 
 
+_GPA_NUM_RE = re.compile(r"(?:เกรด|gpa|gpax|ค่าระดับคะแนน)[^\d]{0,20}?([0-4]\.\d{1,2})", re.IGNORECASE)
+
+
+def stated_gpa(text: str) -> float | None:
+    """เกรดเฉลี่ยที่ผู้ถามบอกมา เช่น "ได้เกรดเฉลี่ย 1.80" (None = ไม่ได้ระบุตัวเลข)."""
+    m = _GPA_NUM_RE.search(text)
+    return float(m.group(1)) if m else None
+
+
 def detect_regulation_topic(question: str) -> str | None:
     """หัวข้อข้อบังคับที่คำถามถามถึง (None = ไม่ใช่คำถามข้อบังคับ)."""
     raw = re.sub(r"^\s*หลักสูตร\s+[A-Za-z_]+\s*[:：]\s*", "", question)
@@ -116,6 +125,10 @@ def detect_regulation_topic(question: str) -> str | None:
     gpa = any(w in q for w in ("เกรด", "gpa", "gpax", "ค่าระดับคะแนน"))
     asks_effect = not any(w in q for w in ("จบ", "สำเร็จการศึกษา", "เกียรตินิยม", "ภาคทัณฑ์", "พ้นสภาพ", "รีไทร์"))
     if low and gpa and asks_effect:
+        return "low_gpa"
+    # "เทอมแรกได้เกรดเฉลี่ย 1.80 จะเกิดอะไรขึ้น", "เกรดเฉลี่ยสะสม 0.95 ยังเรียนต่อได้ไหม"
+    g = stated_gpa(raw)
+    if g is not None and g < 2.0 and asks_effect:
         return "low_gpa"
     # "ลง 25 หน่วยกิตได้ไหม" — ระบุจำนวนหน่วยกิตที่จะลงในภาคเดียว (ไม่ได้ระบุปี/เทอมของแผน)
     if re.search(r"ลง\s*(?:ทะเบียน|เรียน)?\s*\d{1,2}\s*หน่วยกิต", raw) and not names_term:
@@ -141,6 +154,13 @@ def try_regulation(conn: sqlite3.Connection, question: str):
     ).fetchone()
     pages_txt = ", ".join(str(p) for p in topic.pages)
     lines = [f"{topic.title} ตาม{SOURCE_LABEL} หน้า {pages_txt}", "(ข้อบังคับของสถาบัน ใช้กับทุกหลักสูตรปริญญาตรี)"]
+    g = stated_gpa(question)
+    if key == "low_gpa" and g is not None and g < 2.0:
+        if g < 1.0:
+            lines.insert(0, f"คำตอบ: เกรดเฉลี่ยสะสม {g:.2f} ต่ำกว่า 1.00 → พ้นสภาพนักศึกษา (ข้อ 43.11)")
+        else:
+            lines.insert(0, f"คำตอบ: เกรดเฉลี่ย {g:.2f} ต่ำกว่า 2.00 → ถูกภาคทัณฑ์ (ข้อ 31) "
+                            "ถ้าภาคถัดไปเกรดเฉลี่ยประจำภาคยังต่ำกว่า 2.00 จะพ้นสภาพ (ข้อ 43.10)")
     lines += [f"- {ln}" for ln in topic.lines]
     pages = [(doc[0], p, "ข้อบังคับการศึกษาระดับปริญญาตรี") for p in topic.pages] if doc else []
     return StructuredResult(True, "\n".join(lines), SOURCE_LABEL, "regulation", pages=pages)
