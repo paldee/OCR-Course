@@ -79,3 +79,101 @@ def _parse(conn: sqlite3.Connection, version_id: int) -> dict[str, list[tuple[in
         if names:
             out[role] = names
     return out
+
+
+# ══════════════════════════════════════════════════════════════════════
+# วุฒิการศึกษาของอาจารย์ (จากตารางประวัติอาจารย์ในหัวข้อ 3.2)
+# ══════════════════════════════════════════════════════════════════════
+
+_EDU_ASK = ("จบการศึกษา", "จบจาก", "จบที่", "จบอะไร", "วุฒิ", "ประวัติการศึกษา", "เรียนจบ", "จบปริญญา", "สำเร็จการศึกษาจาก")
+_EDU_STOP = re.compile(r"\|\s*(?:\d\.\s*)?(?:งานวิจัย|ผลงานทางวิชาการ|ตำรา|ภาระงานสอน|ประสบการณ์)|\|\s*\d{1,2}\.\s*" + _TITLE)
+_NAME_IN_Q = re.compile(r"(?:อาจารย์|อ\.|ดร\.|ผศ\.|รศ\.|ศ\.)\s*(?:ดร\.)?\s*([ก-๙]{2,25})(?:\s+([ก-๙]{2,30}))?")
+
+
+def detect_person_education(question: str) -> tuple[str, str] | None:
+    """(ชื่อ, นามสกุล) ของอาจารย์ที่ถามวุฒิการศึกษา หรือ None."""
+    if not any(k in question for k in _EDU_ASK):
+        return None
+    m = _NAME_IN_Q.search(question)
+    if not m:
+        return None
+    first, last = m.group(1), (m.group(2) or "")
+    for suffix in ("จบการศึกษา", "จบ", "มีวุฒิ", "วุฒิ", "เรียน"):
+        if last.startswith(suffix):
+            last = ""
+        first = first.split(suffix)[0] if suffix in first and len(first.split(suffix)[0]) >= 2 else first
+    return first, last
+
+
+def _degrees_in(text: str, first: str) -> list[str]:
+    flat = re.sub(r"\s*\n\s*", " | ", text)
+    out: list[str] = []
+    for m in re.finditer(re.escape(first), flat):
+        head = flat[max(0, m.start() - 40):m.start()]
+        if not re.search(_TITLE, head):
+            continue  # ชื่อในย่อหน้าอื่น (เช่นรายชื่อผลงาน) ไม่ใช่หัวประวัติ
+        block = flat[m.end():m.end() + 900]
+        stop = _EDU_STOP.search(block)
+        block = block[:stop.start()] if stop else block
+        if " - " not in f" {block}" and "| -" not in block:
+            continue
+        items = [re.sub(r"\s*\|\s*", " ", x).strip(" |,") for x in re.split(r"\|\s*-\s+", "|" + block.split("| -", 1)[-1] if "| -" in block else block)]
+        degrees = [re.sub(r"\(\d{13}\)|\d{13}", "", x).strip() for x in items if re.search(r"\d{4}", x)]
+        if degrees:
+            out = degrees
+            break
+    return out
+
+
+def try_person_education(conn: sqlite3.Connection, question: str):
+    """วุฒิการศึกษาของอาจารย์ตามตารางประวัติในเล่มของหลักสูตรที่เลือก."""
+    from katrag.query.structured_query import StructuredResult, _course_scope_versions, _versions_label, detect_program
+
+    none = StructuredResult(False, "", "", "none")
+    who = detect_person_education(question)
+    program = detect_program(question)
+    if not who or not program:
+        return none
+    first, last = who
+    version_ids = _course_scope_versions(conn, question, program)
+
+    def search(vids):
+        for vid in vids:
+            for doc_id, pg, text in conn.execute(
+                "SELECT d.document_id, p.page_number, p.page_text FROM page p JOIN document d ON d.document_id = p.document_id "
+                "WHERE d.version_id = ? AND p.page_text LIKE ? ORDER BY p.page_number",
+                (vid, f"%{first}%"),
+            ):
+                deg = _degrees_in(text or "", first)
+                if deg:
+                    return vid, doc_id, pg, deg
+        return None
+
+    own = search(version_ids)
+    others_ids = [
+        r[0] for r in conn.execute(
+            "SELECT DISTINCT cv.version_id FROM curriculum_version cv JOIN document d ON d.version_id = cv.version_id "
+            "WHERE cv.edition_status = 'current'"
+        ) if r[0] not in version_ids
+    ]
+    other = None
+    for vid in others_ids:
+        hit = search([vid])
+        if hit and (not own or len(hit[3]) > len(own[3])):
+            other = hit if not other or len(hit[3]) > len(other[3]) else other
+    if not own and not other:
+        return none
+    lines: list[str] = []
+    pages: list[tuple[str, int, str]] = []
+    name = f"{first} {last}".strip()
+    if own:
+        vid, doc_id, pg, deg = own
+        lines.append(f"ประวัติการศึกษาของอาจารย์{name} ตามเล่ม {_versions_label(conn, [vid])} (หน้า {pg}):")
+        lines += [f"  - {d}" for d in deg]
+        pages.append((doc_id, pg, "ประวัติอาจารย์"))
+    if other:
+        vid, doc_id, pg, deg = other
+        lines.append(("เล่ม" if not own else "เล่มอื่นระบุไว้ครบกว่า — เล่ม") + f" {_versions_label(conn, [vid])} (หน้า {pg}):")
+        lines += [f"  - {d}" for d in deg]
+        pages.append((doc_id, pg, "ประวัติอาจารย์"))
+    return StructuredResult(True, "\n".join(lines), name, "person_education", pages=pages)

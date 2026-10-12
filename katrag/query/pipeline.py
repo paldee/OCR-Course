@@ -77,6 +77,7 @@ from katrag.query.course_groups import (
 )
 from katrag.query.plan_variants import detect_plan_variant_intent, try_plan_variants
 from katrag.query.grad_plans import try_grad_plans
+from katrag.query.faculty import try_person_education
 from katrag.query.regulations import try_regulation
 from katrag.query.topic_semantic import (
     answer_topic,
@@ -104,7 +105,7 @@ DIRECT_INTENTS = frozenset({
     "topic_courses", "topic_semantic", "prerequisite", "rule", "person",
     "course_code", "doc_relation", "grad_audit", "credit_compare",
     "dependents", "semester_load", "category_credits", "plan_variant",
-    "course_lookup", "track", "regulation", "grad_plans",
+    "course_lookup", "track", "regulation", "grad_plans", "person_education",
 })
 
 ALWAYS_DIRECT_INTENTS = frozenset({
@@ -410,6 +411,10 @@ def _dispatch_intent(conn: sqlite3.Connection, question: str):
         sr = try_rule_answer(conn, question)
         if sr.matched:
             return sr
+        return sr
+    # วุฒิการศึกษาของอาจารย์ (ตารางประวัติอาจารย์ในหัวข้อ 3.2)
+    sr = try_person_education(conn, question)
+    if sr.matched:
         return sr
     # คำถามอาจารย์ผู้รับผิดชอบ/ประจำ/ผู้สอน
     if detect_person_intent(question):
