@@ -78,3 +78,6 @@ docs/tester_live.xlsx
 
 # ผลรันชุดกันถอยหลัง (สร้างใหม่ทุกครั้ง)
 artifacts/regression_*.json
+
+# สำรองฐานข้อมูลเดิมตอนแตกไฟล์ใหม่ (setup_db.py)
+artifacts/*.sqlite3.bak
