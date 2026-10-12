@@ -74,6 +74,8 @@ PATH = {
     "grad_check": "Multi-hop SQL (หน่วยกิตรวม + เกรดขั้นต่ำ ข้อ 34)",
     "program_compare": "Multi-hop SQL (หน่วยกิตรวมข้ามหลักสูตร)",
     "semester_total": "Multi-hop SQL (หน่วยกิตรวมของภาคตามแผน)",
+    "plan_credit_math": "Multi-hop SQL (เทียบภาค/ทั้งปี/สะสมตามแผน)",
+    "course_credit_sum": "Multi-hop SQL (หน่วยกิตรวมของสองวิชา)",
 }
 
 
@@ -88,7 +90,7 @@ def main(results_path: str) -> None:
     res = {r["id"]: r for r in json.loads(Path(results_path).read_text(encoding="utf-8"))}
     meta = {}
     for name in ("eval_bank.json", "eval_holdout.json", "eval_holdout2.json", "eval_holdout3.json", "eval_holdout4.json",
-                 "eval_holdout5.json", "eval_holdout6.json", "eval_holdout7.json"):
+                 "eval_holdout5.json", "eval_holdout6.json", "eval_holdout7.json", "eval_holdout8.json", "eval_holdout9.json"):
         p = ROOT / "docs" / name
         if p.exists():
             for it in json.loads(p.read_text(encoding="utf-8"))["items"]:
@@ -116,7 +118,7 @@ def main(results_path: str) -> None:
             ws.cell(row, 12).value, ws.cell(row, 13).value = RECHECKED[rid]
 
     row = ws.max_row + 1
-    order = [r for r in res.values() if r["set"] in ("bank", "holdout", "holdout2", "holdout3", "holdout4", "holdout5", "holdout6", "holdout7") and r["id"] not in existing]
+    order = [r for r in res.values() if r["set"] in ("bank", "holdout", "holdout2", "holdout3", "holdout4", "holdout5", "holdout6", "holdout7", "holdout8", "holdout9") and r["id"] not in existing]
     for r in order:
         m = meta.get(r["id"], {})
         if r["set"] == "bank":
@@ -126,7 +128,7 @@ def main(results_path: str) -> None:
         else:
             level = m.get("level", "ปานกลาง")
             skill = "ชุดที่ระบบไม่เคยเห็น" + {"holdout2": " รอบ 2", "holdout3": " รอบ 3", "holdout4": " รอบ 4",
-                                          "holdout5": " รอบ 5 (ยาก/ท้าทาย)", "holdout6": " รอบ 6 (ยาก/ท้าทาย)", "holdout7": " รอบ 7 (ยาก/ท้าทาย แบบใหม่)"}.get(r["set"], "")
+                                          "holdout5": " รอบ 5 (ยาก/ท้าทาย)", "holdout6": " รอบ 6 (ยาก/ท้าทาย)", "holdout7": " รอบ 7 (ยาก/ท้าทาย แบบใหม่)", "holdout8": " รอบ 8 (ยาก/ท้าทาย)", "holdout9": " รอบ 9 (ยาก/ท้าทาย)"}.get(r["set"], "")
             group = skill
         passed = r["status"] in ("SAME", "PASS")
         values = [

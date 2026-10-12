@@ -111,6 +111,17 @@ def stated_gpa(text: str) -> float | None:
     return float(m.group(1)) if m else None
 
 
+_FINAL_YEAR_RE = re.compile(r"ปีสุดท้าย|เทอมสุดท้าย|ภาคสุดท้าย|ใกล้จบ")
+
+
+def _final_year_load(text: str) -> int | None:
+    """หน่วยกิตที่ชั้นปีสุดท้ายจะลงในภาคเดียว (None = ไม่ใช่คำถามแบบนี้)."""
+    if not _FINAL_YEAR_RE.search(text) or not re.search(r"ลง|เทอมเดียว|ภาคเดียว|ทีเดียว", text):
+        return None
+    m = re.search(r"(\d{1,2})\s*หน่วยกิต", text)
+    return int(m.group(1)) if m else None
+
+
 def detect_regulation_topic(question: str) -> str | None:
     """หัวข้อข้อบังคับที่คำถามถามถึง (None = ไม่ใช่คำถามข้อบังคับ)."""
     raw = re.sub(r"^\s*หลักสูตร\s+[A-Za-z_]+\s*[:：]\s*", "", question)
@@ -130,6 +141,9 @@ def detect_regulation_topic(question: str) -> str | None:
     g = stated_gpa(raw)
     if g is not None and g < 2.0 and asks_effect:
         return "low_gpa"
+    # "ปีสุดท้ายเหลือ 25 หน่วยกิต ลงเทอมเดียวได้ไหม" — ข้อยกเว้นเพดาน 22 ของชั้นปีสุดท้าย
+    if _final_year_load(raw) is not None:
+        return "registration"
     # "ลง 25 หน่วยกิตได้ไหม" — ระบุจำนวนหน่วยกิตที่จะลงในภาคเดียว (ไม่ได้ระบุปี/เทอมของแผน)
     if re.search(r"ลง\s*(?:ทะเบียน|เรียน)?\s*\d{1,2}\s*หน่วยกิต", raw) and not names_term:
         return "registration"
@@ -154,6 +168,15 @@ def try_regulation(conn: sqlite3.Connection, question: str):
     ).fetchone()
     pages_txt = ", ".join(str(p) for p in topic.pages)
     lines = [f"{topic.title} ตาม{SOURCE_LABEL} หน้า {pages_txt}", "(ข้อบังคับของสถาบัน ใช้กับทุกหลักสูตรปริญญาตรี)"]
+    n = _final_year_load(question)
+    if key == "registration" and n is not None:
+        if n <= 22:
+            lines.insert(0, f"คำตอบ: ได้ — {n} หน่วยกิตไม่เกินเพดานภาคปกติ 22 หน่วยกิต")
+        elif n <= 27:
+            lines.insert(0, f"คำตอบ: ได้ — {n} หน่วยกิตเกิน 22 แต่ชั้นปีสุดท้ายที่ต้องลงเกิน 22 หน่วยกิตเพื่อสำเร็จการศึกษา "
+                            "ลงได้ไม่เกิน 27 หน่วยกิต (ข้อยกเว้นในข้อบังคับ)")
+        else:
+            lines.insert(0, f"คำตอบ: ไม่ได้ — {n} หน่วยกิตเกิน 27 หน่วยกิต ซึ่งเป็นเพดานสูงสุดแม้เป็นชั้นปีสุดท้าย")
     g = stated_gpa(question)
     if key == "low_gpa" and g is not None and g < 2.0:
         if g < 1.0:

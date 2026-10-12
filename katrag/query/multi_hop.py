@@ -211,12 +211,12 @@ def try_course_across_programs(conn: sqlite3.Connection, question: str) -> Struc
 
 # ── 4. วิชาบังคับก่อนไล่หลายชั้น ─────────────────────────────────────────
 
-_CHAIN_RE = re.compile(r"นับรวม|ทั้งหมด|ทุกวิชา|ทางอ้อม|ทั้งทางตรง|หลายชั้น|ไล่|ต่อเนื่อง|พื้นฐานของวิชานั้น|ทั้งสาย|ทั้งชุด")
+_CHAIN_RE = re.compile(r"นับรวม|ทั้งหมด|ทุกวิชา|ทางอ้อม|ทั้งทางตรง|หลายชั้น|ไล่|ต่อเนื่อง|พื้นฐานของวิชานั้น|ทั้งสาย|ทั้งชุด|ทุกทอด|ทุกชั้น")
 
 
 def try_prereq_chain(conn: sqlite3.Connection, question: str) -> StructuredResult:
     text = _user_text(question)
-    if not (re.search(r"ผ่าน|เรียน|ลง", text) and "ก่อน" in text and _CHAIN_RE.search(text)):
+    if not (re.search(r"ผ่าน|เรียน|ลง", text) and re.search(r"ก่อน|กว่าจะ", text) and _CHAIN_RE.search(text)):
         return _NONE
     if any(k in text for k in ("สอบตก", "ตกวิชา", "กระทบ", "ไม่ผ่าน")):
         return _NONE
@@ -264,7 +264,7 @@ def _total_credits(conn: sqlite3.Connection, vid: int):
 
 def try_grad_check(conn: sqlite3.Connection, question: str) -> StructuredResult:
     text = _user_text(question)
-    if not re.search(r"จบ|สำเร็จการศึกษา", text) or "เกียรตินิยม" in text or any(k in text for k in _CATEGORY_WORDS):
+    if not re.search(r"จบ|สำเร็จการศึกษา", text) or "เกียรตินิยม" in text or "เหรียญทอง" in text or any(k in text for k in _CATEGORY_WORDS):
         return _NONE
     cm, gm = _CREDITS_HAVE_RE.search(text), _GPA_RE.search(text)
     if not cm and not gm:
@@ -388,9 +388,127 @@ def try_semester_total(conn: sqlite3.Connection, question: str) -> StructuredRes
     return StructuredResult(True, "\n".join(lines), label, "semester_total", version_id=vid, pages=pages)
 
 
+# ── 8. เทียบสองภาค / ทั้งปี / สะสมเมื่อเรียนครบถึงปี N (จากบรรทัด 'รวม' ของแผนปกติ) ─────
+
+_CMP_SEM_RE = re.compile(r"(?:เทอม|ภาค)\S{0,12}(?:กับ|หรือ)\s*(?:เทอม|ภาค)|(?:เทอม|ภาค)ไหน")
+_HEAVY_RE = re.compile(r"เยอะ|มากกว่า|หนัก|น้อยกว่า|เบา|ต่างกัน")
+_YEAR_ALL_RE = re.compile(r"ทั้งปี|ตลอดปี|สองเทอม|สองภาค|(?:ทั้ง|รวม)\s*2\s*(?:เทอม|ภาค)")
+_CUM_RE = re.compile(r"(?:ครบ|จบ|เรียน|ผ่าน)\s*(?:ถึง)?\s*ปี\s*(?:ที่)?\s*([1-4])")
+
+
+def _plan_totals(conn: sqlite3.Connection, vid: int) -> dict[tuple[int, int], tuple[int, int, str]]:
+    from katrag.query.plan_variants import plan_blocks, variant_totals
+    from katrag.query.structured_query import semester_totals
+
+    out = {k: (b.total, b.pages[0] if b.pages else b.page, b.document_id)
+           for k, b in variant_totals(plan_blocks(conn, vid), "default").items() if b.total is not None}
+    if not out:
+        row = conn.execute("SELECT document_id FROM document WHERE version_id=? AND degree_level='bachelor'",
+                           (vid,)).fetchone()
+        out = {k: (t, pg, row[0] if row else "") for k, (t, pg) in semester_totals(conn, vid).items()}
+    return out
+
+
+def _sem_label(y: int, s: int) -> str:
+    return f"ปีที่ {y} ภาคการศึกษาที่ {s}" if s in (1, 2) else f"ปีที่ {y} ภาคฤดูร้อน"
+
+
+def try_plan_credit_math(conn: sqlite3.Connection, question: str) -> StructuredResult:
+    from katrag.query.plan_variants import _flags as plan_flags
+    from katrag.query.structured_query import detect_year
+
+    text = _user_text(question)
+    if "หน่วยกิต" not in text or "วิชา" in text or any(plan_flags(text)[:2]):
+        return _NONE
+    cum = _CUM_RE.search(text) if re.search(r"สะสม|เก็บ|เหลือ|ขาด", text) else None
+    y = int(cum.group(1)) if cum else detect_year(text)
+    if not y:
+        return _NONE
+    mode = ("cum" if cum else "cmp" if _CMP_SEM_RE.search(text) and _HEAVY_RE.search(text)
+            else "year" if _YEAR_ALL_RE.search(text) else None)
+    if mode is None:
+        return _NONE
+    program, vids = _scope(conn, question)
+    if not vids:
+        return _NONE
+    vid = vids[0]
+    tot = _plan_totals(conn, vid)
+    label = _versions_label(conn, [vid])
+    keys = sorted(k for k in tot if (k[0] <= y if mode == "cum" else k[0] == y))
+    if mode == "cmp":
+        if not ((y, 1) in tot and (y, 2) in tot):
+            return _NONE
+        keys = [(y, 1), (y, 2)]
+    if not keys:
+        return _NONE
+    lines = [f"- {_sem_label(*k)}: {tot[k][0]} หน่วยกิต (หน้า {tot[k][1]})" for k in keys]
+    if mode == "cmp":
+        a, b = tot[(y, 1)][0], tot[(y, 2)][0]
+        verdict = (f"ปีที่ {y} สองภาคลงเท่ากัน {a} หน่วยกิต" if a == b else
+                   f"ปีที่ {y} ภาคการศึกษาที่ {1 if a > b else 2} หนักกว่า ({max(a, b)} เทียบกับ {min(a, b)} หน่วยกิต) "
+                   f"ต่างกัน {abs(a - b)} หน่วยกิต")
+    elif mode == "year":
+        verdict = f"ปีที่ {y} ตามแผนปกติเรียนรวม {sum(tot[k][0] for k in keys)} หน่วยกิต"
+    else:
+        s = sum(tot[k][0] for k in keys)
+        need = _total_credits(conn, vid)
+        verdict = f"เรียนครบตามแผนถึงปีที่ {y} มีหน่วยกิตสะสม {s} หน่วยกิต"
+        if need is not None:
+            verdict += f" เหลืออีก {int(need[0]) - s} หน่วยกิตจึงครบ {int(need[0])} หน่วยกิตตามเกณฑ์จบ (หน้า {need[1]})"
+    lines.insert(0, f"คำตอบ: {verdict}")
+    lines.insert(1, f"หน่วยกิตต่อภาคตามแผนปกติของ {label} (บรรทัด 'รวม' ของแต่ละภาค รวมวิชาเลือกที่แผนกำหนดแล้ว):")
+    pages = sorted({(tot[k][2], tot[k][1], "ตารางแผนการศึกษา") for k in keys if tot[k][2]})
+    return StructuredResult(True, "\n".join(lines), label, "plan_credit_math", version_id=vid, pages=pages)
+
+
+# ── 9. วิชา A บวก วิชา B รวมกี่หน่วยกิต ──────────────────────────────────
+
+_SUM_RE = re.compile(r"บวก|รวมกัน|รวมเป็น|หน่วยกิตรวม")
+
+
+def _credit_num(r) -> int | None:
+    m = re.match(r"\s*(\d+)", r["credits_raw"] or "")
+    return int(m.group(1)) if m else None
+
+
+def try_two_course_credits(conn: sqlite3.Connection, question: str) -> StructuredResult:
+    text = _user_text(question)
+    if "หน่วยกิต" not in text or not _SUM_RE.search(text) or len(_programs_in(text)) >= 2:
+        return _NONE
+    parts = re.split(r"\s+บวก\s+|\s+และ(?:วิชา)?|\s*กับ(?:วิชา)?", text, maxsplit=1)
+    if len(parts) != 2:
+        return _NONE
+    program, vids = _scope(conn, question)
+    if not vids:
+        return _NONE
+    a = _match_course_by_name(conn, parts[0], vids)
+    b = _match_course_by_name(conn, parts[1], vids)
+    if not a or not b or a[0]["code"] == b[0]["code"]:
+        return _NONE
+    a, b = a[0], b[0]
+    ca, cb = _credit_num(a), _credit_num(b)
+    if ca is None or cb is None:
+        return _NONE
+    lines = [f"คำตอบ: รวม {ca + cb} หน่วยกิต ({ca} + {cb})",
+             f"- {_name(a)} — {a['credits_raw']} | {_slot(a)}",
+             f"- {_name(b)} — {b['credits_raw']} | {_slot(b)}"]
+    return StructuredResult(True, "\n".join(lines), _versions_label(conn, [a["version_id"]]), "course_credit_sum",
+                            codes=[a["code"], b["code"]], version_id=a["version_id"])
+
+
+def try_final_year_load(conn: sqlite3.Connection, question: str) -> StructuredResult:
+    """"ปีสุดท้ายเหลือ 25 หน่วยกิต ลงเทอมเดียวได้ไหม" → ข้อยกเว้นเพดาน 22 ในข้อบังคับ
+    (ต้องมาก่อนตัวตรวจแผนจบ ซึ่งเห็น "25 หน่วยกิต" แล้วตีเป็นหน่วยกิตสะสม)."""
+    from katrag.query.regulations import _final_year_load, try_regulation
+
+    if _final_year_load(_user_text(question)) is None:
+        return _NONE
+    return try_regulation(conn, question)
+
+
 def try_multi_hop(conn: sqlite3.Connection, question: str) -> StructuredResult:
     conn.row_factory = sqlite3.Row
-    for fn in (try_semester_total, try_grad_check, try_program_total_compare, try_course_across_programs,
+    for fn in (try_final_year_load, try_plan_credit_math, try_two_course_credits, try_semester_total, try_grad_check, try_program_total_compare, try_course_across_programs,
                try_two_courses, try_prereq_chain, try_can_take):
         sr = fn(conn, question)
         if sr.matched:

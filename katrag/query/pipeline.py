@@ -108,13 +108,13 @@ DIRECT_INTENTS = frozenset({
     "course_code", "doc_relation", "grad_audit", "credit_compare",
     "dependents", "semester_load", "category_credits", "plan_variant",
     "course_lookup", "track", "regulation", "grad_plans", "person_education",
-    "can_take", "course_compare", "cross_program_course", "prereq_chain", "grad_check", "program_compare", "semester_total",
+    "can_take", "course_compare", "cross_program_course", "prereq_chain", "grad_check", "program_compare", "semester_total", "plan_credit_math", "course_credit_sum",
 })
 
 ALWAYS_DIRECT_INTENTS = frozenset({
     "course_code", "doc_relation", "grad_audit", "prerequisite", "dependents",
     "category_credits", "plan_variant", "course_lookup", "track",
-    "can_take", "course_compare", "cross_program_course", "prereq_chain", "grad_check", "program_compare", "semester_total",
+    "can_take", "course_compare", "cross_program_course", "prereq_chain", "grad_check", "program_compare", "semester_total", "plan_credit_math", "course_credit_sum",
 })
 
 #: คำที่บ่งชี้ว่าเป็นคำถามเชิงวิเคราะห์ (ต้องให้ LLM ให้เหตุผล ไม่ใช่ list ข้อมูล)
