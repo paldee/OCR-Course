@@ -1,0 +1,959 @@
+{
+ "_meta": "ชุดที่ไม่เคยเห็น รอบ 22 (ครบ 4 ระดับ) สร้างด้วย build_rounds.py",
+ "items": [
+  {
+   "id": "N22H1",
+   "level": "ยาก",
+   "program": "AIT",
+   "question": "ปี 2 ภาคไหนลงหน่วยกิตน้อยกว่า",
+   "must": [
+    [
+     "18"
+    ],
+    [
+     "19"
+    ]
+   ],
+   "expected": "ภาค 1 18, ภาค 2 19",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22H2",
+   "level": "ยาก",
+   "program": "AIT",
+   "question": "พีชคณิตเชิงเส้น กับ พื้นฐานการเรียนรู้เชิงลึก ลงเทอมเดียวกันได้หรือไม่",
+   "must": [
+    [
+     "ไม่ได้"
+    ],
+    [
+     "06046402"
+    ]
+   ],
+   "expected": "ไม่ได้ ต้องผ่าน 06046402 ก่อน",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22H3",
+   "level": "ยาก",
+   "program": "AIT",
+   "question": "ปี 3 ภาคเรียนที่ 2 ลงกี่หน่วยกิต",
+   "must": [
+    [
+     "13"
+    ]
+   ],
+   "expected": "13 หน่วยกิต",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22H4",
+   "level": "ยาก",
+   "program": "BIT",
+   "question": "เด็กปี 3 ลงวิชา โครงงานทางด้านเทคโนโลยีสารสนเทศเชิงธุรกิจ 2 ได้เลยไหม",
+   "must": [
+    [
+     "ไม่ได้"
+    ],
+    [
+     "06036145"
+    ]
+   ],
+   "expected": "ไม่ได้ ต้องผ่าน 06036145 ก่อน",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22H5",
+   "level": "ยาก",
+   "program": "BIT",
+   "question": "ปี 4 รวมทั้งปีกี่หน่วยกิต",
+   "must": [
+    [
+     "24"
+    ]
+   ],
+   "expected": "12 + 12",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22H6",
+   "level": "ยาก",
+   "program": "BIT",
+   "question": "แนวคิดระบบฐานข้อมูล ไม่ผ่านจะมีผลกับวิชาอะไรบ้าง",
+   "must": [
+    [
+     "06036127"
+    ]
+   ],
+   "expected": "06036127",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22H7",
+   "level": "ยาก",
+   "program": "BIT",
+   "question": "พื้นฐานการเขียนโปรแกรม กับ พื้นฐานทางด้านเทคโนโลยีสารสนเทศ เรียนปีเดียวกันหรือคนละปี",
+   "must": [
+    [
+     "ปีที่ 1",
+     "ปี 1"
+    ],
+    [
+     "ปีที่ 1",
+     "ปี 1"
+    ]
+   ],
+   "expected": "06036119 ปี 1 ภาค 2, 06036100 ปี 1 ภาค 1",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22H8",
+   "level": "ยาก",
+   "program": "BIT",
+   "question": "การสื่อสารด้วยภาพสำหรับธุรกิจ กับ การพัฒนาเว็บแอปพลิเคชันโดยใช้เฟรมเวิร์ก ลงเทอมเดียวกันได้หรือไม่",
+   "must": [
+    [
+     "ไม่ได้"
+    ],
+    [
+     "06036122"
+    ]
+   ],
+   "expected": "ไม่ได้ ต้องผ่าน 06036122 ก่อน",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22H9",
+   "level": "ยาก",
+   "program": "BIT",
+   "question": "การพัฒนาเว็บแอปพลิเคชันโดยใช้เฟรมเวิร์ก มีวิชาบังคับก่อนอะไร และวิชานั้นเรียนเทอมไหน",
+   "must": [
+    [
+     "06036122"
+    ],
+    [
+     "ปีที่ 2",
+     "ปี 2"
+    ]
+   ],
+   "expected": "06036122 ปี 2 ภาค 1",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22H10",
+   "level": "ยาก",
+   "program": "DSBA",
+   "question": "ผู้ประกอบการสมัยใหม่ กับ การหาค่าที่เหมาะที่สุด เรียนปีเดียวกันหรือคนละปี",
+   "must": [
+    [
+     "ปีที่ 3",
+     "ปี 3"
+    ],
+    [
+     "ปีที่ 2",
+     "ปี 2"
+    ]
+   ],
+   "expected": "90643021 ปี 3 ภาค 2, 06026210 ปี 2 ภาค 2",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22H11",
+   "level": "ยาก",
+   "program": "DSBA",
+   "question": "โครงงานวิทยาการข้อมูลและการวิเคราะห์เชิงธุรกิจ 1 ไม่ผ่านจะมีผลกับวิชาอะไรบ้าง",
+   "must": [
+    [
+     "06026215"
+    ]
+   ],
+   "expected": "06026215",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22H12",
+   "level": "ยาก",
+   "program": "DSBA",
+   "question": "กีฬาและนันทนาการ และ ระบบฐานข้อมูลแบบโนเอสคิวแอล รวมเป็นกี่หน่วยกิต",
+   "must": [
+    [
+     "4"
+    ]
+   ],
+   "expected": "1 + 3",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22H13",
+   "level": "ยาก",
+   "program": "DSBA",
+   "question": "ปี 2 ภาคเรียนที่ 1 ลงกี่หน่วยกิต",
+   "must": [
+    [
+     "18"
+    ]
+   ],
+   "expected": "18 หน่วยกิต",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22H14",
+   "level": "ยาก",
+   "program": "IT",
+   "question": "แนวคิดระบบฐานข้อมูล กับ การดูแลและบำรุงรักษาระบบฐานข้อมูล ลงเทอมเดียวกันได้หรือไม่",
+   "must": [
+    [
+     "ไม่ได้"
+    ],
+    [
+     "06066300"
+    ]
+   ],
+   "expected": "ไม่ได้ ต้องผ่าน 06066300 ก่อน",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22H15",
+   "level": "ยาก",
+   "program": "IT",
+   "question": "ปี 1 ภาคเรียนที่ 2 ลงกี่หน่วยกิต",
+   "must": [
+    [
+     "18"
+    ]
+   ],
+   "expected": "18 หน่วยกิต",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22H16",
+   "level": "ยาก",
+   "program": "IT",
+   "question": "พื้นฐานการออกแบบทัศนศิลป์สำหรับสื่อปฏิสัมพันธ์ กับ การประมวลผลทางกายภาพ เรียนปีเดียวกันหรือคนละปี",
+   "must": [
+    [
+     "ปีที่ 2",
+     "ปี 2"
+    ],
+    [
+     "ปีที่ 2",
+     "ปี 2"
+    ]
+   ],
+   "expected": "06016425 ปี 2 ภาค 2, 06016409 ปี 2 ภาค 1",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22H17",
+   "level": "ยาก",
+   "program": "IT",
+   "question": "โรงเรียนสร้างเสน่ห์ และ พื้นฐานความมั่นคงปลอดภัยไซเบอร์ รวมเป็นกี่หน่วยกิต",
+   "must": [
+    [
+     "5"
+    ]
+   ],
+   "expected": "2 + 3",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22C1",
+   "level": "ท้าทาย",
+   "program": "DSBA",
+   "question": "ระบบสารสนเทศเพื่อการจัดการ เรียนปีไหนใน DSBA และใน IT",
+   "must": [
+    [
+     "DSBA"
+    ],
+    [
+     "IT"
+    ],
+    [
+     "ปีที่ 2",
+     "ปี 2"
+    ],
+    [
+     "ปีที่ 3",
+     "ปี 3"
+    ]
+   ],
+   "expected": "DSBA ปี 2 ภาค 2, IT ปี 3 ภาค 1",
+   "source": "teacher_gt (แผนของทั้งสองหลักสูตร)",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22C2",
+   "level": "ท้าทาย",
+   "program": "DSBA",
+   "question": "คณิตศาสตร์ไม่ต่อเนื่อง เรียนปีไหนใน DSBA และใน IT",
+   "must": [
+    [
+     "DSBA"
+    ],
+    [
+     "IT"
+    ],
+    [
+     "ปีที่ 2",
+     "ปี 2"
+    ],
+    [
+     "ปีที่ 2",
+     "ปี 2"
+    ]
+   ],
+   "expected": "DSBA ปี 2 ภาค 1, IT ปี 2 ภาค 1",
+   "source": "teacher_gt (แผนของทั้งสองหลักสูตร)",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22C3",
+   "level": "ท้าทาย",
+   "program": "BIT",
+   "question": "เก็บได้ 117 หน่วยกิต เกรดเฉลี่ย 2.00 จบหรือยัง",
+   "must": [
+    [
+     "126"
+    ],
+    [
+     "9"
+    ]
+   ],
+   "expected": "ต้องครบ 126 และ GPA >= 2.00",
+   "source": "teacher_gt/rules_ground_truth.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22C4",
+   "level": "ท้าทาย",
+   "program": "DSBA",
+   "question": "เก็บได้ 132 หน่วยกิต เกรดเฉลี่ย 2.35 จบหรือยัง",
+   "must": [
+    [
+     "132"
+    ]
+   ],
+   "expected": "ต้องครบ 132 และ GPA >= 2.00",
+   "source": "teacher_gt/rules_ground_truth.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22C5",
+   "level": "ท้าทาย",
+   "program": "BIT",
+   "question": "เกรดเฉลี่ย 1.75 จะเป็นอะไรไหม",
+   "must": [
+    [
+     "ภาคทัณฑ์"
+    ],
+    [
+     "2.00"
+    ]
+   ],
+   "expected": "ภาคทัณฑ์ (< 2.00)",
+   "source": "ข้อบังคับ ป.ตรี (AIT 2566 ภาคผนวก หน้า 82-95)",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22C6",
+   "level": "ท้าทาย",
+   "program": "BIT",
+   "question": "ลง 7 หน่วยกิตในภาคปกติได้หรือเปล่า",
+   "must": [
+    [
+     "9"
+    ]
+   ],
+   "expected": "ภาคปกติ 9-22",
+   "source": "ข้อบังคับ ป.ตรี (AIT 2566 ภาคผนวก หน้า 82-95)",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22C7",
+   "level": "ท้าทาย",
+   "program": "BIT",
+   "question": "ภาคฤดูร้อนลง 12 หน่วยกิตได้หรือเปล่า",
+   "must": [
+    [
+     "9"
+    ]
+   ],
+   "expected": "ภาคฤดูร้อนไม่เกิน 9",
+   "source": "ข้อบังคับ ป.ตรี (AIT 2566 ภาคผนวก หน้า 82-95)",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22C8",
+   "level": "ท้าทาย",
+   "program": "IT",
+   "question": "IT เรียนกี่หน่วยกิต AIT เรียนกี่หน่วยกิต",
+   "must": [
+    [
+     "129"
+    ],
+    [
+     "120"
+    ]
+   ],
+   "expected": "IT 129, AIT 120",
+   "source": "teacher_gt/rules_ground_truth.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22E1",
+   "level": "ง่าย",
+   "program": "AIT",
+   "question": "วิชา โครงงานเทคโนโลยีปัญญาประดิษฐ์ 2 หน่วยกิตเท่าไร",
+   "must": [
+    [
+     "3(0-9-0)",
+     "3 (0-9-0)"
+    ]
+   ],
+   "expected": "3(0-9-0)",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22E2",
+   "level": "ง่าย",
+   "program": "AIT",
+   "question": "วิชา พื้นฐานทักษะการสื่อสารภาษาอังกฤษ หน่วยกิตเท่าไร",
+   "must": [
+    [
+     "0(0-0-45)",
+     "0 (0-0-45)"
+    ]
+   ],
+   "expected": "0(0-0-45)",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22E3",
+   "level": "ง่าย",
+   "program": "AIT",
+   "question": "วิชาสัมมนาปัญญาประดิษฐ์ อยู่ปีไหนในแผน",
+   "must": [
+    [
+     "ปีที่ 3",
+     "ปี 3"
+    ]
+   ],
+   "expected": "ปี 3 ภาค 1",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22E4",
+   "level": "ง่าย",
+   "program": "AIT",
+   "question": "คณิตศาสตร์ไม่ต่อเนื่อง ภาษาอังกฤษว่าอะไร",
+   "must": [
+    [
+     "DISCRETE MATHEMATICS",
+     "Discrete Mathematics"
+    ]
+   ],
+   "expected": "DISCRETE MATHEMATICS",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22E5",
+   "level": "ง่าย",
+   "program": "AIT",
+   "question": "โครงงานกลุ่ม 3 รหัสอะไร",
+   "must": [
+    [
+     "90641006"
+    ]
+   ],
+   "expected": "90641006",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22M1",
+   "level": "ปานกลาง",
+   "program": "AIT",
+   "question": "พื้นฐานการเรียนรู้เชิงลึก ต้องเรียนอะไรก่อน",
+   "must": [
+    [
+     "06046401"
+    ],
+    [
+     "06046402"
+    ]
+   ],
+   "expected": "06046401, 06046402",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22M2",
+   "level": "ปานกลาง",
+   "program": "AIT",
+   "question": "Fundamentals Of Deep Learning มีกี่หน่วยกิต",
+   "must": [
+    [
+     "3(3-0-6)"
+    ]
+   ],
+   "expected": "06046406 พื้นฐานการเรียนรู้เชิงลึก",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22M3",
+   "level": "ปานกลาง",
+   "program": "AIT",
+   "question": "ปี 4 ภาค 1 วิชาบังคับมีอะไรบ้าง",
+   "must": [
+    [
+     "06046442"
+    ]
+   ],
+   "expected": "06046442",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22E6",
+   "level": "ง่าย",
+   "program": "BIT",
+   "question": "วิชา กฎหมายสำหรับคนรุ่นใหม่ หน่วยกิตเท่าไร",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22E7",
+   "level": "ง่าย",
+   "program": "BIT",
+   "question": "วิชา ภาษาอังกฤษพื้นฐาน 2 หน่วยกิตเท่าไร",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22E8",
+   "level": "ง่าย",
+   "program": "BIT",
+   "question": "อัจฉริยะทางธุรกิจและข้อมูลขนาดใหญ่ อยู่ปีไหนในแผน",
+   "must": [
+    [
+     "ปีที่ 2",
+     "ปี 2"
+    ]
+   ],
+   "expected": "ปี 2 ภาค 1",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22E9",
+   "level": "ง่าย",
+   "program": "BIT",
+   "question": "การตลาดเชิงดิจิทัล ภาษาอังกฤษว่าอะไร",
+   "must": [
+    [
+     "DIGITAL MARKETING",
+     "Digital Marketing"
+    ]
+   ],
+   "expected": "DIGITAL MARKETING",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22E10",
+   "level": "ง่าย",
+   "program": "BIT",
+   "question": "อัจฉริยะทางธุรกิจและข้อมูลขนาดใหญ่ รหัสอะไร",
+   "must": [
+    [
+     "06036117"
+    ]
+   ],
+   "expected": "06036117",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22M4",
+   "level": "ปานกลาง",
+   "program": "BIT",
+   "question": "โครงงานทางด้านเทคโนโลยีสารสนเทศเชิงธุรกิจ 2 ต้องเรียนอะไรก่อน",
+   "must": [
+    [
+     "06036145"
+    ]
+   ],
+   "expected": "06036145",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22M5",
+   "level": "ปานกลาง",
+   "program": "BIT",
+   "question": "Foundation English 1 มีกี่หน่วยกิต",
+   "must": [
+    [
+     "3(3-0-6)"
+    ]
+   ],
+   "expected": "96644007 ภาษาอังกฤษพื้นฐาน 1",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22M6",
+   "level": "ปานกลาง",
+   "program": "BIT",
+   "question": "ปี 3 ภาค 1 วิชาบังคับมีอะไรบ้าง",
+   "must": [
+    [
+     "06036107"
+    ],
+    [
+     "06036110"
+    ],
+    [
+     "06036114"
+    ],
+    [
+     "06036121"
+    ],
+    [
+     "06036123"
+    ]
+   ],
+   "expected": "06036107, 06036110, 06036114, 06036121, 06036123",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22E11",
+   "level": "ง่าย",
+   "program": "DSBA",
+   "question": "วิชา การสื่อสารและการนำเสนออย่างมืออาชีพ หน่วยกิตเท่าไร",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22E12",
+   "level": "ง่าย",
+   "program": "DSBA",
+   "question": "วิชา ผู้ประกอบการสมัยใหม่ หน่วยกิตเท่าไร",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22E13",
+   "level": "ง่าย",
+   "program": "DSBA",
+   "question": "กีฬาและนันทนาการ อยู่ปีไหนในแผน",
+   "must": [
+    [
+     "ปีที่ 1",
+     "ปี 1"
+    ]
+   ],
+   "expected": "ปี 1 ภาค 1",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22E14",
+   "level": "ง่าย",
+   "program": "DSBA",
+   "question": "การหาค่าที่เหมาะที่สุด ภาษาอังกฤษว่าอะไร",
+   "must": [
+    [
+     "OPTIMIZATION",
+     "Optimization"
+    ]
+   ],
+   "expected": "OPTIMIZATION",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22E15",
+   "level": "ง่าย",
+   "program": "DSBA",
+   "question": "โครงสร้างข้อมูลและอัลกอริทึม รหัสอะไร",
+   "must": [
+    [
+     "06066301"
+    ]
+   ],
+   "expected": "06066301",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22M7",
+   "level": "ปานกลาง",
+   "program": "DSBA",
+   "question": "โครงงานวิทยาการข้อมูลและการวิเคราะห์เชิงธุรกิจ 2 ต้องเรียนอะไรก่อน",
+   "must": [
+    [
+     "06026214"
+    ]
+   ],
+   "expected": "06026214",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22M8",
+   "level": "ปานกลาง",
+   "program": "DSBA",
+   "question": "Law For New Generation มีกี่หน่วยกิต",
+   "must": [
+    [
+     "3(3-0-6)"
+    ]
+   ],
+   "expected": "90642033 กฎหมายสำหรับคนรุ่นใหม่",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22M9",
+   "level": "ปานกลาง",
+   "program": "DSBA",
+   "question": "ปี 2 ภาค 2 วิชาบังคับมีอะไรบ้าง",
+   "must": [
+    [
+     "06026204"
+    ],
+    [
+     "06026207"
+    ],
+    [
+     "06026208"
+    ],
+    [
+     "06026209"
+    ],
+    [
+     "06026210"
+    ],
+    [
+     "06066102"
+    ],
+    [
+     "06066301"
+    ]
+   ],
+   "expected": "06026204, 06026207, 06026208, 06026209, 06026210, 06066102, 06066301",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22E16",
+   "level": "ง่าย",
+   "program": "IT",
+   "question": "วิชา กีฬาและนันทนาการ หน่วยกิตเท่าไร",
+   "must": [
+    [
+     "1(0-3-2)",
+     "1 (0-3-2)"
+    ]
+   ],
+   "expected": "1(0-3-2)",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22E17",
+   "level": "ง่าย",
+   "program": "IT",
+   "question": "วิชา การวิเคราะห์และออกแบบระบบสารสนเทศ หน่วยกิตเท่าไร",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22E18",
+   "level": "ง่าย",
+   "program": "IT",
+   "question": "การแก้ปัญหาและการโปรแกรมคอมพิวเตอร์ อยู่ปีไหนในแผน",
+   "must": [
+    [
+     "ปีที่ 1",
+     "ปี 1"
+    ]
+   ],
+   "expected": "ปี 1 ภาค 1",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22E19",
+   "level": "ง่าย",
+   "program": "IT",
+   "question": "โครงสร้างพื้นฐานเครือข่ายการสื่อสาร ภาษาอังกฤษว่าอะไร",
+   "must": [
+    [
+     "COMMUNICATION NETWORK INFRASTRUCTURE",
+     "Communication Network Infrastructure"
+    ]
+   ],
+   "expected": "COMMUNICATION NETWORK INFRASTRUCTURE",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22E20",
+   "level": "ง่าย",
+   "program": "IT",
+   "question": "ระบบคอมพิวเตอร์เบื้องต้น รหัสอะไร",
+   "must": [
+    [
+     "06016411"
+    ]
+   ],
+   "expected": "06016411",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22M10",
+   "level": "ปานกลาง",
+   "program": "IT",
+   "question": "การออโตเมชั่นและโครงสร้างพื้นฐานที่สามารถโปรแกรมได้ ต้องเรียนอะไรก่อน",
+   "must": [
+    [
+     "06016413"
+    ]
+   ],
+   "expected": "06016413",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22M11",
+   "level": "ปานกลาง",
+   "program": "IT",
+   "question": "Fundamental Web Programming มีกี่หน่วยกิต",
+   "must": [
+    [
+     "3(2-2-5)"
+    ]
+   ],
+   "expected": "06066302 การเขียนโปรแกรมเว็บพื้นฐาน",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22M12",
+   "level": "ปานกลาง",
+   "program": "IT",
+   "question": "IT ต้องเก็บหน่วยกิตทั้งหมดเท่าไร",
+   "must": [
+    [
+     "129"
+    ]
+   ],
+   "expected": "129",
+   "source": "teacher_gt/rules_ground_truth.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22M13",
+   "level": "ปานกลาง",
+   "program": "BIT",
+   "question": "BIT ต้องเก็บหน่วยกิตทั้งหมดเท่าไร",
+   "must": [
+    [
+     "126"
+    ]
+   ],
+   "expected": "126",
+   "source": "teacher_gt/rules_ground_truth.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22M14",
+   "level": "ปานกลาง",
+   "program": "AIT",
+   "question": "ภาคปกติลงได้มากสุดกี่หน่วยกิต",
+   "must": [
+    [
+     "22"
+    ]
+   ],
+   "expected": "9-22",
+   "source": "ข้อบังคับ ป.ตรี (AIT 2566 ภาคผนวก หน้า 82-95)",
+   "_round_kind": "ครบ 4 ระดับ"
+  },
+  {
+   "id": "N22M15",
+   "level": "ปานกลาง",
+   "program": "BIT",
+   "question": "เกียรตินิยมอันดับหนึ่งใช้เกรดขั้นต่ำเท่าไร",
+   "must": [
+    [
+     "3.50"
+    ]
+   ],
+   "expected": "3.50 / 3.25",
+   "source": "teacher_gt/rules_ground_truth.json",
+   "_round_kind": "ครบ 4 ระดับ"
+  }
+ ]
+}

@@ -63,7 +63,7 @@ def detect_semester(question: str) -> int | None:
         return 1
     if "ภาคปลาย" in question or "เทอมปลาย" in question:
         return 2
-    m = re.search(r"(?:เทอม|ภาค(?:การศึกษา)?(?:ที่)?)\s*([1-3])", question)
+    m = re.search(r"(?:เทอม|ภาค(?:การศึกษา|เรียน)?(?:ที่)?)\s*([1-3])", question)
     if m:
         return int(m.group(1))
     return None
@@ -611,7 +611,8 @@ def detect_prerequisite_intent(question: str) -> bool:
     ]):
         return True
     # สำนวนที่มีคำคั่น: "ก่อนจะลงวิชา X ต้องเรียนวิชาอะไรมาก่อน", "ต้องเรียนวิชาไหนมาก่อน", "ต้องผ่านอะไรมาก่อน"
-    return bool(re.search(r"ก่อน\s*(?:จะ|ที่จะ)?\s*(?:ลง|เรียน)|(?:เรียน|ผ่าน|ลง)\S{0,20}\s*มาก่อน", q))
+    return bool(re.search(r"ก่อน\s*(?:จะ|ที่จะ)?\s*(?:ลง|เรียน)|(?:เรียน|ผ่าน|ลง)\S{0,20}\s*มาก่อน"
+                          r"|ต้อง(?:เรียน|ผ่าน|ลง)\s*(?:วิชา)?(?:อะไร|ไหน)\s*ก่อน", q))
 
 
 def try_prerequisite(
@@ -834,9 +835,11 @@ _DEPENDENT_KW = (
 def detect_dependents_intent(question: str) -> bool:
     if any(k in question for k in _DEPENDENT_KW):
         return True
+    if re.search(r"วิชา(?:ไหน|อะไร)(?:บ้าง)?\s*ที่\s*ต้อง(?:ผ่าน|เรียน)\s*\S.*ก่อน", question):
+        return True
     # "ถ้าสอบไม่ผ่านวิชา X จะลงวิชาไหนต่อไม่ได้", "ติด F วิชา X ลงอะไรไม่ได้บ้าง"
     failed = any(k in question for k in ("ไม่ผ่าน", "ติด f", "ติด F", "ได้ f", "ได้ F", "เกรด F"))
-    blocked = any(k in question for k in ("ไม่ได้", "ลงต่อ", "เรียนต่อ"))
+    blocked = any(k in question for k in ("ไม่ได้", "ลงต่อ", "เรียนต่อ", "มีผล", "กระทบ", "ติดวิชา"))
     return failed and blocked
 
 
@@ -1445,11 +1448,12 @@ def detect_rule_intent(question: str) -> str | None:
 
 
 _GRAD_TOTAL_RE = re.compile(
-    r"ตลอดหลักสูตร|ทั้งหลักสูตร|หน่วยกิตรวม|รวมทั้งหมด|ต้องเรียน(?:ครบ|ทั้งหมด|ให้ครบ)?\s*กี่หน่วยกิต"
+    r"ตลอดหลักสูตร|ทั้งหลักสูตร|หน่วยกิตรวม|รวมทั้งหมด|ต้อง(?:เรียน|เก็บ)(?:ครบ|ทั้งหมด|ให้ครบ)?\s*(?:หน่วยกิต)?\s*(?:กี่หน่วยกิต|ทั้งหมด)"
+    r"|(?:เรียน|เก็บ)(?:ครบ|ทั้งหมด|ให้ครบ)\s*กี่หน่วยกิต"
 )
 
 
-_GRAD_SHORT_RE = re.compile(r"(?:จึงจะ|ถึงจะ|เพื่อ|ถึง|ให้)\s*จบ|จบ\s*(?:ได้|การ|หลักสูตร)")
+_GRAD_SHORT_RE = re.compile(r"(?:จึงจะ|ถึงจะ|เพื่อ|ถึง|ให้)\s*จบ|จบ\s*(?:ได้|การ|หลักสูตร|สาขา|[A-Z]{2,5})")
 
 
 def try_rule_answer(conn: sqlite3.Connection, question: str) -> StructuredResult:

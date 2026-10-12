@@ -1,0 +1,556 @@
+{
+ "_meta": "ชุดที่ไม่เคยเห็น รอบ 10 (ยาก/ท้าทาย) สร้างด้วย build_rounds.py",
+ "items": [
+  {
+   "id": "N10H1",
+   "level": "ยาก",
+   "program": "AIT",
+   "question": "โครงงานกลุ่ม 1 กับ การประมวลผลภาษาธรรมชาติด้วยการเรียนรู้อย่างเชิงลึก อันไหนเรียนก่อน",
+   "must": [
+    [
+     "ปีที่ 1",
+     "ปี 1"
+    ],
+    [
+     "ปีที่ 3",
+     "ปี 3"
+    ]
+   ],
+   "expected": "90641004 ปี 1 ภาค 2, 06046414 ปี 3 ภาค 1",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10H2",
+   "level": "ยาก",
+   "program": "AIT",
+   "question": "สอบตก พีชคณิตเชิงเส้น แล้วจะลงวิชาไหนต่อไม่ได้บ้าง",
+   "must": [
+    [
+     "06046406"
+    ]
+   ],
+   "expected": "06046406",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10H3",
+   "level": "ยาก",
+   "program": "AIT",
+   "question": "การเรียนรู้ของเครื่องเชิงความน่าจะเป็น ไปลงตอนปี 3 ได้ไหม",
+   "must": [
+    [
+     "06066001"
+    ],
+    [
+     "ปีที่ 2",
+     "ปี 2"
+    ]
+   ],
+   "expected": "ได้ แผนกำหนดปี 2 ต้องผ่าน 06066001",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10H4",
+   "level": "ยาก",
+   "program": "AIT",
+   "question": "ปี 4 เทอม 2 ต้องลงทั้งหมดกี่หน่วยกิต",
+   "must": [
+    [
+     "6"
+    ]
+   ],
+   "expected": "6 หน่วยกิต",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10H5",
+   "level": "ยาก",
+   "program": "AIT",
+   "question": "อยู่ปี 1 ลง พื้นฐานการเรียนรู้เชิงลึก ล่วงหน้าเลยได้ไหม",
+   "must": [
+    [
+     "ไม่ได้"
+    ],
+    [
+     "06046401"
+    ]
+   ],
+   "expected": "ไม่ได้ ต้องผ่าน 06046401 ก่อน",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10H6",
+   "level": "ยาก",
+   "program": "AIT",
+   "question": "ปี 3 ทั้งปีลงกี่หน่วยกิต",
+   "must": [
+    [
+     "31"
+    ]
+   ],
+   "expected": "18 + 13",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10H7",
+   "level": "ยาก",
+   "program": "BIT",
+   "question": "ปี 3 เทอมไหนหน่วยกิตมากกว่ากัน",
+   "must": [
+    [
+     "18"
+    ],
+    [
+     "12"
+    ]
+   ],
+   "expected": "ภาค 1 18, ภาค 2 12 (แก้: เฉลยไม่ได้ใส่หน่วยกิต 06036116 — เล่ม BIT 2565 หน้า 29 ภาค 3/2 รวม 12)",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10H8",
+   "level": "ยาก",
+   "program": "BIT",
+   "question": "ปี 4 ทั้งปีลงกี่หน่วยกิต",
+   "must": [
+    [
+     "24"
+    ]
+   ],
+   "expected": "12 + 12",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10H9",
+   "level": "ยาก",
+   "program": "BIT",
+   "question": "การพัฒนาเว็บแอปพลิเคชันโดยใช้เฟรมเวิร์ก ไปลงตอนปี 4 ได้ไหม",
+   "must": [
+    [
+     "06036119"
+    ],
+    [
+     "ปีที่ 3",
+     "ปี 3"
+    ]
+   ],
+   "expected": "ได้ แผนกำหนดปี 3 ต้องผ่าน 06036119",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10H10",
+   "level": "ยาก",
+   "program": "BIT",
+   "question": "การวิเคราะห์เชิงสถิติสำหรับธุรกิจ กับ ภาษาอังกฤษพื้นฐาน 2 อันไหนเรียนก่อน",
+   "must": [
+    [
+     "ปีที่ 1",
+     "ปี 1"
+    ],
+    [
+     "ปีที่ 1",
+     "ปี 1"
+    ]
+   ],
+   "expected": "06036102 ปี 1 ภาค 2, 96644008 ปี 1 ภาค 2",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10H11",
+   "level": "ยาก",
+   "program": "BIT",
+   "question": "สอบตก พื้นฐานการเขียนโปรแกรม แล้วจะลงวิชาไหนต่อไม่ได้บ้าง",
+   "must": [
+    [
+     "06036114"
+    ]
+   ],
+   "expected": "06036114",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10H12",
+   "level": "ยาก",
+   "program": "BIT",
+   "question": "ปี 2 เทอม 1 ต้องลงทั้งหมดกี่หน่วยกิต",
+   "must": [
+    [
+     "18"
+    ]
+   ],
+   "expected": "18 หน่วยกิต",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10H13",
+   "level": "ยาก",
+   "program": "DSBA",
+   "question": "สอบตก พื้นฐานทางธุรกิจสำหรับเทคโนโลยีสารสนเทศ แล้วจะลงวิชาไหนต่อไม่ได้บ้าง",
+   "must": [
+    [
+     "06066102"
+    ]
+   ],
+   "expected": "06066102",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10H14",
+   "level": "ยาก",
+   "program": "DSBA",
+   "question": "การสร้างคลังข้อมูล กับ ภาษาอังกฤษพื้นฐาน 1 อันไหนเรียนก่อน",
+   "must": [
+    [
+     "ปีที่ 3",
+     "ปี 3"
+    ],
+    [
+     "ปีที่ 1",
+     "ปี 1"
+    ]
+   ],
+   "expected": "06026212 ปี 3 ภาค 1, 90644007 ปี 1 ภาค 1",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10H15",
+   "level": "ยาก",
+   "program": "DSBA",
+   "question": "อยู่ปี 3 ลง โครงงานวิทยาการข้อมูลและการวิเคราะห์เชิงธุรกิจ 2 ล่วงหน้าเลยได้ไหม",
+   "must": [
+    [
+     "ไม่ได้"
+    ],
+    [
+     "06026214"
+    ]
+   ],
+   "expected": "ไม่ได้ ต้องผ่าน 06026214 ก่อน",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10H16",
+   "level": "ยาก",
+   "program": "DSBA",
+   "question": "ระบบข้อมูลมหัต ไปลงตอนปี 4 ได้ไหม",
+   "must": [
+    [
+     "06066300"
+    ],
+    [
+     "ปีที่ 3",
+     "ปี 3"
+    ]
+   ],
+   "expected": "ได้ แผนกำหนดปี 3 ต้องผ่าน 06066300",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10H17",
+   "level": "ยาก",
+   "program": "DSBA",
+   "question": "กีฬาและนันทนาการ กับ การบริหารโครงการเทคโนโลยีสารสนเทศ รวมกันกี่หน่วยกิต",
+   "must": [
+    [
+     "4"
+    ]
+   ],
+   "expected": "1 + 3",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10H18",
+   "level": "ยาก",
+   "program": "IT",
+   "question": "สอบตก ระบบเครือข่ายเบื้องต้น แล้วจะลงวิชาไหนต่อไม่ได้บ้าง",
+   "must": [
+    [
+     "06016419"
+    ],
+    [
+     "06016420"
+    ],
+    [
+     "06016422"
+    ],
+    [
+     "06016423"
+    ]
+   ],
+   "expected": "06016419, 06016420, 06016422, 06016423 (เฉลยใส่ 06016432 ด้วย แต่เล่มหน้า 337 วิชาบังคับก่อนของ 06016432 คือ 06066304)",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10H19",
+   "level": "ยาก",
+   "program": "IT",
+   "question": "ลง ระบบเครือข่ายเบื้องต้น กับ การออโตเมชั่นและโครงสร้างพื้นฐานที่สามารถโปรแกรมได้ ในเทอมเดียวกันได้ไหม",
+   "must": [
+    [
+     "ไม่ได้"
+    ],
+    [
+     "06016413"
+    ]
+   ],
+   "expected": "ไม่ได้ ต้องผ่าน 06016413 ก่อน",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10H20",
+   "level": "ยาก",
+   "program": "IT",
+   "question": "ปี 4 เทอมไหนหน่วยกิตมากกว่ากัน",
+   "must": [
+    [
+     "15"
+    ],
+    [
+     "9"
+    ]
+   ],
+   "expected": "ภาค 1 15, ภาค 2 9",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10H21",
+   "level": "ยาก",
+   "program": "IT",
+   "question": "วิชาบังคับก่อนของ โครงงาน 2 เรียนตอนปีไหน",
+   "must": [
+    [
+     "06016406"
+    ],
+    [
+     "ปีที่ 4",
+     "ปี 4"
+    ]
+   ],
+   "expected": "06016406 ปี 4 ภาค 1",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10C1",
+   "level": "ท้าทาย",
+   "program": "DSBA",
+   "question": "เรียนจบปี 3 ตามแผนแล้วมีหน่วยกิตสะสมกี่หน่วยกิต",
+   "must": [
+    [
+     "114"
+    ]
+   ],
+   "expected": "สะสม 114 เหลือ 18",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10C2",
+   "level": "ท้าทาย",
+   "program": "AIT",
+   "question": "เรียนจบปี 2 ตามแผนแล้วมีหน่วยกิตสะสมกี่หน่วยกิต",
+   "must": [
+    [
+     "71"
+    ]
+   ],
+   "expected": "สะสม 71 เหลือ 49",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10C3",
+   "level": "ท้าทาย",
+   "program": "DSBA",
+   "question": "ภาษาอังกฤษพื้นฐาน 2 ใน DSBA กับ IT เรียนปีเดียวกันไหม",
+   "must": [
+    [
+     "DSBA"
+    ],
+    [
+     "IT"
+    ],
+    [
+     "ปีที่ 1",
+     "ปี 1"
+    ],
+    [
+     "ปีที่ 1",
+     "ปี 1"
+    ]
+   ],
+   "expected": "DSBA ปี 1 ภาค 2, IT ปี 1 ภาค 2",
+   "source": "teacher_gt (แผนของทั้งสองหลักสูตร)",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10C4",
+   "level": "ท้าทาย",
+   "program": "DSBA",
+   "question": "การเขียนโปรแกรมเว็บพื้นฐาน ใน DSBA กับ IT เรียนปีเดียวกันไหม",
+   "must": [
+    [
+     "DSBA"
+    ],
+    [
+     "IT"
+    ],
+    [
+     "ปีที่ 2",
+     "ปี 2"
+    ],
+    [
+     "ปีที่ 2",
+     "ปี 2"
+    ]
+   ],
+   "expected": "DSBA ปี 2 ภาค 1, IT ปี 2 ภาค 2",
+   "source": "teacher_gt (แผนของทั้งสองหลักสูตร)",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10C5",
+   "level": "ท้าทาย",
+   "program": "DSBA",
+   "question": "มี 132 หน่วยกิต เกรด 1.85 จบได้ไหม",
+   "must": [
+    [
+     "132"
+    ],
+    [
+     "2.00"
+    ]
+   ],
+   "expected": "ต้องครบ 132 และ GPA >= 2.00",
+   "source": "teacher_gt/rules_ground_truth.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10C6",
+   "level": "ท้าทาย",
+   "program": "IT",
+   "question": "มี 120 หน่วยกิต เกรด 2.00 จบได้ไหม",
+   "must": [
+    [
+     "129"
+    ],
+    [
+     "9"
+    ]
+   ],
+   "expected": "ต้องครบ 129 และ GPA >= 2.00",
+   "source": "teacher_gt/rules_ground_truth.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10C7",
+   "level": "ท้าทาย",
+   "program": "AIT",
+   "question": "จบเกรด 3.30 ได้เกียรตินิยมไหม",
+   "must": [
+    [
+     "3.25"
+    ]
+   ],
+   "expected": "เกณฑ์ 3.25",
+   "source": "teacher_gt/rules_ground_truth.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10C8",
+   "level": "ท้าทาย",
+   "program": "IT",
+   "question": "เกรดเฉลี่ยสะสม 1.95 จะโดนอะไร",
+   "must": [
+    [
+     "ภาคทัณฑ์"
+    ],
+    [
+     "2.00"
+    ]
+   ],
+   "expected": "ภาคทัณฑ์ (< 2.00)",
+   "source": "ข้อบังคับ ป.ตรี (AIT 2566 ภาคผนวก หน้า 82-95)",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10C9",
+   "level": "ท้าทาย",
+   "program": "IT",
+   "question": "ภาคปกติลง 8 หน่วยกิตได้ไหม",
+   "must": [
+    [
+     "9"
+    ]
+   ],
+   "expected": "ภาคปกติ 9-22",
+   "source": "ข้อบังคับ ป.ตรี (AIT 2566 ภาคผนวก หน้า 82-95)",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10C10",
+   "level": "ท้าทาย",
+   "program": "IT",
+   "question": "ซัมเมอร์ลง 9 หน่วยกิตได้ไหม",
+   "must": [
+    [
+     "9"
+    ]
+   ],
+   "expected": "ภาคฤดูร้อนไม่เกิน 9",
+   "source": "ข้อบังคับ ป.ตรี (AIT 2566 ภาคผนวก หน้า 82-95)",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10C11",
+   "level": "ท้าทาย",
+   "program": "BIT",
+   "question": "ปีสุดท้ายเหลือ 25 หน่วยกิต ลงเทอมเดียวจบได้ไหม",
+   "must": [
+    [
+     "27"
+    ]
+   ],
+   "expected": "ได้ ไม่เกิน 27 (ข้อยกเว้นปีสุดท้าย)",
+   "source": "ข้อบังคับ ป.ตรี (AIT 2566 ภาคผนวก หน้า 82-95)",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N10C12",
+   "level": "ท้าทาย",
+   "program": "DSBA",
+   "question": "DSBA กับ AIT ต้องเรียนกี่หน่วยกิต ต่างกันเท่าไร",
+   "must": [
+    [
+     "132"
+    ],
+    [
+     "120"
+    ]
+   ],
+   "expected": "DSBA 132, AIT 120",
+   "source": "teacher_gt/rules_ground_truth.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  }
+ ]
+}

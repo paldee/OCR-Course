@@ -26,7 +26,8 @@ from katrag.query.program_codes import program_code_positions
 
 _PREFIX_RE = re.compile(r"^\s*หลักสูตร\s+[A-Za-z]+\s*[:：]\s*")
 _THAI_DIGIT = {"หนึ่ง": 1, "สอง": 2, "สาม": 3, "สี่": 4, "๑": 1, "๒": 2, "๓": 3, "๔": 4}
-_YES_NO = ("ได้ไหม", "ได้มั้ย", "ได้หรือไม่", "ได้หรือเปล่า", "ได้รึเปล่า", "ได้ป่าว", "ได้เปล่า", "ได้ป่ะ", "ได้มั๊ย")
+# "ได้ไหม", "ได้เลยไหม", "ได้หรือเปล่า", "ทันไหม", "ได้ยัง" — ยอมให้มีคำแทรกสั้น ๆ
+_YES_NO_RE = re.compile(r"(?:ได้|ทัน)\S{0,6}?(?:ไหม|มั้ย|มั๊ย|หรือไม่|หรือเปล่า|รึเปล่า|ป่าว|เปล่า|ป่ะ|ยัง)")
 _NONE = StructuredResult(False, "", "", "none")
 
 
@@ -80,7 +81,7 @@ _TARGET_YEAR_RE = re.compile(r"(?:ตั้งแต่|ตอน|ใน|ช่�
 
 def try_can_take(conn: sqlite3.Connection, question: str) -> StructuredResult:
     text = _user_text(question)
-    if not any(k in text for k in _YES_NO) or not re.search(r"ลง|เรียน", text):
+    if not _YES_NO_RE.search(text) or not re.search(r"ลง|เรียน", text):
         return _NONE
     m = _TARGET_YEAR_RE.search(text)
     if not m:
@@ -122,10 +123,11 @@ def try_can_take(conn: sqlite3.Connection, question: str) -> StructuredResult:
 
 _SAME_TIME_RE = re.compile(
     r"ปีเดียวกัน|เทอมเดียวกัน|ภาคเดียวกัน|พร้อมกัน|ปีไหน|เทอมไหน|ภาคไหน|(?:วิชา|อัน|ตัว)ไหน\S{0,8}ก่อน|ก่อนหรือหลัง"
+    r"|หลังกว่า|ก่อนกว่า|ก่อนกัน|คนละปี|ปีหลัง|ปีแรกกว่า|(?:อยู่|เรียน)(?:ก่อน|หลัง)\s"
 )
 
 
-_CONCURRENT_RE = re.compile(r"พร้อมกัน|เทอมเดียวกัน|ภาคเดียวกัน|ควบคู่|ในคราวเดียว")
+_CONCURRENT_RE = re.compile(r"พร้อมกัน|(?:เทอม|ภาค)เดียว|ควบคู่|คู่กับ|ในคราวเดียว")
 
 
 def _prereq_closure(conn: sqlite3.Connection, r, depth: int = 0) -> set[str]:
@@ -142,12 +144,18 @@ def _prereq_closure(conn: sqlite3.Connection, r, depth: int = 0) -> set[str]:
 
 def try_two_courses(conn: sqlite3.Connection, question: str) -> StructuredResult:
     text = _user_text(question)
-    if not _SAME_TIME_RE.search(text) or "กับ" not in text or len(_programs_in(text)) >= 2:
+    # "A อยู่ก่อน B ใช่ไหม" — แยกสองวิชาที่คำว่า อยู่ก่อน/อยู่หลัง
+    order = re.search(r"\s(?:อยู่|เรียน)(ก่อน|หลัง)\s", text)
+    sep = next((s for s in ("กับ", "ก่อนหรือหลัง", " และ ", " แล้ว ") if s in text), None) or (order and order.group(0))
+    # "เทอมนี้จะลงทั้ง A และ B เลยได้ไหม" = ลงพร้อมกัน
+    concurrent = bool(_CONCURRENT_RE.search(text) or (re.search(r"(?:ลง|เรียน)ทั้ง", text)
+                                                      and re.search(r"(?:เทอม|ภาค)(?:นี้|เดียว)", text)))
+    if not (_SAME_TIME_RE.search(text) or concurrent) or sep is None or len(_programs_in(text)) >= 2:
         return _NONE
     program, vids = _scope(conn, question)
     if not vids:
         return _NONE
-    left, right = text.split("กับ", 1)
+    left, right = text.split(sep, 1)
     a = _match_course_by_name(conn, left, vids)
     b = _match_course_by_name(conn, right, vids)
     if not a or not b or a[0]["code"] == b[0]["code"]:
@@ -158,7 +166,7 @@ def try_two_courses(conn: sqlite3.Connection, question: str) -> StructuredResult
     first, then = (a, b) if a["code"] in _prereq_closure(conn, b) else (b, a) if b["code"] in _prereq_closure(conn, a) else (None, None)
     if first is not None:
         lines.append(f"- {then['code']} มีวิชาบังคับก่อนเป็น {first['code']} (ต้องสอบผ่าน {first['code']} ก่อนจึงลง {then['code']} ได้)")
-    if first is not None and _CONCURRENT_RE.search(text):
+    if first is not None and concurrent:
         verdict = (f"ไม่ได้ — ต้องสอบผ่าน {first['code']} {first['name_th']} ก่อน "
                    f"จึงจะลง {then['code']} {then['name_th']} ได้ จึงลงพร้อมกันในภาคเดียวกันไม่ได้")
     elif a["year"] and b["year"]:
@@ -169,6 +177,9 @@ def try_two_courses(conn: sqlite3.Connection, question: str) -> StructuredResult
         else:
             first = a if (a["year"], a["semester"]) < (b["year"], b["semester"]) else b
             verdict = f"เรียนคนละปี — {first['name_th']} เรียนก่อน"
+            if order and sep == order.group(0):  # ถามยืนยันลำดับ
+                yes = (first is a) == (order.group(1) == "ก่อน")
+                verdict = ("ใช่ — " if yes else "ไม่ใช่ — ") + verdict
     else:
         verdict = "วิชาใดวิชาหนึ่งไม่ได้กำหนดปี/ภาคในแผน (วิชาเลือก) จึงเทียบปีไม่ได้"
     lines.insert(0, f"คำตอบ: {verdict}")
@@ -178,7 +189,7 @@ def try_two_courses(conn: sqlite3.Connection, question: str) -> StructuredResult
 
 # ── 3. วิชา X ของหลักสูตร P1 กับ P2 ─────────────────────────────────────
 
-_WHEN_RE = re.compile(r"ปี|เทอม|ภาค|เรียนตอนไหน|เหมือนกัน|ต่างกัน|เดียวกัน")
+_WHEN_RE = re.compile(r"ปี|เทอม|ภาค|ตอนไหน|เมื่อไร|เหมือนกัน|ต่างกัน|เดียวกัน")
 
 
 def try_course_across_programs(conn: sqlite3.Connection, question: str) -> StructuredResult:
@@ -216,7 +227,9 @@ _CHAIN_RE = re.compile(r"นับรวม|ทั้งหมด|ทุกว�
 
 def try_prereq_chain(conn: sqlite3.Connection, question: str) -> StructuredResult:
     text = _user_text(question)
-    if not (re.search(r"ผ่าน|เรียน|ลง", text) and re.search(r"ก่อน|กว่าจะ", text) and _CHAIN_RE.search(text)):
+    # "X ต้องมีพื้นฐานจากวิชาอะไรบ้าง ไล่ย้อนไปทุกชั้น" — พื้นฐาน/ไล่ย้อน มีความหมายเดียวกับ "ต้องผ่านก่อน"
+    before = re.search(r"ผ่าน|เรียน|ลง", text) and re.search(r"ก่อน|กว่าจะ", text) or re.search(r"พื้นฐานจาก|ไล่ย้อน", text)
+    if not (before and _CHAIN_RE.search(text)):
         return _NONE
     if any(k in text for k in ("สอบตก", "ตกวิชา", "กระทบ", "ไม่ผ่าน")):
         return _NONE
@@ -249,7 +262,8 @@ def try_prereq_chain(conn: sqlite3.Connection, question: str) -> StructuredResul
 
 # ── 5. เก็บได้ N หน่วยกิต เกรด G จบได้ไหม ────────────────────────────────
 
-_CREDITS_HAVE_RE = re.compile(r"(?:เก็บ|เรียน|สะสม|ได้|ครบ|มี|ผ่าน)[^\d]{0,12}?(\d{2,3})\s*หน่วยกิต")
+_CREDITS_HAVE_RE = re.compile(r"(?:เก็บ|เรียน|สะสม|ได้|ครบ|มี|ผ่าน|ตอนนี้|ปัจจุบัน|รวม)[^\d]{0,12}?(\d{2,3})\s*หน่วยกิต"
+                              r"|(?<![\d.])(\d{2,3})\s*หน่วยกิต|หน่วยกิต\S{0,10}\s*(\d{2,3})(?![\d.])")
 _GPA_RE = re.compile(r"(?:เกรด|GPA|gpa|เกรดเฉลี่ย|เกรดเฉลี่ยสะสม|ค่าระดับคะแนนเฉลี่ย)[^\d]{0,12}?([0-4]\.\d{1,2})")
 _CATEGORY_WORDS = ("ศึกษาทั่วไป", "วิชาเฉพาะ", "เลือกเสรี", "เฉพาะบังคับ", "เฉพาะเลือก")
 
@@ -264,7 +278,8 @@ def _total_credits(conn: sqlite3.Connection, vid: int):
 
 def try_grad_check(conn: sqlite3.Connection, question: str) -> StructuredResult:
     text = _user_text(question)
-    if not re.search(r"จบ|สำเร็จการศึกษา", text) or "เกียรตินิยม" in text or "เหรียญทอง" in text or any(k in text for k in _CATEGORY_WORDS):
+    asks_missing = bool(re.search(r"ขาด|เหลือ|พอหรือยัง|ครบหรือยัง", text) and _GPA_RE.search(text))
+    if not (re.search(r"จบ|สำเร็จการศึกษา", text) or asks_missing) or "เกียรตินิยม" in text or "เหรียญทอง" in text or any(k in text for k in _CATEGORY_WORDS):
         return _NONE
     cm, gm = _CREDITS_HAVE_RE.search(text), _GPA_RE.search(text)
     if not cm and not gm:
@@ -281,7 +296,7 @@ def try_grad_check(conn: sqlite3.Connection, question: str) -> StructuredResult:
     label = _versions_label(conn, [vid])
     lines.append(f"หลักสูตร {label} ต้องเรียนครบไม่น้อยกว่า {need} หน่วยกิต (หน้า {total[1]})")
     if cm:
-        have = int(cm.group(1))
+        have = int(cm.group(1) or cm.group(2) or cm.group(3))
         if have >= need:
             lines.append(f"- หน่วยกิต: เก็บได้ {have} หน่วยกิต → ครบเกณฑ์ {need} หน่วยกิต")
         else:
@@ -296,7 +311,12 @@ def try_grad_check(conn: sqlite3.Connection, question: str) -> StructuredResult:
             lines.append(f"- เกรดเฉลี่ยสะสม {g:.2f} → ต่ำกว่าเกณฑ์ขั้นต่ำ 2.00 (ข้อ 34) จึงยังจบไม่ได้"
                          " และเกรดเฉลี่ยสะสมต่ำกว่า 2.00 ต้องถูกภาคทัณฑ์ (ข้อ 31)")
     lines.append("- เงื่อนไขอื่นตามข้อ 34: สอบผ่านทุกรายวิชาตามโครงสร้างหลักสูตร และผ่านการสอบภาษาอังกฤษ (English Exit exam)")
-    verdict = "จบได้ตามเกณฑ์หน่วยกิตและเกรด (ถ้าผ่านเงื่อนไขอื่นครบ)" if ok else "ยังจบไม่ได้"
+    if not ok:
+        verdict = "ยังจบไม่ได้"
+    elif cm:
+        verdict = "จบได้ตามเกณฑ์หน่วยกิตและเกรด (ถ้าผ่านเงื่อนไขอื่นครบ)"
+    else:  # บอกแต่เกรด — ยังสรุปว่าจบได้ไม่ได้
+        verdict = f"เกรดผ่านเกณฑ์ 2.00 แล้ว แต่ต้องเรียนครบ {need} หน่วยกิตด้วยจึงจะจบ"
     lines.insert(0, f"คำตอบ: {verdict}")
     doc = conn.execute(
         "SELECT d.document_id FROM document d JOIN curriculum_version cv ON cv.version_id = d.version_id "
@@ -314,7 +334,7 @@ def try_program_total_compare(conn: sqlite3.Connection, question: str) -> Struct
     progs = list(dict.fromkeys(_programs_in(text)))
     if len(progs) < 2 or "หน่วยกิต" not in text or len(detect_versions(conn, text)) >= 2:
         return _NONE
-    if not re.search(r"รวม|ทั้งหมด|ตลอดหลักสูตร|ต่างกัน|มากกว่า|น้อยกว่า|เท่าไร|กี่", text):
+    if not re.search(r"รวม|ทั้งหมด|ตลอดหลักสูตร|ต่างกัน|มากกว่า|น้อยกว่า|เยอะกว่า|เท่าไร|กี่|เทียบ|ต่างจาก", text):
         return _NONE
     facts, pages = [], []
     for p in progs:
@@ -390,10 +410,12 @@ def try_semester_total(conn: sqlite3.Connection, question: str) -> StructuredRes
 
 # ── 8. เทียบสองภาค / ทั้งปี / สะสมเมื่อเรียนครบถึงปี N (จากบรรทัด 'รวม' ของแผนปกติ) ─────
 
-_CMP_SEM_RE = re.compile(r"(?:เทอม|ภาค)\S{0,12}(?:กับ|หรือ)\s*(?:เทอม|ภาค)|(?:เทอม|ภาค)ไหน")
+# "เทอม 1 กับเทอม 2", "ภาค 1 หรือภาค 2", "เทอมแรกกับเทอมสอง", "ภาคต้นกับภาคปลาย", "เทอมไหน"
+_CMP_SEM_RE = re.compile(r"(?:เทอม|ภาค)\s*\S{0,8}\s*(?:กับ|หรือ)\s*(?:เทอม|ภาค)|(?:เทอม|ภาค)ไหน"
+                         r"|(?:เทอม|ภาค)\s*[12]\s*(?:กับ|หรือ)\s*[12]|สอง(?:เทอม|ภาค)\S{0,6}ต่างกัน")
 _HEAVY_RE = re.compile(r"เยอะ|มากกว่า|หนัก|น้อยกว่า|เบา|ต่างกัน")
 _YEAR_ALL_RE = re.compile(r"ทั้งปี|ตลอดปี|สองเทอม|สองภาค|(?:ทั้ง|รวม)\s*2\s*(?:เทอม|ภาค)")
-_CUM_RE = re.compile(r"(?:ครบ|จบ|เรียน|ผ่าน)\s*(?:ถึง)?\s*ปี\s*(?:ที่)?\s*([1-4])")
+_CUM_RE = re.compile(r"(?:ครบ|จบ|เรียน|ผ่าน)\s*(?:ถึง)?\s*ปี\s*(?:ที่)?\s*([1-4])|(?:ครบ|เรียน|ผ่าน)\s*([1-4])\s*ปี")
 
 
 def _plan_totals(conn: sqlite3.Connection, vid: int) -> dict[tuple[int, int], tuple[int, int, str]]:
@@ -418,10 +440,11 @@ def try_plan_credit_math(conn: sqlite3.Connection, question: str) -> StructuredR
     from katrag.query.structured_query import detect_year
 
     text = _user_text(question)
-    if "หน่วยกิต" not in text or "วิชา" in text or any(plan_flags(text)[:2]):
+    compares = bool(_CMP_SEM_RE.search(text) and _HEAVY_RE.search(text))  # "ภาค 1 หรือภาค 2 ที่ลงเยอะกว่า"
+    if ("หน่วยกิต" not in text and not compares) or "วิชา" in text or any(plan_flags(text)[:2]):
         return _NONE
-    cum = _CUM_RE.search(text) if re.search(r"สะสม|เก็บ|เหลือ|ขาด", text) else None
-    y = int(cum.group(1)) if cum else detect_year(text)
+    cum = _CUM_RE.search(text) if re.search(r"สะสม|เก็บ|เหลือ|ขาด|(?:จะ|ได้)\s*(?:หน่วยกิต|กี่หน่วยกิต)", text) else None
+    y = int(cum.group(1) or cum.group(2)) if cum else detect_year(text)
     if not y:
         return _NONE
     mode = ("cum" if cum else "cmp" if _CMP_SEM_RE.search(text) and _HEAVY_RE.search(text)
@@ -463,7 +486,7 @@ def try_plan_credit_math(conn: sqlite3.Connection, question: str) -> StructuredR
 
 # ── 9. วิชา A บวก วิชา B รวมกี่หน่วยกิต ──────────────────────────────────
 
-_SUM_RE = re.compile(r"บวก|รวมกัน|รวมเป็น|หน่วยกิตรวม")
+_SUM_RE = re.compile(r"บวก|รวมกัน|รวมเป็น|หน่วยกิตรวม|รวมกับ|สองวิชา|2 วิชา|\s\+\s")
 
 
 def _credit_num(r) -> int | None:
@@ -475,7 +498,8 @@ def try_two_course_credits(conn: sqlite3.Connection, question: str) -> Structure
     text = _user_text(question)
     if "หน่วยกิต" not in text or not _SUM_RE.search(text) or len(_programs_in(text)) >= 2:
         return _NONE
-    parts = re.split(r"\s+บวก\s+|\s+และ(?:วิชา)?|\s*กับ(?:วิชา)?", text, maxsplit=1)
+    text = re.sub(r"(?:ลง|เรียน)?\s*(?:ทั้ง)?\s*(?:สองวิชา|2 วิชา)\s*", " ", text)
+    parts = re.split(r"\s+บวก\s+|\s+\+\s+|\s*รวมกับ\s*|\s+และ(?:วิชา)?|\s*กับ(?:วิชา)?|\s+พร้อม(?:กับ)?(?!กัน)\s*", text, maxsplit=1)
     if len(parts) != 2:
         return _NONE
     program, vids = _scope(conn, question)

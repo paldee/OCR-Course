@@ -93,10 +93,10 @@
    "question": "ถ้าลงตามแผน ปี 3 เทอม 2 ทั้งเทอมรวมกี่หน่วยกิต",
    "must": [
     [
-     "9"
+     "12"
     ]
    ],
-   "expected": "9 หน่วยกิต",
+   "expected": "12 หน่วยกิต",
    "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
   },
   {

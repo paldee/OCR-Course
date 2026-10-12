@@ -15,7 +15,7 @@ import random
 from pathlib import Path
 
 from katrag.eval.build_bank import (
-    COOP_PLANS, GT, GT_KNOWN_ERRORS, PLANS, _clean, _codes, _credit_alts, _fixed_slot,
+    COOP_PLANS, GT, GT_KNOWN_ERRORS, PLANS, _clean, _codes, _credit_alts, _fixed_slot, gt_credit,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -484,8 +484,8 @@ def build_round7() -> list[dict]:
         # หน่วยกิตรวมต่อภาคตามแผน (รวมแถววิชาเลือก/ศึกษาทั่วไปที่ยังไม่ระบุรหัส)
         totals: dict[tuple[int, int], int] = {}
         for c in courses:
-            if _fixed_slot(c) and c.get("credits") and (prog, (_codes(c["code"]) or [""])[0]) not in GT_KNOWN_ERRORS:
-                totals[_fixed_slot(c)] = totals.get(_fixed_slot(c), 0) + cred(c)
+            if _fixed_slot(c) and gt_credit(prog, c) and (prog, (_codes(c["code"]) or [""])[0]) not in GT_KNOWN_ERRORS:
+                totals[_fixed_slot(c)] = totals.get(_fixed_slot(c), 0) + gt_credit(prog, c)
 
         # ยาก 1: หน่วยกิตรวมทั้งภาค
         y, s = rng.choice(sorted(totals))
@@ -598,8 +598,8 @@ def build_round8(seed_offset: int = 8000, ids: tuple[str, str] = ("RH", "RC"), a
         pre = {_codes(c["code"])[0]: [p for p in _codes(c.get("prerequisite")) if p in by_code] for c in named}
         totals: dict[tuple[int, int], int] = {}
         for c in courses:
-            if _fixed_slot(c) and c.get("credits") and (prog, (_codes(c["code"]) or [""])[0]) not in GT_KNOWN_ERRORS:
-                totals[_fixed_slot(c)] = totals.get(_fixed_slot(c), 0) + cred(c)
+            if _fixed_slot(c) and gt_credit(prog, c) and (prog, (_codes(c["code"]) or [""])[0]) not in GT_KNOWN_ERRORS:
+                totals[_fixed_slot(c)] = totals.get(_fixed_slot(c), 0) + gt_credit(prog, c)
         # เฉลยบางภาคใส่วิชาทุกกลุ่มให้เลือก (เช่น IT 2565 ปี 2 ภาค 2 รวมได้ 30 แต่เล่มหน้า 34 เขียน "รวม 18"
         # เพราะเลือกเรียนกลุ่มเดียว) — ยอดรวมจากเฉลยของภาคเหล่านั้นใช้เป็นค่าเฉลยไม่ได้
         bad_years = {y for (y, s), v in totals.items() if v > 22}

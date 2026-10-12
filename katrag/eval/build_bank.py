@@ -27,6 +27,21 @@ GT_KNOWN_ERRORS = {
     ("AIT", "06016401"): "ไม่อยู่ในตารางแผนปี 1 ภาค 1 ของ AIT 2566 (หน้า 23)",
 }
 
+#: หน่วยกิตที่เฉลยอาจารย์เว้นว่างไว้ (หลักสูตร, รหัส): (หน่วยกิตตามเล่ม, ที่มา)
+GT_CREDIT_FIXES = {
+    ("BIT", "06036116"): (3, "เล่ม BIT 2565 หน้า 29: 06036116 การตลาดเชิงดิจิทัล 3(2-2-5) ภาคนี้รวม 12"),
+}
+
+
+def gt_credit(prog: str, c: dict) -> int:
+    """หน่วยกิตของแถวในเฉลย (0 = ไม่มี) — เติมค่าที่เฉลยเว้นว่างจาก GT_CREDIT_FIXES."""
+    m = re.match(r"\s*(\d+)", str(c.get("credits") or ""))
+    if m:
+        return int(m.group(1))
+    codes = _codes(c.get("code"))
+    return GT_CREDIT_FIXES.get((prog, codes[0]), (0, ""))[0] if codes else 0
+
+
 PLANS = [
     ("AIT", "AIT/AIT_academic_plan.json"),
     ("BIT", "BIT/BIT_academic_plan_no_coop.json"),

@@ -85,6 +85,9 @@ TOPICS: dict[str, Topic] = {
     )),
 }
 
+_SUMMER_WORDS = ("ภาคฤดูร้อน", "ซัมเมอร์", "summer", "ภาคการศึกษาพิเศษ", "ภาคพิเศษ", "ภาคเรียนพิเศษ", "เทอมพิเศษ",
+                 "ภาคเรียนฤดูร้อน", "เทอมฤดูร้อน")
+
 # คำบ่งชี้ต่อหัวข้อ — เรียงจากเฉพาะไปกว้าง หัวข้อแรกที่ตรงชนะ
 _RULES: list[tuple[str, tuple[str, ...], tuple[str, ...]]] = [
     # (หัวข้อ, ต้องมีคำใดคำหนึ่งในกลุ่มนี้, และ/หรือคำใดคำหนึ่งในกลุ่มนี้ (ว่าง = ไม่ต้อง))
@@ -93,7 +96,7 @@ _RULES: list[tuple[str, tuple[str, ...], tuple[str, ...]]] = [
     ("dismissal", ("พ้นสภาพ", "รีไทร์", "retire", "ถูกไล่ออก", "หมดสภาพ"), ()),
     ("cheating", ("ทุจริต", "โกงสอบ", "ลอกข้อสอบ"), ()),
     ("registration", ("ลงทะเบียน", "ลงเรียน"), ("หน่วยกิต", "กี่ตัว", "กี่วิชา")),
-    ("registration", ("ภาคฤดูร้อน", "ซัมเมอร์", "summer", "ภาคการศึกษาพิเศษ", "ภาคพิเศษ"), ("หน่วยกิต",)),
+    ("registration", _SUMMER_WORDS, ("หน่วยกิต",)),
     ("registration", ("ภาคปกติ", "ภาคเรียนปกติ", "ภาคการศึกษาปกติ", "เทอมปกติ"), ("หน่วยกิต",)),
     ("grading", ("ระบบเกรด", "ค่าระดับคะแนน", "เกรด a", "เกรด b", "เกรด c", "เกรด d", "เกรด f", "ได้กี่แต้ม", "กี่แต้ม", "เกรด i", "เกรด s", "เกรด u"), ()),
     ("graduation", ("เกรดเฉลี่ย", "gpa", "gpax", "เกรด"), ("จบ", "สำเร็จการศึกษา")),
@@ -105,13 +108,22 @@ _GRAD_LEVEL = ("ปริญญาโท", "ปริญญาเอก", "ป.�
 _GPA_NUM_RE = re.compile(r"(?:เกรด|gpa|gpax|ค่าระดับคะแนน)[^\d]{0,20}?([0-4]\.\d{1,2})", re.IGNORECASE)
 
 
+def _honors_gpa(text: str) -> float | None:
+    """เกรดเฉลี่ยในคำถามเกียรตินิยม — รับเลขทศนิยม 2 ตำแหน่งลอย ๆ ได้ ("จบด้วย 3.45")."""
+    g = stated_gpa(text)
+    if g is not None:
+        return g
+    m = re.search(r"(?<![\d.])([0-4]\.\d{2})(?![\d])", text)
+    return float(m.group(1)) if m else None
+
+
 def stated_gpa(text: str) -> float | None:
     """เกรดเฉลี่ยที่ผู้ถามบอกมา เช่น "ได้เกรดเฉลี่ย 1.80" (None = ไม่ได้ระบุตัวเลข)."""
     m = _GPA_NUM_RE.search(text)
     return float(m.group(1)) if m else None
 
 
-_FINAL_YEAR_RE = re.compile(r"ปีสุดท้าย|เทอมสุดท้าย|ภาคสุดท้าย|ใกล้จบ")
+_FINAL_YEAR_RE = re.compile(r"ปีสุดท้าย|เทอมสุดท้าย|ภาคสุดท้าย|ใกล้จบ|จะจบแล้ว|ก่อนจบ")
 
 
 def _final_year_load(text: str) -> int | None:
@@ -141,6 +153,9 @@ def detect_regulation_topic(question: str) -> str | None:
     g = stated_gpa(raw)
     if g is not None and g < 2.0 and asks_effect:
         return "low_gpa"
+    # "จบด้วย 3.45 ได้อันดับ 1 หรืออันดับ 2" — ถามอันดับเกียรตินิยมโดยไม่พูดคำว่าเกียรตินิยม
+    if re.search(r"อันดับ\s*(?:1|2|หนึ่ง|สอง)", raw) and (_honors_gpa(raw) is not None or gpa):
+        return "honors"  # "อันดับสองต้องได้ GPA เท่าไหร่"
     # "ปีสุดท้ายเหลือ 25 หน่วยกิต ลงเทอมเดียวได้ไหม" — ข้อยกเว้นเพดาน 22 ของชั้นปีสุดท้าย
     if _final_year_load(raw) is not None:
         return "registration"
@@ -177,6 +192,31 @@ def try_regulation(conn: sqlite3.Connection, question: str):
                             "ลงได้ไม่เกิน 27 หน่วยกิต (ข้อยกเว้นในข้อบังคับ)")
         else:
             lines.insert(0, f"คำตอบ: ไม่ได้ — {n} หน่วยกิตเกิน 27 หน่วยกิต ซึ่งเป็นเพดานสูงสุดแม้เป็นชั้นปีสุดท้าย")
+    if key == "registration" and n is None:
+        m = re.search(r"(\d{1,2})\s*หน่วยกิต", question)
+        if m:
+            k = int(m.group(1))
+            if any(w in question.lower() for w in _SUMMER_WORDS):
+                lines.insert(0, f"คำตอบ: {'ได้' if k <= 9 else 'ไม่ได้'} — ภาคฤดูร้อนลงทะเบียนได้ไม่เกิน 9 หน่วยกิต"
+                                + (f" ({k} หน่วยกิตเกินเพดาน)" if k > 9 else ""))
+            elif k < 9 or k > 22:
+                lines.insert(0, f"คำตอบ: ไม่ได้ — ภาคปกติต้องลงไม่น้อยกว่า 9 และไม่เกิน 22 หน่วยกิต ({k} หน่วยกิต"
+                                + (" ต่ำกว่าขั้นต่ำ)" if k < 9 else " เกินเพดาน)")
+                                + " ยกเว้นกรณีชั้นปีสุดท้ายตามข้อยกเว้นด้านล่าง")
+            else:
+                lines.insert(0, f"คำตอบ: ได้ — {k} หน่วยกิตอยู่ในช่วง 9–22 หน่วยกิตของภาคปกติ")
+    hg = _honors_gpa(question) if key == "honors" else None
+    if hg is not None:
+        if hg >= 3.75:
+            lines.insert(0, f"คำตอบ: เกรดเฉลี่ยสะสม {hg:.2f} ถึงเกณฑ์อันดับ 1 (3.50) และถึงเกณฑ์เกรดของเหรียญทอง (3.75) "
+                            "แต่เหรียญทองต้องเป็นเกรดสูงสุดของรุ่นในหลักสูตรด้วย")
+        elif hg >= 3.5:
+            lines.insert(0, f"คำตอบ: เกรดเฉลี่ยสะสม {hg:.2f} ได้เกียรตินิยมอันดับ 1 (ไม่ต่ำกว่า 3.50) แต่ยังไม่ถึงเกณฑ์เหรียญทอง 3.75")
+        elif hg >= 3.25:
+            lines.insert(0, f"คำตอบ: เกรดเฉลี่ยสะสม {hg:.2f} ได้เกียรตินิยมอันดับ 2 (ไม่ต่ำกว่า 3.25) ยังไม่ถึงอันดับ 1 ซึ่งต้อง 3.50")
+        else:
+            lines.insert(0, f"คำตอบ: เกรดเฉลี่ยสะสม {hg:.2f} ไม่ได้เกียรตินิยม (อันดับ 2 ต้องไม่ต่ำกว่า 3.25)")
+        lines[0] += " — และต้องผ่านเงื่อนไขทั่วไปข้อ 36.1 ด้านล่าง"
     g = stated_gpa(question)
     if key == "low_gpa" and g is not None and g < 2.0:
         if g < 1.0:

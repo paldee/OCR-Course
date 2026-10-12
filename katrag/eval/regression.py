@@ -27,6 +27,7 @@ from __future__ import annotations
 import argparse
 import ast
 import json
+import re
 import statistics
 import time
 from pathlib import Path
@@ -84,12 +85,22 @@ def _bank_items() -> list[dict]:
     return out
 
 
+def holdout_files() -> list[tuple[Path, str]]:
+    """docs/eval_holdout.json, eval_holdout2.json, ... เรียงตามเลขรอบ → (ไฟล์, ชื่อชุด holdout/holdoutN)."""
+    import re as _re
+
+    found = []
+    for p in (ROOT / "docs").glob("eval_holdout*.json"):
+        m = _re.fullmatch(r"eval_holdout(\d*)\.json", p.name)
+        if m:
+            found.append((int(m.group(1) or 1), p, "holdout" + m.group(1)))
+    return [(p, name) for _, p, name in sorted(found)]
+
+
 def _holdout_items() -> list[dict]:
     out = []
-    for name, set_name in (("eval_holdout.json", "holdout"), ("eval_holdout2.json", "holdout2"), ("eval_holdout3.json", "holdout3"), ("eval_holdout4.json", "holdout4"), ("eval_holdout5.json", "holdout5"), ("eval_holdout6.json", "holdout6"), ("eval_holdout7.json", "holdout7"), ("eval_holdout8.json", "holdout8"), ("eval_holdout9.json", "holdout9")):
-        path = ROOT / "docs" / name
-        if path.exists():
-            out += _holdout_file(path, set_name)
+    for path, set_name in holdout_files():
+        out += _holdout_file(path, set_name)
     return out
 
 
@@ -154,13 +165,20 @@ def _loose(s: str | None) -> str:
     return "".join((s or "").split()).lower().replace("ฎ", "ฏ")
 
 
+def _has(alt: str, answer: str, loose: str) -> bool:
+    """ตัวเลขล้วนต้องตรงทั้งตัว — "9" ไม่นับ "(หน้า 29)" หรือ "9.5"."""
+    if re.fullmatch(r"\d+(?:\.\d+)?", alt.strip()):
+        return re.search(rf"(?<![\d.]){re.escape(alt.strip())}(?!\.?\d)", answer or "") is not None
+    return _loose(alt) in loose
+
+
 def check(item: dict, answer: str) -> tuple[str, list[str]]:
     """คืน (สถานะ, เหตุผล) ตามกติกาในหัวไฟล์."""
     problems = []
     a = _loose(answer)
     for m in item.get("must", []):
         alts = m if isinstance(m, list) else [m]
-        if not any(_loose(x) in a for x in alts):
+        if not any(_has(x, answer, a) for x in alts):
             problems.append(f"ขาด: {' | '.join(alts)}")
     for m in item.get("must_not", []):
         if _loose(m) in a:

@@ -1,0 +1,575 @@
+{
+ "_meta": "ชุดที่ไม่เคยเห็น รอบ 12 (ยาก/ท้าทาย) สร้างด้วย build_rounds.py",
+ "items": [
+  {
+   "id": "N12H1",
+   "level": "ยาก",
+   "program": "AIT",
+   "question": "เทอม 2 ของปี 2 หน่วยกิตรวมเท่าไร",
+   "must": [
+    [
+     "19"
+    ]
+   ],
+   "expected": "19 หน่วยกิต",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12H2",
+   "level": "ยาก",
+   "program": "AIT",
+   "question": "พื้นฐานการเรียนรู้เชิงลึก ลงตอนปี 1 ได้ไหม",
+   "must": [
+    [
+     "ไม่ได้"
+    ],
+    [
+     "06046402"
+    ]
+   ],
+   "expected": "ไม่ได้ ต้องผ่าน 06046402 ก่อน",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12H3",
+   "level": "ยาก",
+   "program": "AIT",
+   "question": "ความน่าจะเป็นและสถิติ กับ การเรียนรู้ของเครื่องเชิงความน่าจะเป็น ลงพร้อมกันได้มั้ย",
+   "must": [
+    [
+     "ไม่ได้"
+    ],
+    [
+     "06066001"
+    ]
+   ],
+   "expected": "ไม่ได้ ต้องผ่าน 06066001 ก่อน",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12H4",
+   "level": "ยาก",
+   "program": "AIT",
+   "question": "ติด F วิชา พีชคณิตเชิงเส้น กระทบวิชาอะไร",
+   "must": [
+    [
+     "06046406"
+    ]
+   ],
+   "expected": "06046406",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12H5",
+   "level": "ยาก",
+   "program": "AIT",
+   "question": "สหกิจศึกษาทางเทคโนโลยีปัญญาประดิษฐ์ สหกิจศึกษาต่างประเทศทางเทคโนโลยีปัญญาประดิษฐ์ บวก แคลคูลัส 2 กี่หน่วยกิต",
+   "must": [
+    [
+     "9"
+    ]
+   ],
+   "expected": "6 + 3",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12H6",
+   "level": "ยาก",
+   "program": "AIT",
+   "question": "วิชา พื้นฐานวิทยาการข้อมูล กับวิชา ทักษะการสื่อสารภาษาอังกฤษระหว่างวัฒนธรรม 1 อยู่ปีเดียวกันหรือเปล่า",
+   "must": [
+    [
+     "ปีที่ 2",
+     "ปี 2"
+    ],
+    [
+     "ปีที่ 2",
+     "ปี 2"
+    ]
+   ],
+   "expected": "06046407 ปี 2 ภาค 2, 90641009 ปี 2 ภาค 1",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12H7",
+   "level": "ยาก",
+   "program": "BIT",
+   "question": "ปีที่ 3 ต้องเรียนรวมทั้งปีกี่หน่วยกิต",
+   "must": [
+    [
+     "30"
+    ]
+   ],
+   "expected": "18 + 12",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12H8",
+   "level": "ยาก",
+   "program": "BIT",
+   "question": "วิชา พื้นฐานทางด้านเทคโนโลยีสารสนเทศ กับวิชา การจัดการข้อมูลธุรกิจและเทคโนโลยีเกิดใหม่ อยู่ปีเดียวกันหรือเปล่า",
+   "must": [
+    [
+     "ปีที่ 1",
+     "ปี 1"
+    ],
+    [
+     "ปีที่ 3",
+     "ปี 3"
+    ]
+   ],
+   "expected": "06036100 ปี 1 ภาค 1, 06036106 ปี 3 ภาค 2",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12H9",
+   "level": "ยาก",
+   "program": "BIT",
+   "question": "ก่อนลง โครงงานทางด้านเทคโนโลยีสารสนเทศเชิงธุรกิจ 2 ต้องผ่านวิชาอะไร วิชานั้นเปิดปีไหนเทอมไหน",
+   "must": [
+    [
+     "06036145"
+    ],
+    [
+     "ปีที่ 3",
+     "ปี 3"
+    ]
+   ],
+   "expected": "06036145 ปี 3 ภาค 2",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12H10",
+   "level": "ยาก",
+   "program": "BIT",
+   "question": "ถ้าลง การพัฒนาเว็บแอปพลิเคชันโดยใช้เฟรมเวิร์ก ช้ากว่าแผนเป็นปี 4 ได้มั้ย",
+   "must": [
+    [
+     "06036119"
+    ],
+    [
+     "ปีที่ 3",
+     "ปี 3"
+    ]
+   ],
+   "expected": "ได้ แผนกำหนดปี 3 ต้องผ่าน 06036119",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12H11",
+   "level": "ยาก",
+   "program": "BIT",
+   "question": "พื้นฐานการเขียนโปรแกรม กับ การพัฒนาเว็บแอปพลิเคชันโดยใช้เฟรมเวิร์ก ลงพร้อมกันได้มั้ย",
+   "must": [
+    [
+     "ไม่ได้"
+    ],
+    [
+     "06036119"
+    ]
+   ],
+   "expected": "ไม่ได้ ต้องผ่าน 06036119 ก่อน",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12H12",
+   "level": "ยาก",
+   "program": "BIT",
+   "question": "ติด F วิชา โครงงานทางด้านเทคโนโลยีสารสนเทศเชิงธุรกิจ 1 กระทบวิชาอะไร",
+   "must": [
+    [
+     "06036146"
+    ]
+   ],
+   "expected": "06036146",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12H13",
+   "level": "ยาก",
+   "program": "DSBA",
+   "question": "พื้นฐานทางธุรกิจสำหรับเทคโนโลยีสารสนเทศ กับ ระบบสารสนเทศเพื่อการจัดการ ลงพร้อมกันได้มั้ย",
+   "must": [
+    [
+     "ไม่ได้"
+    ],
+    [
+     "06066101"
+    ]
+   ],
+   "expected": "ไม่ได้ ต้องผ่าน 06066101 ก่อน",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12H14",
+   "level": "ยาก",
+   "program": "DSBA",
+   "question": "ติด F วิชา แคลคูลัส 1 กระทบวิชาอะไร",
+   "must": [
+    [
+     "06026201"
+    ]
+   ],
+   "expected": "06026201",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12H15",
+   "level": "ยาก",
+   "program": "DSBA",
+   "question": "โครงงานวิทยาการข้อมูลและการวิเคราะห์เชิงธุรกิจ 2 ลงตอนปี 3 ได้ไหม",
+   "must": [
+    [
+     "ไม่ได้"
+    ],
+    [
+     "06026214"
+    ]
+   ],
+   "expected": "ไม่ได้ ต้องผ่าน 06026214 ก่อน",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12H16",
+   "level": "ยาก",
+   "program": "DSBA",
+   "question": "ถ้าลง การสร้างคลังข้อมูล ช้ากว่าแผนเป็นปี 4 ได้มั้ย",
+   "must": [
+    [
+     "06066300"
+    ],
+    [
+     "ปีที่ 3",
+     "ปี 3"
+    ]
+   ],
+   "expected": "ได้ แผนกำหนดปี 3 ต้องผ่าน 06066300",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12H17",
+   "level": "ยาก",
+   "program": "DSBA",
+   "question": "ก่อนลง แคลคูลัส 2 ต้องผ่านวิชาอะไร วิชานั้นเปิดปีไหนเทอมไหน",
+   "must": [
+    [
+     "06026200"
+    ],
+    [
+     "ปีที่ 1",
+     "ปี 1"
+    ]
+   ],
+   "expected": "06026200 ปี 1 ภาค 1",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12H18",
+   "level": "ยาก",
+   "program": "DSBA",
+   "question": "วิชา พีชคณิตเชิงเส้น กับวิชา แคลคูลัส 1 อยู่ปีเดียวกันหรือเปล่า",
+   "must": [
+    [
+     "ปีที่ 1",
+     "ปี 1"
+    ],
+    [
+     "ปีที่ 1",
+     "ปี 1"
+    ]
+   ],
+   "expected": "06026202 ปี 1 ภาค 1, 06026200 ปี 1 ภาค 1",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12H19",
+   "level": "ยาก",
+   "program": "IT",
+   "question": "เทอม 2 ของปี 1 หน่วยกิตรวมเท่าไร",
+   "must": [
+    [
+     "18"
+    ]
+   ],
+   "expected": "18 หน่วยกิต",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12H20",
+   "level": "ยาก",
+   "program": "IT",
+   "question": "ปีที่ 4 ต้องเรียนรวมทั้งปีกี่หน่วยกิต",
+   "must": [
+    [
+     "24"
+    ]
+   ],
+   "expected": "15 + 9",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12H21",
+   "level": "ยาก",
+   "program": "IT",
+   "question": "ก่อนลง ระบบโครงสร้างพื้นฐานและการบริการ ต้องผ่านวิชาอะไร วิชานั้นเปิดปีไหนเทอมไหน",
+   "must": [
+    [
+     "06016413"
+    ],
+    [
+     "ปีที่ 2",
+     "ปี 2"
+    ]
+   ],
+   "expected": "06016413 ปี 2 ภาค 1",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12H22",
+   "level": "ยาก",
+   "program": "IT",
+   "question": "โรงเรียนสร้างเสน่ห์ บวก พื้นฐานทางด้านเทคโนโลยีสารสนเทศ กี่หน่วยกิต",
+   "must": [
+    [
+     "5"
+    ]
+   ],
+   "expected": "2 + 3",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12H23",
+   "level": "ยาก",
+   "program": "IT",
+   "question": "ถ้าลง โครงสร้างพื้นฐานเครือข่ายการสื่อสาร ช้ากว่าแผนเป็นปี 3 ได้มั้ย",
+   "must": [
+    [
+     "06016413"
+    ],
+    [
+     "ปีที่ 2",
+     "ปี 2"
+    ]
+   ],
+   "expected": "ได้ แผนกำหนดปี 2 ต้องผ่าน 06016413",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12C1",
+   "level": "ท้าทาย",
+   "program": "AIT",
+   "question": "เรียนครบถึงปี 3 ได้กี่หน่วยกิตแล้ว ขาดอีกเท่าไร",
+   "must": [
+    [
+     "102"
+    ],
+    [
+     "18"
+    ]
+   ],
+   "expected": "สะสม 102 เหลือ 18",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12C2",
+   "level": "ท้าทาย",
+   "program": "AIT",
+   "question": "วิชา การแก้ปัญหาและการโปรแกรมคอมพิวเตอร์ ถ้าอยู่ AIT กับอยู่ DSBA เรียนตอนไหนต่างกันไหม",
+   "must": [
+    [
+     "AIT"
+    ],
+    [
+     "DSBA"
+    ],
+    [
+     "ปีที่ 1",
+     "ปี 1"
+    ],
+    [
+     "ปีที่ 1",
+     "ปี 1"
+    ]
+   ],
+   "expected": "AIT ปี 1 ภาค 1, DSBA ปี 1 ภาค 1",
+   "source": "teacher_gt (แผนของทั้งสองหลักสูตร)",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12C3",
+   "level": "ท้าทาย",
+   "program": "DSBA",
+   "question": "วิชา กีฬาและนันทนาการ ถ้าอยู่ DSBA กับอยู่ IT เรียนตอนไหนต่างกันไหม",
+   "must": [
+    [
+     "DSBA"
+    ],
+    [
+     "IT"
+    ],
+    [
+     "ปีที่ 1",
+     "ปี 1"
+    ],
+    [
+     "ปีที่ 1",
+     "ปี 1"
+    ]
+   ],
+   "expected": "DSBA ปี 1 ภาค 1, IT ปี 1 ภาค 1",
+   "source": "teacher_gt (แผนของทั้งสองหลักสูตร)",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12C4",
+   "level": "ท้าทาย",
+   "program": "BIT",
+   "question": "ได้ 117 หน่วยกิตแล้ว เกรดเฉลี่ย 3.05 จะสำเร็จการศึกษาได้หรือไม่",
+   "must": [
+    [
+     "126"
+    ],
+    [
+     "9"
+    ]
+   ],
+   "expected": "ต้องครบ 126 และ GPA >= 2.00",
+   "source": "teacher_gt/rules_ground_truth.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12C5",
+   "level": "ท้าทาย",
+   "program": "DSBA",
+   "question": "ได้ 127 หน่วยกิตแล้ว เกรดเฉลี่ย 1.85 จะสำเร็จการศึกษาได้หรือไม่",
+   "must": [
+    [
+     "132"
+    ],
+    [
+     "5"
+    ],
+    [
+     "2.00"
+    ]
+   ],
+   "expected": "ต้องครบ 132 และ GPA >= 2.00",
+   "source": "teacher_gt/rules_ground_truth.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12C6",
+   "level": "ท้าทาย",
+   "program": "IT",
+   "question": "GPA 3.80 ตอนจบ จะได้เกียรตินิยมหรือเปล่า",
+   "must": [
+    [
+     "3.75"
+    ]
+   ],
+   "expected": "เกณฑ์ 3.75",
+   "source": "teacher_gt/rules_ground_truth.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12C7",
+   "level": "ท้าทาย",
+   "program": "AIT",
+   "question": "เทอมนี้ได้เกรดเฉลี่ย 1.40 ต้องกังวลอะไรไหม",
+   "must": [
+    [
+     "ภาคทัณฑ์"
+    ],
+    [
+     "2.00"
+    ]
+   ],
+   "expected": "ภาคทัณฑ์ (< 2.00)",
+   "source": "ข้อบังคับ ป.ตรี (AIT 2566 ภาคผนวก หน้า 82-95)",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12C8",
+   "level": "ท้าทาย",
+   "program": "DSBA",
+   "question": "ลงทะเบียน 8 หน่วยกิตในเทอมปกติได้หรือเปล่า",
+   "must": [
+    [
+     "9"
+    ]
+   ],
+   "expected": "ภาคปกติ 9-22",
+   "source": "ข้อบังคับ ป.ตรี (AIT 2566 ภาคผนวก หน้า 82-95)",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12C9",
+   "level": "ท้าทาย",
+   "program": "IT",
+   "question": "summer นี้อยากลง 12 หน่วยกิต ทำได้หรือเปล่า",
+   "must": [
+    [
+     "9"
+    ]
+   ],
+   "expected": "ภาคฤดูร้อนไม่เกิน 9",
+   "source": "ข้อบังคับ ป.ตรี (AIT 2566 ภาคผนวก หน้า 82-95)",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12C10",
+   "level": "ท้าทาย",
+   "program": "BIT",
+   "question": "ใกล้จบแล้วเหลือ 25 หน่วยกิต ขอลงทีเดียวได้ไหม",
+   "must": [
+    [
+     "27"
+    ]
+   ],
+   "expected": "ได้ ไม่เกิน 27 (ข้อยกเว้นปีสุดท้าย)",
+   "source": "ข้อบังคับ ป.ตรี (AIT 2566 ภาคผนวก หน้า 82-95)",
+   "_round_kind": "ยาก/ท้าทาย"
+  },
+  {
+   "id": "N12C11",
+   "level": "ท้าทาย",
+   "program": "BIT",
+   "question": "BIT เรียนมากกว่าหรือน้อยกว่า IT กี่หน่วยกิต",
+   "must": [
+    [
+     "126"
+    ],
+    [
+     "129"
+    ]
+   ],
+   "expected": "BIT 126, IT 129",
+   "source": "teacher_gt/rules_ground_truth.json",
+   "_round_kind": "ยาก/ท้าทาย"
+  }
+ ]
+}
