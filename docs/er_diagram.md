@@ -126,4 +126,4 @@ erDiagram
 
 `chunk_fts` เป็น FTS5 virtual table (ดัชนีค้นด้วยคำของ `chunk.text` และ `chunk.heading`) ไม่ได้วาดในภาพ
 
-จำนวนแถวจริง: curriculum_version 13, document 14, page 3,689, provenance 38,721, course 1,419, plan_slot 329, chunk 11,587, chunk_embedding 11,587, course_embedding 1,419, rule 2, person 126, document_relation 2
+จำนวนแถวจริง: curriculum_version 13, document 14, page 3,689, provenance 41,651, course 1,444, plan_slot 347, chunk 11,587, chunk_embedding 11,587, course_embedding 1,444, rule 96, person 126, document_relation 2

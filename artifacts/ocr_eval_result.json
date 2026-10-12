@@ -146,88 +146,86 @@
       "program": "AIT",
       "version": "AIT 2566 (current)",
       "gt_total": 50,
-      "extracted_total": 366,
-      "matched_codes": 46,
-      "code_recall": 0.92,
-      "code_precision": 0.1257,
-      "code_f1": 0.2212,
-      "field_macro_accuracy": 0.9627,
+      "extracted_total": 370,
+      "matched_codes": 48,
+      "code_recall": 0.96,
+      "code_precision": 0.1297,
+      "code_f1": 0.2286,
+      "field_macro_accuracy": 0.9554,
       "fields": {
         "name_th": {
-          "matched": 45,
-          "compared": 46,
-          "accuracy": 0.9783
+          "matched": 47,
+          "compared": 48,
+          "accuracy": 0.9792
         },
         "name_en": {
-          "matched": 45,
-          "compared": 46,
-          "accuracy": 0.9783
+          "matched": 47,
+          "compared": 48,
+          "accuracy": 0.9792
         },
         "credits": {
-          "matched": 46,
-          "compared": 46,
+          "matched": 48,
+          "compared": 48,
           "accuracy": 1.0
         },
         "year": {
-          "matched": 31,
-          "compared": 31,
+          "matched": 32,
+          "compared": 32,
           "accuracy": 1.0
         },
         "semester": {
-          "matched": 31,
-          "compared": 31,
+          "matched": 32,
+          "compared": 32,
           "accuracy": 1.0
         },
         "category": {
           "matched": 39,
-          "compared": 46,
-          "accuracy": 0.8478
+          "compared": 48,
+          "accuracy": 0.8125
         },
         "type": {
-          "matched": 43,
-          "compared": 46,
-          "accuracy": 0.9348
+          "matched": 44,
+          "compared": 48,
+          "accuracy": 0.9167
         }
       },
       "category_recall": {
         "หมวดวิชาเฉพาะ": {
-          "found": 39,
+          "found": 40,
           "total": 42,
-          "recall": 0.9286
+          "recall": 0.9524
         },
         "หมวดวิชาศึกษาทั่วไป": {
-          "found": 7,
+          "found": 8,
           "total": 8,
-          "recall": 0.875
+          "recall": 1.0
         }
       },
       "missing_codes": [
         "06016401",
-        "06046420",
-        "06046443หรือ06046444",
-        "90641008"
+        "06046443หรือ06046444"
       ]
     },
     {
       "program": "BIT",
       "version": "BIT 2565 (current)",
       "gt_total": 56,
-      "extracted_total": 55,
+      "extracted_total": 57,
       "matched_codes": 55,
       "code_recall": 0.9821,
-      "code_precision": 1.0,
-      "code_f1": 0.991,
-      "field_macro_accuracy": 0.9351,
+      "code_precision": 0.9649,
+      "code_f1": 0.9735,
+      "field_macro_accuracy": 0.9429,
       "fields": {
         "name_th": {
-          "matched": 51,
+          "matched": 53,
           "compared": 55,
-          "accuracy": 0.9273
+          "accuracy": 0.9636
         },
         "name_en": {
-          "matched": 46,
+          "matched": 47,
           "compared": 55,
-          "accuracy": 0.8364
+          "accuracy": 0.8545
         },
         "credits": {
           "matched": 54,
@@ -275,26 +273,26 @@
       "program": "DSBA",
       "version": "DSBA 2565 (current)",
       "gt_total": 80,
-      "extracted_total": 75,
-      "matched_codes": 75,
-      "code_recall": 0.9375,
+      "extracted_total": 79,
+      "matched_codes": 79,
+      "code_recall": 0.9875,
       "code_precision": 1.0,
-      "code_f1": 0.9677,
-      "field_macro_accuracy": 0.9714,
+      "code_f1": 0.9937,
+      "field_macro_accuracy": 0.9584,
       "fields": {
         "name_th": {
-          "matched": 67,
-          "compared": 75,
-          "accuracy": 0.8933
+          "matched": 69,
+          "compared": 79,
+          "accuracy": 0.8734
         },
         "name_en": {
-          "matched": 75,
-          "compared": 75,
+          "matched": 79,
+          "compared": 79,
           "accuracy": 1.0
         },
         "credits": {
-          "matched": 75,
-          "compared": 75,
+          "matched": 79,
+          "compared": 79,
           "accuracy": 1.0
         },
         "year": {
@@ -309,20 +307,20 @@
         },
         "category": {
           "matched": 71,
-          "compared": 75,
-          "accuracy": 0.9467
+          "compared": 79,
+          "accuracy": 0.8987
         },
         "type": {
-          "matched": 72,
-          "compared": 75,
-          "accuracy": 0.96
+          "matched": 74,
+          "compared": 79,
+          "accuracy": 0.9367
         }
       },
       "category_recall": {
         "หมวดวิชาเฉพาะ": {
-          "found": 67,
+          "found": 71,
           "total": 72,
-          "recall": 0.9306
+          "recall": 0.9861
         },
         "หมวดวิชาศึกษาทั่วไป": {
           "found": 8,
@@ -331,65 +329,61 @@
         }
       },
       "missing_codes": [
-        "06016401",
-        "06026243",
-        "06026245",
-        "06026259",
-        "06026260"
+        "06016401"
       ]
     },
     {
       "program": "IT",
       "version": "IT 2565 (current)",
       "gt_total": 99,
-      "extracted_total": 315,
-      "matched_codes": 96,
-      "code_recall": 0.9697,
-      "code_precision": 0.3048,
-      "code_f1": 0.4638,
-      "field_macro_accuracy": 0.9412,
+      "extracted_total": 319,
+      "matched_codes": 98,
+      "code_recall": 0.9899,
+      "code_precision": 0.3072,
+      "code_f1": 0.4689,
+      "field_macro_accuracy": 0.9621,
       "fields": {
         "name_th": {
-          "matched": 87,
-          "compared": 96,
-          "accuracy": 0.9062
+          "matched": 89,
+          "compared": 98,
+          "accuracy": 0.9082
         },
         "name_en": {
-          "matched": 86,
-          "compared": 96,
-          "accuracy": 0.8958
+          "matched": 98,
+          "compared": 98,
+          "accuracy": 1.0
         },
         "credits": {
-          "matched": 95,
-          "compared": 96,
-          "accuracy": 0.9896
+          "matched": 97,
+          "compared": 98,
+          "accuracy": 0.9898
         },
         "year": {
-          "matched": 41,
-          "compared": 44,
-          "accuracy": 0.9318
+          "matched": 45,
+          "compared": 45,
+          "accuracy": 1.0
         },
         "semester": {
-          "matched": 44,
-          "compared": 44,
+          "matched": 45,
+          "compared": 45,
           "accuracy": 1.0
         },
         "category": {
           "matched": 96,
-          "compared": 96,
-          "accuracy": 1.0
+          "compared": 98,
+          "accuracy": 0.9796
         },
         "type": {
-          "matched": 83,
-          "compared": 96,
-          "accuracy": 0.8646
+          "matched": 84,
+          "compared": 98,
+          "accuracy": 0.8571
         }
       },
       "category_recall": {
         "หมวดวิชาเฉพาะ": {
-          "found": 88,
+          "found": 90,
           "total": 91,
-          "recall": 0.967
+          "recall": 0.989
         },
         "หมวดวิชาศึกษาทั่วไป": {
           "found": 8,
@@ -398,21 +392,19 @@
         }
       },
       "missing_codes": [
-        "06016454",
-        "06016481หรือ06016482",
-        "06066102"
+        "06016481หรือ06016482"
       ]
     },
     {
       "program": "วิชาศึกษาทั่วไป (gen-ed, ทุกหลักสูตรรวมกัน)",
       "version": "ทุก curriculum_version ที่ current",
       "gt_total": 266,
-      "extracted_total": 406,
+      "extracted_total": 407,
       "matched_codes": 220,
       "code_recall": 0.8271,
-      "code_precision": 0.5419,
-      "code_f1": 0.6548,
-      "field_macro_accuracy": 0.6642,
+      "code_precision": 0.5405,
+      "code_f1": 0.6538,
+      "field_macro_accuracy": 0.6788,
       "fields": {
         "name_th": {
           "matched": 158,
@@ -420,9 +412,9 @@
           "accuracy": 0.4788
         },
         "name_en": {
-          "matched": 15,
+          "matched": 39,
           "compared": 330,
-          "accuracy": 0.0455
+          "accuracy": 0.1182
         },
         "credits": {
           "matched": 330,

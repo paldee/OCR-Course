@@ -220,7 +220,7 @@
       "edition": "current",
       "chunk_text_layer": 466,
       "chunk_ocr": 806,
-      "course_text_layer": 46,
+      "course_text_layer": 50,
       "course_ocr": 320,
       "has_ground_truth": true
     },
@@ -250,7 +250,7 @@
       "edition": "old",
       "chunk_text_layer": 582,
       "chunk_ocr": 0,
-      "course_text_layer": 55,
+      "course_text_layer": 57,
       "course_ocr": 0,
       "has_ground_truth": false
     },
@@ -260,7 +260,7 @@
       "edition": "current",
       "chunk_text_layer": 770,
       "chunk_ocr": 0,
-      "course_text_layer": 55,
+      "course_text_layer": 57,
       "course_ocr": 0,
       "has_ground_truth": true
     },
@@ -270,7 +270,7 @@
       "edition": "old",
       "chunk_text_layer": 677,
       "chunk_ocr": 0,
-      "course_text_layer": 71,
+      "course_text_layer": 74,
       "course_ocr": 0,
       "has_ground_truth": false
     },
@@ -280,7 +280,7 @@
       "edition": "current",
       "chunk_text_layer": 788,
       "chunk_ocr": 0,
-      "course_text_layer": 75,
+      "course_text_layer": 79,
       "course_ocr": 0,
       "has_ground_truth": true
     },
@@ -290,7 +290,7 @@
       "edition": "old",
       "chunk_text_layer": 648,
       "chunk_ocr": 260,
-      "course_text_layer": 100,
+      "course_text_layer": 106,
       "course_ocr": 61,
       "has_ground_truth": false
     },
@@ -320,7 +320,7 @@
       "edition": "current",
       "chunk_text_layer": 676,
       "chunk_ocr": 526,
-      "course_text_layer": 96,
+      "course_text_layer": 100,
       "course_ocr": 219,
       "has_ground_truth": true
     },

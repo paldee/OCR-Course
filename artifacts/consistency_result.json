@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "course_total": 1419,
+  "course_total": 1444,
   "version_total": 13,
   "error_count": 0,
   "warning_count": 12,
@@ -31,11 +31,11 @@
       "title": "ทุกรหัสในแผน มีคำอธิบายรายวิชา",
       "catches": "รหัสผิดหลัก หรือหมวดคำอธิบายไม่ครบ",
       "severity": "warning",
-      "checked": 322,
+      "checked": 328,
       "finding_count": 3,
       "error_count": 0,
       "warning_count": 3,
-      "pass_rate": 0.9907,
+      "pass_rate": 0.9909,
       "passed": false,
       "findings": [
         {
@@ -66,7 +66,7 @@
       "title": "รหัสวิชาเป็นตัวเลข 8 หลัก",
       "catches": "OCR อ่านตัวอักษรปนเข้ามาในรหัส",
       "severity": "error",
-      "checked": 1419,
+      "checked": 1444,
       "finding_count": 0,
       "error_count": 0,
       "warning_count": 0,
@@ -79,7 +79,7 @@
       "title": "หน่วยกิตในแผน = หน่วยกิตในคำอธิบาย",
       "catches": "ตัวเลขหน่วยกิตผิดในแหล่งใดแหล่งหนึ่ง",
       "severity": "error",
-      "checked": 670,
+      "checked": 671,
       "finding_count": 0,
       "error_count": 0,
       "warning_count": 0,
@@ -92,11 +92,11 @@
       "title": "วิชาบังคับก่อน อยู่ภาคที่มาก่อนจริง",
       "catches": "prerequisite ผิดตัว, ชั้นปี/ภาคผิด, หรือเล่มเขียนผิด",
       "severity": "error",
-      "checked": 51,
+      "checked": 63,
       "finding_count": 2,
       "error_count": 0,
       "warning_count": 2,
-      "pass_rate": 0.9608,
+      "pass_rate": 0.9683,
       "passed": false,
       "findings": [
         {
@@ -120,7 +120,7 @@
       "title": "ไม่มีวิชาซ้ำในภาคเรียนเดียวกัน",
       "catches": "ตารางแผนถูกอ่านซ้ำสองรอบ",
       "severity": "error",
-      "checked": 322,
+      "checked": 328,
       "finding_count": 0,
       "error_count": 0,
       "warning_count": 0,
@@ -180,7 +180,7 @@
           "version": "IT/2565(current)",
           "code": "",
           "severity": "warning",
-          "detail": "ปี 3 ภาค 1 รวม 27 หน่วยกิต (9 วิชา) — เกินเกณฑ์"
+          "detail": "ปี 3 ภาค 1 รวม 30 หน่วยกิต (10 วิชา) — เกินเกณฑ์"
         }
       ]
     }
