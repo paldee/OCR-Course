@@ -95,6 +95,13 @@ def all_items() -> list[dict]:
         + _json_items(ROOT / "docs" / "challenge_extended.json", "xyz")
         + _bank_items()
     )
+    # คำตอบที่ตรวจแล้วว่าถูก/ดีขึ้นหลังแก้ระบบ (docs/eval_accepted.json) ใช้แทนคำตอบอ้างอิงเดิม
+    accepted_path = ROOT / "docs" / "eval_accepted.json"
+    if accepted_path.exists():
+        accepted = _load(accepted_path)["answers"]
+        for it in items:
+            if it["id"] in accepted:
+                it["ref_answer"] = accepted[it["id"]]["answer"]
     # เงื่อนไขอัตโนมัติของข้อเดิมที่ผ่าน LLM (docs/eval_rules.json)
     rules_path = ROOT / "docs" / "eval_rules.json"
     if rules_path.exists():
@@ -153,6 +160,8 @@ def main() -> None:
     ap.add_argument("--sets", help="เลือกชุด เช่น core,level,heldout,tester,xyz,bank")
     ap.add_argument("--no-llm", action="store_true", help="ไม่เรียก LLM (ข้อที่ต้องใช้ LLM จะได้หลักฐานดิบ)")
     ap.add_argument("--out", default=str(ROOT / "artifacts" / "regression_last.json"))
+    ap.add_argument("--accept", help="รหัสข้อ (คั่นด้วย comma) ที่ตรวจแล้ว ให้ใช้คำตอบรอบนี้เป็นคำตอบอ้างอิงใหม่")
+    ap.add_argument("--note", default="", help="เหตุผลที่ยอมรับ (บันทึกลง docs/eval_accepted.json)")
     args = ap.parse_args()
 
     items = all_items()
@@ -222,6 +231,8 @@ def main() -> None:
         print(f"{mark} {it['id']:<5} {dt:5.2f}s {seen.get('intent', '') or ('llm' if llm_calls else '-'):<16} {it['question'][:50]}")
 
     Path(args.out).write_text(json.dumps(results, ensure_ascii=False, indent=1), encoding="utf-8")
+    if args.accept:
+        _accept(results, {x.strip() for x in args.accept.split(",")}, args.note)
     by = {}
     for r in results:
         by[r["status"]] = by.get(r["status"], 0) + 1
@@ -236,6 +247,19 @@ def main() -> None:
             for p in r["problems"]:
                 print("   ", p)
     print(f"\nผลเต็ม -> {args.out}")
+
+
+def _accept(results: list[dict], ids: set[str], note: str) -> None:
+    path = ROOT / "docs" / "eval_accepted.json"
+    data = _load(path) if path.exists() else {
+        "_meta": "คำตอบที่ตรวจแล้วหลังแก้ระบบ — ใช้เป็นคำตอบอ้างอิงของชุดกันถอยหลัง (ไม่แก้ผลที่บันทึกไว้ใน docs เดิม)",
+        "answers": {},
+    }
+    for r in results:
+        if r["id"] in ids and r["status"] != "ERROR":
+            data["answers"][r["id"]] = {"answer": r["answer"], "note": note}
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"ยอมรับคำตอบ {len(ids)} ข้อ -> {path}")
 
 
 if __name__ == "__main__":

@@ -76,6 +76,7 @@ from katrag.query.course_groups import (
     try_track,
 )
 from katrag.query.plan_variants import detect_plan_variant_intent, try_plan_variants
+from katrag.query.regulations import try_regulation
 from katrag.query.topic_semantic import (
     answer_topic,
     detect_program_code,
@@ -102,7 +103,7 @@ DIRECT_INTENTS = frozenset({
     "topic_courses", "topic_semantic", "prerequisite", "rule", "person",
     "course_code", "doc_relation", "grad_audit", "credit_compare",
     "dependents", "semester_load", "category_credits", "plan_variant",
-    "course_lookup", "track",
+    "course_lookup", "track", "regulation",
 })
 
 ALWAYS_DIRECT_INTENTS = frozenset({
@@ -363,6 +364,12 @@ def _dispatch_intent(conn: sqlite3.Connection, question: str):
         sr = try_structure_answer(conn, question)
         if sr.matched:
             return sr
+
+    # 2.4 ข้อบังคับการศึกษาระดับปริญญาตรี (ลงทะเบียน เกรด ภาคทัณฑ์ พ้นสภาพ เกรดขั้นต่ำเพื่อจบ เกียรตินิยม)
+    # มาก่อนเกณฑ์จบ (ซึ่งตอบแต่หน่วยกิต) และก่อนหน่วยกิตต่อภาค (ซึ่งตอบจากแผน ไม่ใช่เพดานการลงทะเบียน)
+    sr = try_regulation(conn, question)
+    if sr.matched:
+        return sr
 
     # 3. เกณฑ์สำเร็จการศึกษา/เกียรตินิยม — คำเฉพาะเจาะจง เช็กก่อน intent อื่นได้
     if detect_rule_intent(question) is not None:
