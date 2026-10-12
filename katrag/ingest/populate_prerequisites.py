@@ -176,8 +176,88 @@ def populate(db_path: Path | str) -> dict[str, int]:
                     with_prereq += 1
 
     conn.commit()
+    fixed = reconcile_with_page_scan(conn)
     conn.close()
-    return {"updated": updated, "with_prereq": with_prereq}
+    return {"updated": updated, "with_prereq": with_prereq, "reconciled": fixed}
+
+
+# ══════════════════════════════════════════════════════════════════════
+# ตรวจซ้ำจากข้อความรายหน้า
+# ══════════════════════════════════════════════════════════════════════
+
+_KW_TH = re.compile(r"วิชาบังคับก่อน\s*:?")
+_ZONE_STOP = re.compile(r"PREREQUISITE|\d\s*\(\d+-\d+-\d+\)|CO-?REQUISITE|วิชาบังคับร่วม", re.IGNORECASE)
+_NONE_START = re.compile(r"^\s*(?:ไม่มี|none|-)", re.IGNORECASE)
+
+
+def scan_page_prerequisites(text: str) -> dict[str, list[str] | None]:
+    """อ่านวิชาบังคับก่อนจากข้อความหนึ่งหน้าโดยยึดคำว่า "วิชาบังคับก่อน" (ฝั่งภาษาไทย).
+
+    วิชาแม่ = รหัสตัวสุดท้ายก่อน keyword (ตัดส่วนที่อยู่หลัง PREREQUISITE ของวิชาก่อนหน้าออก
+    เพื่อไม่ให้รหัสที่ถูกอ้างของวิชาก่อนกลายเป็นวิชาแม่) ส่วนรหัสที่ถูกอ้าง = รหัสระหว่าง
+    keyword กับ PREREQUISITE / หน่วยกิตตัวถัดไป
+    คืน {รหัสวิชา: [รหัสที่ต้องผ่าน]} โดย [] = เล่มเขียนว่าไม่มี
+    """
+    out: dict[str, list[str] | None] = {}
+    for m in _KW_TH.finditer(text):
+        before = text[max(0, m.start() - 260):m.start()]
+        cut = before.rfind("PREREQUISITE")
+        if cut >= 0:
+            before = before[cut + len("PREREQUISITE"):]
+        heads = _CODE_RE.findall(before)
+        if not heads:
+            continue
+        head = heads[-1]
+        after = text[m.end():m.end() + 160]
+        if _NONE_START.match(after):
+            out.setdefault(head, [])
+            continue
+        stop = _ZONE_STOP.search(after)
+        zone = after[:stop.start()] if stop else after
+        codes = [c for c in dict.fromkeys(_CODE_RE.findall(zone)) if c != head]
+        if codes or head not in out:
+            out[head] = codes
+    return out
+
+
+def reconcile_with_page_scan(conn: sqlite3.Connection) -> int:
+    """แก้ prerequisite ที่ตัวสกัดแบบบล็อกพลาด โดยเทียบกับการอ่านรายหน้า.
+
+    ตัวสกัดแบบบล็อกรวมข้อความทั้งเล่มแล้วตัดตามหัวรายวิชา บางรูปแบบหน้าทำให้วิชาบังคับก่อน
+    ไปผูกกับวิชาข้างเคียง (เช่น DSBA 2560: เล่มเขียน 06026106 "ไม่มี" แต่ตาราง course ได้
+    06026104 ซึ่งเป็นของ 06026107) หรือหายไปเลย (DSBA 2565 06026213, IT 2565 06016420)
+    แก้เฉพาะกรณีที่ขัดกันชัดเจน: ตารางว่างแต่เล่มมีรหัส / ตารางมีรหัสแต่เล่มเขียนว่าไม่มี
+    ถ้าทั้งสองฝั่งมีรหัสแต่ต่างกัน (เช่นเล่มเขียนรหัสไทยกับอังกฤษไม่ตรงกัน) คงค่าเดิมไว้
+    """
+    fixed = 0
+    versions = [r[0] for r in conn.execute("SELECT version_id FROM curriculum_version")]
+    for vid in versions:
+        scanned: dict[str, list[str]] = {}
+        for (text,) in conn.execute(
+            "SELECT p.page_text FROM page p JOIN document d ON d.document_id = p.document_id "
+            "WHERE d.version_id = ? ORDER BY p.page_number",
+            (vid,),
+        ):
+            for code, pre in scan_page_prerequisites(text or "").items():
+                if pre or code not in scanned:
+                    scanned[code] = pre
+        for code, pre in scanned.items():
+            row = conn.execute(
+                "SELECT prerequisite_json FROM course WHERE code = ? AND version_id = ?", (code, vid)
+            ).fetchone()
+            if row is None:
+                continue
+            have = json.loads(row[0] or "[]")
+            if (not have and pre) or (have and not pre):
+                conn.execute(
+                    "UPDATE course SET prerequisite_json = ?, prerequisite_raw = ? "
+                    "WHERE code = ? AND version_id = ?",
+                    (json.dumps(pre, ensure_ascii=False),
+                     ("วิชาบังคับก่อน : " + " ".join(pre)) if pre else "ไม่มี", code, vid),
+                )
+                fixed += 1
+    conn.commit()
+    return fixed
 
 
 if __name__ == "__main__":
