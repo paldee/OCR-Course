@@ -557,6 +557,14 @@ def build_context(structured: StructuredOutcome, hits: Sequence[EvidenceHit]) ->
     return "\n\n".join(parts)
 
 
+def is_direct_answer(structured: "StructuredOutcome", question: str) -> bool:
+    """True เมื่อคำตอบคือผลจากตารางตรง ๆ โดยไม่ผ่าน LLM."""
+    return structured.matched and (
+        structured.intent in ALWAYS_DIRECT_INTENTS
+        or (structured.intent in DIRECT_INTENTS and not is_reasoning_question(question))
+    )
+
+
 def is_reasoning_question(question: str) -> bool:
     """คำถามเชิงวิเคราะห์ (ได้ไหม/ทำไม/แนะนำ) ต้องให้ LLM ให้เหตุผล ไม่ใช่ list ข้อมูล."""
     return any(m in question for m in REASONING_MARKERS)
@@ -617,10 +625,7 @@ def compose_answer(
     reasoning = is_reasoning_question(question)
 
     # คำถามตายตัวที่ structured ตอบครบแล้ว → คืนตรง ๆ กันวิชาตกหล่น
-    if structured.matched and (
-        structured.intent in ALWAYS_DIRECT_INTENTS
-        or (structured.intent in DIRECT_INTENTS and not reasoning)
-    ):
+    if is_direct_answer(structured, question):
         return structured.context
 
     if llm is None:
@@ -825,7 +830,13 @@ def answer_question(
         structured = run_structured(
             conn, scoped, course_index=course_index, llm=llm
         )
-        hits = retrieve_evidence(conn, scoped, dense_index=dense_index)
+        # คำตอบที่คืนจากตารางตรง ๆ และมีหน้าอ้างอิงของตัวเองแล้ว ไม่ต้องค้นข้อความ
+        # (ผลค้นไม่ถูกใช้ทั้งในคำตอบและ citation — ข้ามได้โดยผลลัพธ์ไม่เปลี่ยน
+        # และประหยัดการ encode คำถามด้วย bge-m3 ซึ่งเป็นส่วนที่ช้าที่สุดของคำถามแบบนี้)
+        if is_direct_answer(structured, scoped) and citations_from_structured(conn, structured):
+            hits = []
+        else:
+            hits = retrieve_evidence(conn, scoped, dense_index=dense_index)
 
         if not structured.matched and not hits:
             return AnswerResult(
