@@ -20,6 +20,13 @@ GT = ROOT / "data" / "teacher_gt"
 SEED = 20261012
 PER_TEMPLATE = 6
 
+#: จุดที่เฉลยอาจารย์ไม่ตรงกับเล่ม (ตรวจกับหน้าในเล่มแล้ว) — ไม่ใช้เป็นเงื่อนไขของคลังคำถาม
+#: (โปรแกรม, รหัส): เหตุผล
+GT_KNOWN_ERRORS = {
+    ("DSBA", "06016401"): "ไม่อยู่ในตารางแผนปี 1 ภาค 1 ของ DSBA 2565 (หน้า 23 และ 30)",
+    ("AIT", "06016401"): "ไม่อยู่ในตารางแผนปี 1 ภาค 1 ของ AIT 2566 (หน้า 23)",
+}
+
 PLANS = [
     ("AIT", "AIT/AIT_academic_plan.json"),
     ("BIT", "BIT/BIT_academic_plan_no_coop.json"),
@@ -94,7 +101,7 @@ def build() -> list[dict]:
         # รายวิชาบังคับต่อภาค (แผนปกติ)
         slots: dict[tuple[int, int], list[str]] = {}
         for c in slotted:
-            if c.get("type") == "บังคับ":
+            if c.get("type") == "บังคับ" and (prog, _codes(c["code"])[0]) not in GT_KNOWN_ERRORS:
                 slots.setdefault(_fixed_slot(c), []).append(_codes(c["code"])[0])
         for (y, s) in sorted(slots)[:8]:
             add(prog, "semester", f"ปี {y} เทอม {s} ต้องเรียนวิชาบังคับอะไรบ้าง",

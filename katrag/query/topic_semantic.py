@@ -179,7 +179,10 @@ def _keyword_hits(
         f"SELECT c.code, c.name_th, c.name_en, c.credits_raw, c.year, c.semester, "
         f"       c.version_id, cv.program, cv.curriculum_year "
         f"FROM course c JOIN curriculum_version cv ON cv.version_id = c.version_id "
-        f"WHERE ({where_kw}) AND c.version_id IN ({ph}) ORDER BY c.code",
+        # สหกิจศึกษาเป็นการฝึกงาน ไม่ใช่วิชาในหัวข้อ (เช่น "วิชาเกี่ยวกับปัญญาประดิษฐ์") เว้นแต่ถามถึงสหกิจเอง
+        f"WHERE ({where_kw}) AND c.version_id IN ({ph}) "
+        f"{'' if 'สหกิจ' in topic else 'AND c.name_th NOT LIKE ' + chr(39) + 'สหกิจศึกษา%' + chr(39)} "
+        f"ORDER BY c.code",
         params,
     ).fetchall()
     return [

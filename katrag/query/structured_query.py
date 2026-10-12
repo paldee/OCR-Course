@@ -906,7 +906,8 @@ def _format_full_plan(
 
     # วิชาเลือก/เสรี ที่ไม่ผูกเทอม
     elective_count = conn.execute(
-        "SELECT COUNT(*) FROM course WHERE version_id=? AND year IS NULL", (version_id,)
+        "SELECT COUNT(*) FROM course WHERE version_id=? AND year IS NULL "
+        "AND name_th NOT LIKE 'สหกิจศึกษา%'", (version_id,)  # สหกิจเป็นแผนแยก ไม่ใช่วิชาเลือก
     ).fetchone()[0]
     lines.append(f"\nหมายเหตุ: มีวิชาเลือก/เลือกเสรีอีก {elective_count} วิชา ที่ไม่ผูกภาคเรียนตายตัว (เลือกลงได้ตามเงื่อนไข)")
     lines.append(f"หน่วยกิตในแผนบังคับตามเทอม: {total_all} หน่วยกิต")
@@ -927,7 +928,8 @@ def _format_early_grad(
     # วิชาเลือก/เสรี ที่ไม่ผูกเทอม
     elective_rows = conn.execute(
         "SELECT code, name_th, name_en, credits_raw, credits_total "
-        "FROM course WHERE version_id=? AND year IS NULL", (version_id,)
+        "FROM course WHERE version_id=? AND year IS NULL "
+        "AND name_th NOT LIKE 'สหกิจศึกษา%'", (version_id,)  # สหกิจเป็นแผนแยก ไม่ใช่วิชาเลือก
     ).fetchall()
 
     last_credits = sum((r["credits_total"] or 0) for r in last_sem)
@@ -1249,7 +1251,10 @@ def detect_program_name_intent(question: str) -> bool:
     ต้องมีคำว่า 'หลักสูตร' หรือ 'ปริญญา' ประกอบ เพื่อไม่ชนกับคำถามชื่อ 'วิชา'
     """
     q = question.lower()
-    if "วิชา" in question and "หลักสูตร" not in question:
+    # ตัดคำนำหน้า "หลักสูตร X:" ที่ pipeline เติมให้ทุกคำถามก่อน ไม่งั้นคำถามชื่อวิชา
+    # ("วิชาแคลคูลัส 2 ชื่อภาษาอังกฤษว่าอะไร") มีคำว่า หลักสูตร เสมอและถูกตีเป็นชื่อหลักสูตร
+    raw = re.sub(r"^\s*หลักสูตร\s+[A-Za-z_]+\s*[:：]\s*", "", question)
+    if "วิชา" in raw and "หลักสูตร" not in raw:
         return False  # ถามชื่อวิชา ไม่ใช่ชื่อหลักสูตร
     has_name_kw = any(kw.lower() in q for kw in _PROGRAM_NAME_KW)
     has_program_ctx = any(w in question for w in ["หลักสูตร", "ปริญญา", "สาขา"])

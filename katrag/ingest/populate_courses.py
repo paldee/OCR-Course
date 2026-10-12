@@ -233,6 +233,272 @@ def repair_continuation_pages(conn: sqlite3.Connection) -> int:
     return fixed
 
 
+#: ชื่ออังกฤษตัวพิมพ์ใหญ่ที่อาจขึ้นบรรทัดใหม่ (" | ") — ใช้เฉพาะตอนเติมชื่อที่หาย
+#: (คนละตัวกับ _EN_NAME_RE ของตัวสกัดตารางด้านบน)
+_EN_REPAIR_RE = re.compile(
+    r"([A-Z][A-Z0-9&,'’/\-\.\(\) ]{4,}(?:\s*\|\s*[A-Z][A-Z0-9&,'’/\-\.\(\) ]{1,})*)"
+)
+_EN_REPAIR_STOP = ("PREREQUISITE", "NONE", "CO-REQUISITE")
+
+
+def _english_after_code(text: str, code: str, name_th: str) -> str | None:
+    """ชื่ออังกฤษที่ตามหลัง "รหัส ชื่อไทย [หน่วยกิต]" ในหน้าคำอธิบาย/ตารางรายวิชา."""
+    for m in re.finditer(rf"(?<!\d){code}(?!\d)", text):
+        win = text[m.end():m.end() + 260]
+        th = (name_th or "")[:8]
+        if th and th not in win[:120]:
+            continue  # รหัสที่ถูกอ้าง (เช่นเป็น prerequisite) ไม่ใช่หัวรายวิชา
+        cut = re.search(r"วิชาบังคับก่อน|PREREQUISITE", win)
+        zone = win[:cut.start()] if cut else win
+        for em in _EN_REPAIR_RE.finditer(zone):
+            cand = re.sub(r"\s{2,}", " ", re.sub(r"\s*\|\s*", " ", em.group(1))).strip(" -,.")
+            if len(cand) >= 6 and re.search(r"[A-Z]{2,}", cand) and not any(w in cand for w in _EN_REPAIR_STOP):
+                return cand
+    return None
+
+
+def repair_english_names(conn: sqlite3.Connection) -> int:
+    """เติมชื่ออังกฤษให้วิชาที่ name_en ว่าง จากข้อความในเล่มของเวอร์ชันเดียวกัน.
+
+    ตัวสกัดตารางบางรูปแบบ (IT 2565, AIT 2566) เก็บชื่อไทยได้แต่ชื่ออังกฤษหาย ทำให้ถาม
+    ชื่ออังกฤษหรือค้นวิชาด้วยชื่ออังกฤษไม่เจอ (เช่น 06016420 INFRASTRUCTURE SYSTEMS AND SERVICES)
+    ใช้หน้า text layer ก่อน หน้า OCR รับเฉพาะชื่อที่ทุกคำเคยปรากฏในชื่อวิชาอังกฤษที่มีอยู่แล้ว
+    (กันชื่อเพี้ยนจาก OCR เช่น "MODERN REPRENE") วนจนไม่มีชื่อใหม่ เพราะชื่อที่เติมได้จาก
+    text layer เพิ่มคำศัพท์ให้รอบถัดไปตรวจหน้า OCR ได้มากขึ้น
+    """
+    total = 0
+    for _ in range(5):
+        n = _fill_english_names_once(conn)
+        total += n
+        if not n:
+            break
+    return total
+
+
+def _fill_english_names_once(conn: sqlite3.Connection) -> int:
+    vocab = {
+        w for (n,) in conn.execute("SELECT name_en FROM course WHERE coalesce(trim(name_en),'') != ''")
+        for w in re.findall(r"[A-Z]{2,}", (n or "").upper())
+    }
+    filled = 0
+    for (vid,) in conn.execute("SELECT version_id FROM curriculum_version").fetchall():
+        texts = {"text_layer": [], "ocr": []}
+        for method, text in conn.execute(
+            "SELECT p.extraction_method, p.page_text FROM page p JOIN document d ON d.document_id = p.document_id "
+            "WHERE d.version_id = ? ORDER BY p.page_number",
+            (vid,),
+        ):
+            texts["text_layer" if method == "text_layer" else "ocr"].append(text or "")
+        text_blob, ocr_blob = "\n".join(texts["text_layer"]), "\n".join(texts["ocr"])
+        empty = conn.execute(
+            "SELECT code, name_th FROM course WHERE version_id = ? AND coalesce(trim(name_en),'') = ''", (vid,)
+        ).fetchall()
+        for code, name_th in empty:
+            en = _english_after_code(text_blob, code, name_th)
+            if not en:
+                cand = _english_after_code(ocr_blob, code, name_th)
+                words = re.findall(r"[A-Z]{2,}", cand or "")
+                if cand and words and all(w in vocab for w in words):
+                    en = cand
+            if en:
+                conn.execute("UPDATE course SET name_en = ? WHERE version_id = ? AND code = ?", (en, vid, code))
+                filled += 1
+    return filled
+
+
+def _single_plan_blocks(conn: sqlite3.Connection, version_id: int) -> list[tuple]:
+    """บล็อกตารางแผนของหลักสูตรที่มีแผนเดียว: แบ่งข้อความหน้า 15-60 ตามหัว "ปีที่ X ภาคการศึกษาที่ Y"."""
+    doc = conn.execute(
+        "SELECT document_id FROM document WHERE version_id=? AND degree_level='bachelor'", (version_id,)
+    ).fetchone()
+    if not doc:
+        return []
+    out = []
+    for page_no, text in conn.execute(
+        "SELECT page_number, page_text FROM page WHERE document_id=? AND page_number BETWEEN 15 AND 60 "
+        "ORDER BY page_number", (doc[0],)
+    ):
+        heads = list(_YEAR_SEM_RE.finditer(text or ""))
+        for i, m in enumerate(heads):
+            end = heads[i + 1].start() if i + 1 < len(heads) else len(text)
+            out.append(("default", int(m.group(1)), int(m.group(2)), page_no, doc[0], text[m.end():end]))
+    return out
+
+
+def _lenient_plan_rows(text: str, version_id: int, page: int, document_id: str, skip: set[str]) -> list[ParsedCourse]:
+    """แถวตารางแผนที่ตัวอ่านหลักอ่านไม่ได้ — "รหัส | หรือ | ชื่อ" และคู่ "หรือ" ที่ใช้หน่วยกิตร่วมกัน.
+
+    เช่น DSBA 2565 แผนสหกิจ: "06026259 | หรือ | สหกิจศึกษา... | COOPERATIVE ... | 6 (0-35-0) |
+    06026260 สหกิจศึกษาต่างประเทศ... | OVERSEA COOPERATIVE ..." (06026260 ไม่มีหน่วยกิตของตัวเอง)
+    """
+    flat = re.sub(r"\s*\n\s*", " | ", text)
+    codes = [(m.group(1), m.start(), m.end()) for m in re.finditer(r"(?<!\d)(\d{8})(?!\d)", flat)]
+    credit_re = re.compile(r"(\d{1,2})\s*\((\d{1,2})-(\d{1,2})-(\d{1,2})\)")  # สหกิจ 6 (0-35-0)
+    out: list[ParsedCourse] = []
+    last_credit = None
+    pending: str | None = None  # รหัสแรกของคู่ "A หรือ B ชื่อA หรือ ชื่อB"
+    for i, (code, s, e) in enumerate(codes):
+        seg_end = codes[i + 1][1] if i + 1 < len(codes) else len(flat)
+        seg = re.split(r"\|\s*รวม\s*\|", flat[e:seg_end])[0]
+        cm = credit_re.search(seg)
+        if cm:
+            last_credit = cm
+        body = seg[:cm.start()] if cm else seg
+        names = _names_split_by_or(body)
+        if not names:
+            # รหัสที่ตามด้วย "หรือ" ทันที: ชื่อของมันอยู่หลังรหัสถัดไป
+            pending = code if "หรือ" in body else None
+            continue
+        targets = [pending, code] if pending and len(names) >= 2 else [code]
+        pending = None
+        # คู่ "หรือ": ไม่มีหน่วยกิตของตัวเอง ใช้ของวิชาก่อนหน้าที่อยู่ติดกันใน "หรือ" เดียวกัน
+        credit = cm or (last_credit if "หรือ" in flat[max(0, s - 400):s] else None)
+        if not credit:
+            continue
+        for target, (th, en) in zip(targets, names):
+            if target in skip:
+                continue
+            out.append(ParsedCourse(
+                code=target, name_th=th, name_en=en,
+                credits_total=int(credit.group(1)), credits_lecture=int(credit.group(2)),
+                credits_lab=int(credit.group(3)), credits_self_study=int(credit.group(4)),
+                version_id=version_id, page_number=page, document_id=document_id,
+            ))
+    return out
+
+
+def _names_split_by_or(body: str) -> list[tuple[str, str]]:
+    """แยก (ชื่อไทย, ชื่ออังกฤษ) ของแถว — ตัดเป็นหลายชื่อตรงคำว่า "หรือ" ข้ามหัวข้อแขนง/กลุ่ม."""
+    groups: list[tuple[list[str], list[str]]] = [([], [])]
+    for raw in body.split("|"):
+        tok = raw.strip()
+        if not tok:
+            continue
+        trailing_or = tok.endswith(" หรือ")
+        tok = tok[: -len(" หรือ")].strip() if trailing_or else tok
+        if tok == "หรือ":
+            if groups[-1][0]:
+                groups.append(([], []))
+            continue
+        if re.match(r"(แขนงวิชา|กลุ่มวิชา)", tok):
+            continue
+        if re.match(r"[ก-๙]", tok):
+            groups[-1][0].append(tok)
+        elif re.match(r"[A-Za-z]", tok):
+            groups[-1][1].append(tok)
+        if trailing_or and groups[-1][0]:
+            groups.append(([], []))
+    return [(" ".join(th), " ".join(en)) for th, en in groups if th]
+
+
+def repair_missing_plan_courses(conn: sqlite3.Connection) -> int:
+    """เติมวิชาที่อยู่ในตารางแผนการศึกษาแต่ไม่มีในตาราง course.
+
+    ตัวสกัดหลักอ่านจาก chunk แถวตารางที่ถูกตัดคร่อม chunk (รหัสอยู่ชิ้นหนึ่ง หน่วยกิตอยู่อีกชิ้น)
+    จึงหายไป เช่น IT 2565 06066102 (ปี 3 ภาค 1), AIT 2566 90641008 (ปี 1 ภาค 1)
+    ขั้นนี้อ่านบล็อกตารางแผนจากข้อความทั้งหน้า (plan_variants) แล้วเติมเฉพาะรหัสที่ยังไม่มี
+    วิชาที่พบเฉพาะในแผนสหกิจไม่ใส่ปี/ภาค เพราะคำตอบ "ปี X ภาค Y เรียนอะไร" อ่านปี/ภาคจาก
+    ตาราง course และหมายถึงแผนปกติ (ปี/ภาคของแผนสหกิจตอบจาก plan_variants อยู่แล้ว)
+    """
+    from katrag.query.plan_variants import _parse_blocks
+
+    inserted = 0
+    for (vid,) in conn.execute("SELECT version_id FROM curriculum_version").fetchall():
+        blocks = [(b.variant, b.year, b.semester, b.page, b.document_id, b.text) for b in _parse_blocks(conn, vid)]
+        if not blocks:
+            blocks = _single_plan_blocks(conn, vid)  # หลักสูตรแผนเดียว (AIT) ไม่มีหัว แผนปกติ/แผนสหกิจ
+        found: dict[str, tuple[ParsedCourse, str, int, int]] = {}
+        for variant, year, sem, page, doc_id, text in blocks:
+            parsed = parse_courses_from_text(text, vid, page, doc_id, current_year=year, current_semester=sem)
+            parsed += _lenient_plan_rows(text, vid, page, doc_id, {c.code for c in parsed})
+            for c in parsed:
+                prev = found.get(c.code)
+                # แผนปกติชนะแผนสหกิจ เมื่อวิชาเดียวกันอยู่ทั้งสองแผน และในแผนเดียวกันเลือกแถวที่ชื่อสั้นสุด
+                # (บางหน้าวางคู่ "หรือ" โดยไม่มีคำว่า หรือ คั่นชื่อ ทำให้ชื่อสองวิชาต่อกัน)
+                if prev is None or (prev[1] != "default" and variant == "default"):
+                    found[c.code] = (c, variant, year, sem)
+        # ชื่อจากแถวรายการวิชาแบบตรงตัว "รหัส | ชื่อไทย | ชื่ออังกฤษ | หน่วยกิต" ถ้ามี
+        # (ตารางแผนบางหน้าวางคู่ "หรือ" โดยไม่มีคำคั่นชื่อ ทำให้ชื่อสองวิชาต่อกัน)
+        blob = " | ".join(
+            re.sub(r"\s*\n\s*", " | ", t or "")
+            for (t,) in conn.execute(
+                "SELECT p.page_text FROM page p JOIN document d ON d.document_id = p.document_id "
+                "WHERE d.version_id = ? ORDER BY p.page_number", (vid,)
+            )
+        )
+        for code, (c, variant, year, sem) in found.items():
+            if conn.execute("SELECT 1 FROM course WHERE version_id=? AND code=?", (vid, code)).fetchone():
+                continue
+            direct = re.search(
+                rf"(?<!\d){code}(?!\d)\s*\|\s*([ก-๙][^|]*?)\s*\|\s*([A-Z][^|]*?(?:\|\s*[A-Z][^|]*?)?)\s*\|\s*\d{{1,2}}\s*\(",
+                blob,
+            )
+            if direct:
+                c.name_th = direct.group(1).strip()
+                c.name_en = re.sub(r"\s*\|\s*", " ", direct.group(2)).strip()
+            prov = conn.execute(
+                """INSERT INTO provenance (document_id, page_number, x0, y0, x1, y1,
+                   span_start, span_end, extraction_method, provenance_source)
+                   VALUES (?, ?, 0.0, 0.0, 595.0, 842.0, 0, ?, 'text_layer', 'document_text')""",
+                (c.document_id, c.page_number, len(c.name_th)),
+            ).lastrowid
+            y, s = (year, sem) if variant == "default" else (None, None)
+            credits_raw = f"{c.credits_total}({c.credits_lecture}-{c.credits_lab}-{c.credits_self_study})"
+            # schema จำกัดค่าย่อย 0-30 แต่บางวิชาในเล่มเกิน (สหกิจ 6(0-35-0), 0(0-0-45))
+            # เก็บค่าจริงไว้ใน credits_raw และเว้นช่องที่เกินเป็น NULL
+
+            def fit(v):
+                return v if v is not None and 0 <= v <= 30 else None
+
+            course_id = conn.execute(
+                """INSERT INTO course (version_id, code, name_th, name_en,
+                   credits_total, credits_lecture, credits_lab, credits_self_study,
+                   credits_raw, year, semester, category, type,
+                   prerequisite_json, prerequisite_raw, flexible_year_semester, note, provenance_id)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, '[]', '', 0, '', ?)""",
+                (vid, code, c.name_th, c.name_en, fit(c.credits_total), fit(c.credits_lecture),
+                 fit(c.credits_lab), fit(c.credits_self_study), credits_raw, y, s, prov),
+            ).lastrowid
+            conn.execute(
+                """INSERT OR IGNORE INTO plan_slot (version_id, course_id, year, semester, plan_variant, provenance_id)
+                   VALUES (?, ?, ?, ?, ?, ?)""",
+                (vid, course_id, year, sem, variant, prov),
+            )
+            inserted += 1
+    return inserted
+
+
+_FACULTY_GROUP_RE = re.compile(
+    r"(?<!\d)(\d{8})\s*\|\s*กลุ่มวิชาที่กำหนดโดยคณะ\*?\s*\|\s*([ก-๙][^|]*?)\s*\|\s*([A-Z][^|]*?)\s*\|"
+)
+
+
+def repair_faculty_group_names(conn: sqlite3.Connection) -> int:
+    """ชื่อวิชาในแถว "รหัส | กลุ่มวิชาที่กำหนดโดยคณะ* | ชื่อไทย | ชื่ออังกฤษ" ของตารางแผน.
+
+    รูปแบบนี้ทำให้ตัวสกัดหลักเอาชื่อกลุ่มเป็นชื่อวิชา หรือเลื่อนชื่อไปผูกกับรหัสข้างเคียง
+    (BIT 2565: 96643021 คือ ผู้ประกอบการสมัยใหม่ แต่ตารางได้ชื่อ กฎหมายสำหรับคนรุ่นใหม่ ซึ่งเป็นของ 96642033)
+    """
+    fixed = 0
+    for (vid,) in conn.execute("SELECT version_id FROM curriculum_version").fetchall():
+        names: dict[str, tuple[str, str]] = {}
+        for (text,) in conn.execute(
+            "SELECT p.page_text FROM page p JOIN document d ON d.document_id = p.document_id WHERE d.version_id = ?",
+            (vid,),
+        ):
+            flat = re.sub(r"\s*\n\s*", " | ", text or "")
+            for m in _FACULTY_GROUP_RE.finditer(flat):
+                names[m.group(1)] = (m.group(2).strip(), m.group(3).strip())
+        for code, (th, en) in names.items():
+            cur = conn.execute(
+                "UPDATE course SET name_th = ?, name_en = ?, note = 'กลุ่มวิชาที่กำหนดโดยคณะ' "
+                "WHERE version_id = ? AND code = ? AND (name_th IS NOT ? OR name_en IS NOT ?)",
+                (th, en, vid, code, th, en),
+            )
+            fixed += cur.rowcount
+    return fixed
+
+
 def populate(db_path: Path | str) -> dict[str, int]:
     """สแกนทุก chunk แล้ว populate course + plan_slot tables.
 
@@ -558,12 +824,18 @@ def populate(db_path: Path | str) -> dict[str, int]:
             plan_slots_inserted += cur_slot.rowcount or 0
 
     repaired = repair_continuation_pages(conn)
+    missing_added = repair_missing_plan_courses(conn)
+    faculty_fixed = repair_faculty_group_names(conn)
+    en_filled = repair_english_names(conn)
 
     conn.commit()
     conn.close()
 
     return {
         "continuation_repaired": repaired,
+        "missing_plan_courses_added": missing_added,
+        "faculty_group_names_fixed": faculty_fixed,
+        "english_names_filled": en_filled,
         "courses_inserted": courses_inserted,
         "plan_slots_inserted": plan_slots_inserted,
         "pages_scanned": len(rows),

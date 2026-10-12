@@ -146,6 +146,8 @@ _LOOKUP_KW = (
     "เรียนตอนไหน", "เรียนปีไหน", "เรียนเทอมไหน", "เรียนภาคไหน", "ปีไหน", "เทอมไหน", "ภาคไหน", "ตอนไหน",
     "ปีอะไร", "เทอมอะไร", "ภาคอะไร", "กลุ่มไหน", "แขนงไหน", "อยู่แขนง", "อยู่กลุ่ม", "กี่หน่วยกิต",
     "รหัสวิชาอะไร", "รหัสอะไร", "ลงตอนไหน", "ลงได้ตอนไหน", "ลงปีไหน",
+    # ชื่ออีกภาษาของวิชาที่ระบุ — ตอบจากตาราง course (เดิมถูกตีเป็น "ชื่อหลักสูตร" แล้วไป LLM)
+    "ชื่อภาษาอังกฤษ", "ภาษาอังกฤษว่า", "ภาษาอังกฤษคือ", "ชื่ออังกฤษ", "ภาษาไทยว่า", "ชื่อภาษาไทย",
 )
 _TRACK_WORDS = ("แขนง", "กลุ่ม", "โมดูล")
 _TRACK_ASK = ("วิชาอะไร", "มีวิชา", "เรียนอะไร", "ต้องเรียน", "กี่วิชา", "รายวิชา", "มีอะไรบ้าง", "เรียนวิชา")
@@ -292,6 +294,18 @@ def try_course_lookup(conn: sqlite3.Connection, question: str):
             )
         strict.sort(key=lambda c: len(c["name_en"] or ""))
         rows = strict[:1]
+    shared_from_other = False
+    if not rows:
+        # วิชาศึกษาทั่วไปใช้ร่วมกันทุกหลักสูตร แต่บางเล่มไม่ได้ลงรายชื่อครบ
+        # (เช่น โรงเรียนสร้างเสน่ห์ ไม่อยู่ในตารางของ AIT) → หาจากเล่มปริญญาตรีฉบับปัจจุบันเล่มอื่น
+        others = [
+            r[0] for r in conn.execute(
+                "SELECT DISTINCT cv.version_id FROM curriculum_version cv JOIN document d ON d.version_id = cv.version_id "
+                "WHERE cv.edition_status = 'current' AND d.degree_level = 'bachelor'"
+            ).fetchall() if r[0] not in version_ids
+        ]
+        rows = [r for r in _match_course_by_name(conn, q, others) if str(r["code"]).startswith("9")]
+        shared_from_other = bool(rows)
     if not rows:
         return none
 
@@ -303,6 +317,9 @@ def try_course_lookup(conn: sqlite3.Connection, question: str):
     label = _versions_label(conn, [vid])
     en = f" ({full['name_en']})" if full["name_en"] else ""
     lines = [f"วิชา {code} {full['name_th']}{en} — {full['credits_raw']} หน่วยกิต · หลักสูตร {label}"]
+    if shared_from_other:
+        lines.append("(วิชาศึกษาทั่วไปที่ใช้ร่วมกันทุกหลักสูตร — ข้อมูลจากเล่มหลักสูตรข้างต้น "
+                     "เพราะเล่มของหลักสูตรที่เลือกไม่ได้ลงรายละเอียดวิชานี้)")
     groups = course_groups(conn, vid).get(code, [])
     for g in groups:
         parent = f" (ส่วนของ{g.parent})" if g.parent else ""

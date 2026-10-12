@@ -123,16 +123,21 @@ def _norm(s: str | None) -> str:
     return " ".join((s or "").split())
 
 
+def _loose(s: str | None) -> str:
+    """เทียบแบบไม่สนช่องว่าง ตัวพิมพ์ และ ฎ/ฏ ที่เล่มพิมพ์ต่างกัน (ปฎิบัติ/ปฏิบัติ)."""
+    return "".join((s or "").split()).lower().replace("ฎ", "ฏ")
+
+
 def check(item: dict, answer: str) -> tuple[str, list[str]]:
     """คืน (สถานะ, เหตุผล) ตามกติกาในหัวไฟล์."""
     problems = []
-    a = _norm(answer).lower()
+    a = _loose(answer)
     for m in item.get("must", []):
         alts = m if isinstance(m, list) else [m]
-        if not any(_norm(x).lower() in a for x in alts):
+        if not any(_loose(x) in a for x in alts):
             problems.append(f"ขาด: {' | '.join(alts)}")
     for m in item.get("must_not", []):
-        if _norm(m).lower() in a:
+        if _loose(m) in a:
             problems.append(f"มีคำต้องห้าม: {m}")
     has_rules = bool(item.get("must") or item.get("must_not"))
     if item.get("ref_answer") is not None and _norm(answer) == _norm(item["ref_answer"]):
