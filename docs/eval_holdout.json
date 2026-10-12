@@ -1,0 +1,802 @@
+{
+ "_meta": "ชุดทดสอบใหม่ที่ระบบไม่เคยใช้ปรับแก้ (held-out) → docs/eval_holdout.json.",
+ "items": [
+  {
+   "id": "HE1",
+   "level": "ง่าย",
+   "program": "AIT",
+   "question": "วิชาจริยธรรมด้านปัญญาประดิษฐ์กี่หน่วยกิต",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "HE2",
+   "level": "ง่าย",
+   "program": "AIT",
+   "question": "วิชาโครงงานเทคโนโลยีปัญญาประดิษฐ์ 1กี่หน่วยกิต",
+   "must": [
+    [
+     "3(0-9-0)",
+     "3 (0-9-0)"
+    ]
+   ],
+   "expected": "3(0-9-0)",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "HE3",
+   "level": "ง่าย",
+   "program": "AIT",
+   "question": "วิชาแนวคิดระบบฐานข้อมูลกี่หน่วยกิต",
+   "must": [
+    [
+     "3(2-2-5)",
+     "3 (2-2-5)"
+    ]
+   ],
+   "expected": "3(2-2-5)",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "HE4",
+   "level": "ง่าย",
+   "program": "AIT",
+   "question": "การประมวลผลภาษาธรรมชาติเบื้องต้น อยู่ปีไหน ภาคไหน",
+   "must": [
+    [
+     "ปีที่ 2"
+    ],
+    [
+     "ภาคการศึกษาที่ 2"
+    ]
+   ],
+   "expected": "ปี 2 ภาค 2",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "HE5",
+   "level": "ง่าย",
+   "program": "AIT",
+   "question": "โครงงานกลุ่ม 3 อยู่ปีไหน ภาคไหน",
+   "must": [
+    [
+     "ปีที่ 3"
+    ],
+    [
+     "ภาคการศึกษาที่ 2"
+    ]
+   ],
+   "expected": "ปี 3 ภาค 2",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "HM1",
+   "level": "ปานกลาง",
+   "program": "AIT",
+   "question": "calculus 2 ต้องเรียนตอนปีไหน",
+   "must": [
+    [
+     "ปีที่ 1"
+    ],
+    [
+     "ภาคการศึกษาที่ 2"
+    ]
+   ],
+   "expected": "ปี 1 ภาค 2",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "HM2",
+   "level": "ปานกลาง",
+   "program": "AIT",
+   "question": "natural language processing with deep learning ต้องเรียนตอนปีไหน",
+   "must": [
+    [
+     "ปีที่ 3"
+    ],
+    [
+     "ภาคการศึกษาที่ 1"
+    ]
+   ],
+   "expected": "ปี 3 ภาค 1",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "HM3",
+   "level": "ปานกลาง",
+   "program": "AIT",
+   "question": "ก่อนจะลงวิชาพื้นฐานการเรียนรู้เชิงลึก ต้องเรียนวิชาอะไรมาก่อน",
+   "must": [
+    [
+     "06046401"
+    ],
+    [
+     "06046402"
+    ]
+   ],
+   "expected": "06046401, 06046402",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "HM4",
+   "level": "ปานกลาง",
+   "program": "AIT",
+   "question": "ก่อนจะลงวิชาแคลคูลัส 2 ต้องเรียนวิชาอะไรมาก่อน",
+   "must": [
+    [
+     "06046400"
+    ]
+   ],
+   "expected": "06046400",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "HH1",
+   "level": "ยาก",
+   "program": "AIT",
+   "question": "วิชาพื้นฐานการเรียนรู้เชิงลึกต้องผ่านวิชาอะไรก่อน และวิชานั้นเรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "06046401"
+    ],
+    [
+     "ปีที่ 1"
+    ],
+    [
+     "ภาคการศึกษาที่ 2"
+    ]
+   ],
+   "expected": "06046401 ปี 1 ภาค 2",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "HH2",
+   "level": "ยาก",
+   "program": "AIT",
+   "question": "วิชาแคลคูลัส 2ต้องผ่านวิชาอะไรก่อน และวิชานั้นเรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "06046400"
+    ],
+    [
+     "ปีที่ 1"
+    ],
+    [
+     "ภาคการศึกษาที่ 1"
+    ]
+   ],
+   "expected": "06046400 ปี 1 ภาค 1",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "HE6",
+   "level": "ง่าย",
+   "program": "BIT",
+   "question": "วิชาการเก็บความต้องการและสร้างต้นแบบในด้านยูเอ็กซ์ยูไอกี่หน่วยกิต",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HE7",
+   "level": "ง่าย",
+   "program": "BIT",
+   "question": "วิชาระบบฐานข้อมูลขั้นสูงกี่หน่วยกิต",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HE8",
+   "level": "ง่าย",
+   "program": "BIT",
+   "question": "วิชากีฬาและนันทนาการกี่หน่วยกิต",
+   "must": [
+    [
+     "1(0-3-2)",
+     "1 (0-3-2)"
+    ]
+   ],
+   "expected": "1(0-3-2)",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HE9",
+   "level": "ง่าย",
+   "program": "BIT",
+   "question": "คณิตศาสตร์สำหรับธุรกิจ อยู่ปีไหน ภาคไหน",
+   "must": [
+    [
+     "ปีที่ 1"
+    ],
+    [
+     "ภาคการศึกษาที่ 1"
+    ]
+   ],
+   "expected": "ปี 1 ภาค 1",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HE10",
+   "level": "ง่าย",
+   "program": "BIT",
+   "question": "องค์กรและการจัดการ อยู่ปีไหน ภาคไหน",
+   "must": [
+    [
+     "ปีที่ 2"
+    ],
+    [
+     "ภาคการศึกษาที่ 1"
+    ]
+   ],
+   "expected": "ปี 2 ภาค 1",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HM5",
+   "level": "ปานกลาง",
+   "program": "BIT",
+   "question": "law for new generation ต้องเรียนตอนปีไหน",
+   "must": [
+    [
+     "ปีที่ 4"
+    ],
+    [
+     "ภาคการศึกษาที่ 1"
+    ]
+   ],
+   "expected": "ปี 4 ภาค 1",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HM6",
+   "level": "ปานกลาง",
+   "program": "BIT",
+   "question": "professional communication and presentation ต้องเรียนตอนปีไหน",
+   "must": [
+    [
+     "ปีที่ 1"
+    ],
+    [
+     "ภาคการศึกษาที่ 1"
+    ]
+   ],
+   "expected": "ปี 1 ภาค 1",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HM7",
+   "level": "ปานกลาง",
+   "program": "BIT",
+   "question": "ก่อนจะลงวิชาการพัฒนาเว็บแอปพลิเคชันโดยใช้เฟรมเวิร์ก ต้องเรียนวิชาอะไรมาก่อน",
+   "must": [
+    [
+     "06036119"
+    ],
+    [
+     "06036122"
+    ]
+   ],
+   "expected": "06036119 หรือ 06036122",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HM8",
+   "level": "ปานกลาง",
+   "program": "BIT",
+   "question": "ก่อนจะลงวิชาโครงงานทางด้านเทคโนโลยีสารสนเทศเชิงธุรกิจ 2 ต้องเรียนวิชาอะไรมาก่อน",
+   "must": [
+    [
+     "06036145"
+    ]
+   ],
+   "expected": "06036145",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HH3",
+   "level": "ยาก",
+   "program": "BIT",
+   "question": "วิชาการพัฒนาเว็บแอปพลิเคชันโดยใช้เฟรมเวิร์กต้องผ่านวิชาอะไรก่อน และวิชานั้นเรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "06036119"
+    ],
+    [
+     "ปีที่ 1"
+    ],
+    [
+     "ภาคการศึกษาที่ 2"
+    ]
+   ],
+   "expected": "06036119 ปี 1 ภาค 2",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HH4",
+   "level": "ยาก",
+   "program": "BIT",
+   "question": "วิชาโครงงานทางด้านเทคโนโลยีสารสนเทศเชิงธุรกิจ 2ต้องผ่านวิชาอะไรก่อน และวิชานั้นเรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "06036145"
+    ],
+    [
+     "ปีที่ 3"
+    ],
+    [
+     "ภาคการศึกษาที่ 2"
+    ]
+   ],
+   "expected": "06036145 ปี 3 ภาค 2",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HE11",
+   "level": "ง่าย",
+   "program": "DSBA",
+   "question": "วิชาการดูแลและบำรุงรักษาระบบฐานข้อมูลกี่หน่วยกิต",
+   "must": [
+    [
+     "3(2-2-5)",
+     "3 (2-2-5)"
+    ]
+   ],
+   "expected": "3(2-2-5)",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HE12",
+   "level": "ง่าย",
+   "program": "DSBA",
+   "question": "วิชาเครือข่ายและความมั่นคงทางไซเบอร์เบื่องต้นกี่หน่วยกิต",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HE13",
+   "level": "ง่าย",
+   "program": "DSBA",
+   "question": "การโปรแกรมคอมพิวเตอร์ อยู่ปีไหน ภาคไหน",
+   "must": [
+    [
+     "ปีที่ 1"
+    ],
+    [
+     "ภาคการศึกษาที่ 2"
+    ]
+   ],
+   "expected": "ปี 1 ภาค 2",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HE14",
+   "level": "ง่าย",
+   "program": "DSBA",
+   "question": "การวิเคราะห์ข้อมูลและการโปรแกรม อยู่ปีไหน ภาคไหน",
+   "must": [
+    [
+     "ปีที่ 2"
+    ],
+    [
+     "ภาคการศึกษาที่ 1"
+    ]
+   ],
+   "expected": "ปี 2 ภาค 1",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HM9",
+   "level": "ปานกลาง",
+   "program": "DSBA",
+   "question": "digital intelligence quotient ต้องเรียนตอนปีไหน",
+   "must": [
+    [
+     "ปีที่ 1"
+    ],
+    [
+     "ภาคการศึกษาที่ 2"
+    ]
+   ],
+   "expected": "ปี 1 ภาค 2",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HM10",
+   "level": "ปานกลาง",
+   "program": "DSBA",
+   "question": "nosql database systems ต้องเรียนตอนปีไหน",
+   "must": [
+    [
+     "ปีที่ 2"
+    ],
+    [
+     "ภาคการศึกษาที่ 2"
+    ]
+   ],
+   "expected": "ปี 2 ภาค 2",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HM11",
+   "level": "ปานกลาง",
+   "program": "DSBA",
+   "question": "ก่อนจะลงวิชาระบบข้อมูลมหัต ต้องเรียนวิชาอะไรมาก่อน",
+   "must": [
+    [
+     "06066300"
+    ]
+   ],
+   "expected": "06066300",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HM12",
+   "level": "ปานกลาง",
+   "program": "DSBA",
+   "question": "ก่อนจะลงวิชาโครงงานวิทยาการข้อมูลและการวิเคราะห์เชิงธุรกิจ 2 ต้องเรียนวิชาอะไรมาก่อน",
+   "must": [
+    [
+     "06026214"
+    ]
+   ],
+   "expected": "06026214",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HH5",
+   "level": "ยาก",
+   "program": "DSBA",
+   "question": "วิชาการสร้างคลังข้อมูลต้องผ่านวิชาอะไรก่อน และวิชานั้นเรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "06066300"
+    ],
+    [
+     "ปีที่ 2"
+    ],
+    [
+     "ภาคการศึกษาที่ 1"
+    ]
+   ],
+   "expected": "06066300 ปี 2 ภาค 1",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HH6",
+   "level": "ยาก",
+   "program": "DSBA",
+   "question": "วิชาระบบข้อมูลมหัตต้องผ่านวิชาอะไรก่อน และวิชานั้นเรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "06066300"
+    ],
+    [
+     "ปีที่ 2"
+    ],
+    [
+     "ภาคการศึกษาที่ 1"
+    ]
+   ],
+   "expected": "06066300 ปี 2 ภาค 1",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HE15",
+   "level": "ง่าย",
+   "program": "IT",
+   "question": "วิชาการบริหารระบบลูกค้าสัมพันธ์กี่หน่วยกิต",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HE16",
+   "level": "ง่าย",
+   "program": "IT",
+   "question": "วิชาการออกแบบฮาร์ดแวร์สำหรับอินเทอร์เน็ตแห่งสรรพสิ่งกี่หน่วยกิต",
+   "must": [
+    [
+     "3(2-2-5)",
+     "3 (2-2-5)"
+    ]
+   ],
+   "expected": "3(2-2-5)",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HE17",
+   "level": "ง่าย",
+   "program": "IT",
+   "question": "ระบบสารสนเทศเพื่อการจัดการ อยู่ปีไหน ภาคไหน",
+   "must": [
+    [
+     "ปีที่ 3"
+    ],
+    [
+     "ภาคการศึกษาที่ 1"
+    ]
+   ],
+   "expected": "ปี 3 ภาค 1",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HE18",
+   "level": "ง่าย",
+   "program": "IT",
+   "question": "การออกแบบส่วนต่อประสานกับมนุษย์ อยู่ปีไหน ภาคไหน",
+   "must": [
+    [
+     "ปีที่ 2"
+    ],
+    [
+     "ภาคการศึกษาที่ 2"
+    ]
+   ],
+   "expected": "ปี 2 ภาค 2",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HM13",
+   "level": "ปานกลาง",
+   "program": "IT",
+   "question": "cloud computing ต้องเรียนตอนปีไหน",
+   "must": [
+    [
+     "ปีที่ 3"
+    ],
+    [
+     "ภาคการศึกษาที่ 1"
+    ]
+   ],
+   "expected": "ปี 3 ภาค 1",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HM14",
+   "level": "ปานกลาง",
+   "program": "IT",
+   "question": "communication network infrastructure ต้องเรียนตอนปีไหน",
+   "must": [
+    [
+     "ปีที่ 2"
+    ],
+    [
+     "ภาคการศึกษาที่ 2"
+    ]
+   ],
+   "expected": "ปี 2 ภาค 2",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HM15",
+   "level": "ปานกลาง",
+   "program": "IT",
+   "question": "ก่อนจะลงวิชาระบบโครงสร้างพื้นฐานและการบริการ ต้องเรียนวิชาอะไรมาก่อน",
+   "must": [
+    [
+     "06016413"
+    ]
+   ],
+   "expected": "06016413",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HM16",
+   "level": "ปานกลาง",
+   "program": "IT",
+   "question": "ก่อนจะลงวิชาการพัฒนาเว็บฝั่งเซิร์ฟเวอร์ ต้องเรียนวิชาอะไรมาก่อน",
+   "must": [
+    [
+     "06016408"
+    ]
+   ],
+   "expected": "06016408",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HH7",
+   "level": "ยาก",
+   "program": "IT",
+   "question": "วิชาโครงงาน 2ต้องผ่านวิชาอะไรก่อน และวิชานั้นเรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "06016406"
+    ],
+    [
+     "ปีที่ 4"
+    ],
+    [
+     "ภาคการศึกษาที่ 1"
+    ]
+   ],
+   "expected": "06016406 ปี 4 ภาค 1",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HH8",
+   "level": "ยาก",
+   "program": "IT",
+   "question": "วิชาระบบสารสนเทศเพื่อการจัดการต้องผ่านวิชาอะไรก่อน และวิชานั้นเรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "06066101"
+    ],
+    [
+     "ปีที่ 1"
+    ],
+    [
+     "ภาคการศึกษาที่ 2"
+    ]
+   ],
+   "expected": "06066101 ปี 1 ภาค 2",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "HH9",
+   "level": "ยาก",
+   "program": "BIT",
+   "question": "แผนสหกิจศึกษา ปี 4 เทอม 2 เรียนวิชาอะไร",
+   "must": [
+    [
+     "06036147"
+    ]
+   ],
+   "expected": "06036147",
+   "source": "teacher_gt/BIT/BIT_academic_plan_coop.json"
+  },
+  {
+   "id": "HC1",
+   "level": "ท้าทาย",
+   "program": "IT",
+   "question": "IT 2560 กับ IT 2565 หน่วยกิตรวมตลอดหลักสูตรต่างกันกี่หน่วยกิต",
+   "must": [
+    [
+     "130"
+    ],
+    [
+     "129"
+    ]
+   ],
+   "expected": "130 กับ 129 ต่างกัน 1",
+   "source": "IT2560 หน้า 18 / IT2565 หน้า 6"
+  },
+  {
+   "id": "HC2",
+   "level": "ท้าทาย",
+   "program": "AIT",
+   "question": "AIT 2566 กับ DSBA 2565 หลักสูตรไหนต้องเรียนหน่วยกิตรวมมากกว่า",
+   "must": [
+    [
+     "120"
+    ],
+    [
+     "132"
+    ]
+   ],
+   "expected": "AIT 120, DSBA 132",
+   "source": "rule table (หน้าโครงสร้างหลักสูตร)"
+  },
+  {
+   "id": "HC3",
+   "level": "ท้าทาย",
+   "program": "IT",
+   "question": "ปริญญาเอก IT 2566 แบบ 1.2 ต้องเรียนกี่หน่วยกิต",
+   "must": [
+    [
+     "72"
+    ]
+   ],
+   "expected": "72",
+   "source": "PhD IT 2566 หน้า 25"
+  },
+  {
+   "id": "HC4",
+   "level": "ท้าทาย",
+   "program": "AITBA",
+   "question": "ปริญญาโท AITBA 2564 แผน ข ต้องทำการค้นคว้าอิสระกี่หน่วยกิต",
+   "must": [
+    [
+     "6"
+    ]
+   ],
+   "expected": "6",
+   "source": "AITBA 2564 หน้า 16"
+  },
+  {
+   "id": "HC5",
+   "level": "ท้าทาย",
+   "program": "IT",
+   "question": "ปริญญาเอก IT 2561 กับ 2566 แบบ 1.1 ต้องเรียนหน่วยกิตต่างกันไหม",
+   "must": [
+    [
+     "60"
+    ],
+    [
+     "57"
+    ]
+   ],
+   "expected": "2561: 60, 2566: 57",
+   "source": "PhD IT 2561 หน้า 16 / 2566 หน้า 25"
+  },
+  {
+   "id": "HC6",
+   "level": "ท้าทาย",
+   "program": "DSBA",
+   "question": "นักศึกษาปีสุดท้ายลงทะเบียนได้มากที่สุดกี่หน่วยกิต",
+   "must": [
+    [
+     "27"
+    ]
+   ],
+   "expected": "27",
+   "source": "AIT 2566 ภาคผนวก หน้า 82"
+  },
+  {
+   "id": "HC7",
+   "level": "ท้าทาย",
+   "program": "BIT",
+   "question": "เกรด D+ มีค่าเท่าไหร่",
+   "must": [
+    [
+     "1.50"
+    ]
+   ],
+   "expected": "1.50",
+   "source": "AIT 2566 ภาคผนวก หน้า 85"
+  },
+  {
+   "id": "HC8",
+   "level": "ท้าทาย",
+   "program": "IT",
+   "question": "ทุจริตในการสอบสองครั้งจะเป็นอย่างไร",
+   "must": [
+    [
+     "พ้นสภาพ"
+    ]
+   ],
+   "expected": "พ้นสภาพ (ข้อ 43.7)",
+   "source": "AIT 2566 ภาคผนวก หน้า 94"
+  },
+  {
+   "id": "HC9",
+   "level": "ท้าทาย",
+   "program": "DSBA",
+   "question": "อาจารย์ภัทรชัย ลลิตโรจน์วงศ์ จบปริญญาเอกจากที่ไหน",
+   "must": [
+    [
+     "Illinois"
+    ]
+   ],
+   "expected": "Ph.D. Illinois Institute of Technology, 2542",
+   "source": "DSBA 2565 หน้า 51"
+  }
+ ]
+}

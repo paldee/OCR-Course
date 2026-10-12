@@ -608,11 +608,14 @@ def _norm_name(name: str) -> str:
 def detect_prerequisite_intent(question: str) -> bool:
     """ตรวจว่าเป็นคำถามวิชาบังคับก่อน (prerequisite)."""
     q = question.lower()
-    return any(w in q for w in [
+    if any(w in q for w in [
         "บังคับก่อน", "ต้องผ่าน", "ต้องเรียนก่อน", "ลงก่อน", "prerequisite",
         "ก่อนถึงจะลง", "เรียนก่อน", "ตัวต่อ", "วิชาต่อเนื่อง", "prereq", "pre-requisite",
         "เงื่อนไขก่อน", "ก่อนเรียน",
-    ])
+    ]):
+        return True
+    # สำนวนที่มีคำคั่น: "ก่อนจะลงวิชา X ต้องเรียนวิชาอะไรมาก่อน", "ต้องเรียนวิชาไหนมาก่อน", "ต้องผ่านอะไรมาก่อน"
+    return bool(re.search(r"ก่อน\s*(?:จะ|ที่จะ)?\s*(?:ลง|เรียน)|(?:เรียน|ผ่าน|ลง)\S{0,20}\s*มาก่อน", q))
 
 
 def try_prerequisite(

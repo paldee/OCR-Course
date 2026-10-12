@@ -84,6 +84,24 @@ def _bank_items() -> list[dict]:
     return out
 
 
+def _holdout_items() -> list[dict]:
+    out = []
+    for name, set_name in (("eval_holdout.json", "holdout"), ("eval_holdout2.json", "holdout2")):
+        path = ROOT / "docs" / name
+        if path.exists():
+            out += _holdout_file(path, set_name)
+    return out
+
+
+def _holdout_file(path: Path, set_name: str) -> list[dict]:
+    return [{
+        "id": it["id"], "set": set_name, "level": it.get("level", ""), "program": it["program"],
+        "question": it["question"], "expected": it.get("expected", ""), "ref_answer": it.get("answer"),
+        "verdict": it.get("verdict", ""), "must": it.get("must", []), "must_not": it.get("must_not", []),
+        "source": it.get("source", ""),
+    } for it in _load(path)["items"]]
+
+
 def _load(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -94,6 +112,7 @@ def all_items() -> list[dict]:
         + _json_items(ROOT / "docs" / "extra_levels.json", "extra")
         + _json_items(ROOT / "docs" / "challenge_extended.json", "xyz")
         + _bank_items()
+        + _holdout_items()
     )
     # คำตอบที่ตรวจแล้วว่าถูก/ดีขึ้นหลังแก้ระบบ (docs/eval_accepted.json) ใช้แทนคำตอบอ้างอิงเดิม
     accepted_path = ROOT / "docs" / "eval_accepted.json"
