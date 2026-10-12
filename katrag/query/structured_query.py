@@ -279,7 +279,10 @@ def _on_word_boundaries(question: str, name: str) -> bool:
 
 
 #: คำอังกฤษที่ไม่ใช่ส่วนของชื่อวิชา
-_EN_STOP = {"and", "the", "for", "prerequisite", "prereq", "pre", "requisite", "course", "subject"}
+_EN_STOP = {"and", "the", "for", "prerequisite", "prereq", "pre", "requisite", "course", "subject",
+            # คำในประโยคคำถามภาษาอังกฤษ ไม่ใช่ส่วนของชื่อวิชา
+            "how", "many", "credit", "credits", "which", "what", "when", "year", "semester", "taught",
+            "does", "take", "study", "offered", "english", "name", "this", "that", "with", "is", "in"}
 
 
 try:

@@ -149,6 +149,9 @@ _LOOKUP_KW = (
     # ชื่ออีกภาษาของวิชาที่ระบุ — ตอบจากตาราง course (เดิมถูกตีเป็น "ชื่อหลักสูตร" แล้วไป LLM)
     "ชื่อภาษาอังกฤษ", "ภาษาอังกฤษว่า", "ภาษาอังกฤษคือ", "ชื่ออังกฤษ", "ภาษาไทยว่า", "ชื่อภาษาไทย",
     "หน่วยกิตเท่า", "หน่วยกิตของวิชา", "กี่หน่วย",
+    # คำถามภาษาอังกฤษทั้งประโยค เช่น "How many credits is X?", "Which year is X taught?"
+    "credit", "which year", "what year", "which semester", "what semester", "taught", "when is", "when do",
+    "english name",
 )
 _TRACK_WORDS = ("แขนง", "กลุ่ม", "โมดูล")
 _TRACK_ASK = ("วิชาอะไร", "มีวิชา", "เรียนอะไร", "ต้องเรียน", "กี่วิชา", "รายวิชา", "มีอะไรบ้าง", "เรียนวิชา")
@@ -175,7 +178,8 @@ def detect_course_lookup_intent(question: str) -> bool:
 
     if detect_prerequisite_intent(question) or detect_dependents_intent(question):
         return False
-    return any(k in question for k in _LOOKUP_KW)
+    q = question.lower()
+    return any(k in q for k in _LOOKUP_KW)
 
 
 def detect_track_intent(question: str) -> bool:
@@ -334,6 +338,17 @@ def try_course_lookup(conn: sqlite3.Connection, question: str):
         if str(code).startswith("9"):
             lines.append(f"(วิชาศึกษาทั่วไปที่ใช้ร่วมกันทุกหลักสูตร — เล่ม {selected} ไม่ได้ลงรายละเอียดวิชานี้ "
                          f"จึงใช้ข้อมูลจากเล่ม {label})")
+            # ชื่อเดียวกันอาจมีรหัส/หน่วยกิตต่างกันในเล่มอื่น (เช่น การสื่อสารนวัตกรรม 90644070 3(3-0-6) ใน AIT
+            # แต่ 90644038 4(4-0-8) ใน IT 2565) → แสดงทุกแบบ ไม่เลือกเดาแบบเดียว
+            alts: dict[tuple[str, str], list[int]] = {}
+            for a in conn.execute(
+                "SELECT code, credits_raw, version_id FROM course WHERE name_th = ? AND code LIKE '9%'",
+                (full["name_th"],),
+            ).fetchall():
+                if (a["code"], a["credits_raw"]) != (code, full["credits_raw"]):
+                    alts.setdefault((a["code"], a["credits_raw"]), []).append(a["version_id"])
+            for (acode, acred), vids in sorted(alts.items()):
+                lines.append(f"ชื่อวิชาเดียวกันในเล่มอื่น: {acode} — {acred} หน่วยกิต · หลักสูตร {_versions_label(conn, vids)}")
         else:
             lines.append(f"(ไม่พบวิชานี้ในเล่ม {selected} — ข้อมูลด้านล่างมาจากเล่ม {label} "
                          "ปี/ภาคที่เรียนอาจต่างกันในแต่ละหลักสูตร)")

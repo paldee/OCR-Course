@@ -1,0 +1,585 @@
+{
+ "_meta": "ชุดที่ไม่เคยเห็น รอบ 4 (seed ใหม่, วิชาสุ่มใหม่ทั้งหมด)",
+ "items": [
+  {
+   "id": "VE1",
+   "level": "ง่าย",
+   "program": "AIT",
+   "question": "อยากทราบหน่วยกิตของวิชาปัญญาประดิษฐ์และอินเทอร์เน็ตประสานสรรพสิ่ง",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "VE2",
+   "level": "ง่าย",
+   "program": "AIT",
+   "question": "อยากทราบหน่วยกิตของวิชาโครงงานกลุ่ม 1",
+   "must": [
+    [
+     "1(0-2-1)",
+     "1 (0-2-1)"
+    ]
+   ],
+   "expected": "1(0-2-1)",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "VE3",
+   "level": "ง่าย",
+   "program": "AIT",
+   "question": "โครงงานกลุ่ม 3 เรียนปีอะไร",
+   "must": [
+    [
+     "ปีที่ 3"
+    ]
+   ],
+   "expected": "ปี 3 ภาค 2",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "VE4",
+   "level": "ง่าย",
+   "program": "AIT",
+   "question": "แนวคิดระบบฐานข้อมูล เรียนปีอะไร",
+   "must": [
+    [
+     "ปีที่ 2"
+    ]
+   ],
+   "expected": "ปี 2 ภาค 1",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "VM1",
+   "level": "ปานกลาง",
+   "program": "AIT",
+   "question": "How many credits is Project In Artificial Intelligence Technology 1?",
+   "must": [
+    [
+     "3(0-9-0)",
+     "3 (0-9-0)"
+    ]
+   ],
+   "expected": "3(0-9-0)",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "VM2",
+   "level": "ปานกลาง",
+   "program": "AIT",
+   "question": "How many credits is Discrete Mathematics?",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "VM3",
+   "level": "ปานกลาง",
+   "program": "AIT",
+   "question": "Which year and semester is Probabilistic Machine Learning taught?",
+   "must": [
+    [
+     "ปีที่ 2"
+    ],
+    [
+     "ภาคการศึกษาที่ 1"
+    ]
+   ],
+   "expected": "ปี 2 ภาค 1",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "VM4",
+   "level": "ปานกลาง",
+   "program": "AIT",
+   "question": "พื้นฐานการเรียนรู้เชิงลึก มี prerequisite อะไร",
+   "must": [
+    [
+     "06046401"
+    ],
+    [
+     "06046402"
+    ]
+   ],
+   "expected": "06046401, 06046402",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "VH1",
+   "level": "ยาก",
+   "program": "AIT",
+   "question": "เทอม 2 ปี 3 ต้องลงวิชาบังคับอะไรบ้าง",
+   "must": [
+    [
+     "06046441"
+    ],
+    [
+     "90641006"
+    ]
+   ],
+   "expected": "06046441, 90641006",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "VE5",
+   "level": "ง่าย",
+   "program": "BIT",
+   "question": "อยากทราบหน่วยกิตของวิชาสถาปัตยกรรมคอมพิวเตอร์และระบบปฏิบัติการ",
+   "must": [
+    [
+     "3(2-2-5)",
+     "3 (2-2-5)"
+    ]
+   ],
+   "expected": "3(2-2-5)",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "VE6",
+   "level": "ง่าย",
+   "program": "BIT",
+   "question": "อยากทราบหน่วยกิตของวิชาแนวคิดระบบฐานข้อมูล",
+   "must": [
+    [
+     "3(2-2-5)",
+     "3 (2-2-5)"
+    ]
+   ],
+   "expected": "3(2-2-5)",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "VE7",
+   "level": "ง่าย",
+   "program": "BIT",
+   "question": "เทคโนโลยีดิจิทัลสำหรับธุรกิจ เรียนปีอะไร",
+   "must": [
+    [
+     "ปีที่ 2"
+    ]
+   ],
+   "expected": "ปี 2 ภาค 2",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "VM5",
+   "level": "ปานกลาง",
+   "program": "BIT",
+   "question": "How many credits is Information Technology Fundamentals?",
+   "must": [
+    [
+     "3(2-2-5)",
+     "3 (2-2-5)"
+    ]
+   ],
+   "expected": "3(2-2-5)",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "VM6",
+   "level": "ปานกลาง",
+   "program": "BIT",
+   "question": "How many credits is Enterprise Resource Planning?",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "VM7",
+   "level": "ปานกลาง",
+   "program": "BIT",
+   "question": "การพัฒนาเว็บแอปพลิเคชันโดยใช้เฟรมเวิร์ก มี prerequisite อะไร",
+   "must": [
+    [
+     "06036119"
+    ],
+    [
+     "06036122"
+    ]
+   ],
+   "expected": "06036119 หรือ 06036122",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "VE8",
+   "level": "ง่าย",
+   "program": "DSBA",
+   "question": "อยากทราบหน่วยกิตของวิชาการบริหารเชิงกลยุทธ์และสมรรถะของธุรกิจ",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "VE9",
+   "level": "ง่าย",
+   "program": "DSBA",
+   "question": "อยากทราบหน่วยกิตของวิชาระบบข้อมูลแบบกระจาย",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "VE10",
+   "level": "ง่าย",
+   "program": "DSBA",
+   "question": "ความน่าจะเป็นและสถิติ เรียนปีอะไร",
+   "must": [
+    [
+     "ปีที่ 1"
+    ]
+   ],
+   "expected": "ปี 1 ภาค 2",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "VE11",
+   "level": "ง่าย",
+   "program": "DSBA",
+   "question": "พื้นฐานวิทยาการข้อมูล เรียนปีอะไร",
+   "must": [
+    [
+     "ปีที่ 2"
+    ]
+   ],
+   "expected": "ปี 2 ภาค 2",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "VM8",
+   "level": "ปานกลาง",
+   "program": "DSBA",
+   "question": "How many credits is Special Workshop In Statistical Analytics 1?",
+   "must": [
+    [
+     "3(2-2-5)",
+     "3 (2-2-5)"
+    ]
+   ],
+   "expected": "3(2-2-5)",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "VM9",
+   "level": "ปานกลาง",
+   "program": "DSBA",
+   "question": "How many credits is Deep Learning In Medical Image And Video Analysis?",
+   "must": [
+    [
+     "3(2-2-5)",
+     "3 (2-2-5)"
+    ]
+   ],
+   "expected": "3(2-2-5)",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "VM10",
+   "level": "ปานกลาง",
+   "program": "DSBA",
+   "question": "Which year and semester is Calculus 2 taught?",
+   "must": [
+    [
+     "ปีที่ 1"
+    ],
+    [
+     "ภาคการศึกษาที่ 2"
+    ]
+   ],
+   "expected": "ปี 1 ภาค 2",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "VM11",
+   "level": "ปานกลาง",
+   "program": "DSBA",
+   "question": "โครงงานวิทยาการข้อมูลและการวิเคราะห์เชิงธุรกิจ 2 มี prerequisite อะไร",
+   "must": [
+    [
+     "06026214"
+    ]
+   ],
+   "expected": "06026214",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "VH2",
+   "level": "ยาก",
+   "program": "DSBA",
+   "question": "เทอม 1 ปี 1 ต้องลงวิชาบังคับอะไรบ้าง",
+   "must": [
+    [
+     "06026200"
+    ],
+    [
+     "06026202"
+    ],
+    [
+     "06066101"
+    ],
+    [
+     "06066303"
+    ],
+    [
+     "90641001"
+    ],
+    [
+     "90641003"
+    ],
+    [
+     "90644007"
+    ]
+   ],
+   "expected": "06026200, 06026202, 06066101, 06066303, 90641001, 90641003, 90644007",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "VE12",
+   "level": "ง่าย",
+   "program": "IT",
+   "question": "อยากทราบหน่วยกิตของวิชาองค์ประกอบสำคัญของวิทยาการข้อมูล",
+   "must": [
+    [
+     "3(2-2-5)",
+     "3 (2-2-5)"
+    ]
+   ],
+   "expected": "3(2-2-5)",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "VE13",
+   "level": "ง่าย",
+   "program": "IT",
+   "question": "อยากทราบหน่วยกิตของวิชาการวิเคราะห์และออกแบบระบบสารสนเทศ",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "VE14",
+   "level": "ง่าย",
+   "program": "IT",
+   "question": "การออกแบบส่วนต่อประสานกับมนุษย์ เรียนปีอะไร",
+   "must": [
+    [
+     "ปีที่ 2"
+    ]
+   ],
+   "expected": "ปี 2 ภาค 2",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "VM12",
+   "level": "ปานกลาง",
+   "program": "IT",
+   "question": "How many credits is Advanced Database Systems?",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "VM13",
+   "level": "ปานกลาง",
+   "program": "IT",
+   "question": "How many credits is Sports And Recreational Activities?",
+   "must": [
+    [
+     "1(0-3-2)",
+     "1 (0-3-2)"
+    ]
+   ],
+   "expected": "1(0-3-2)",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "VM14",
+   "level": "ปานกลาง",
+   "program": "IT",
+   "question": "Which year and semester is Law For New Generation taught?",
+   "must": [
+    [
+     "ปีที่ 3"
+    ],
+    [
+     "ภาคการศึกษาที่ 2"
+    ]
+   ],
+   "expected": "ปี 3 ภาค 2",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "VM15",
+   "level": "ปานกลาง",
+   "program": "IT",
+   "question": "โครงสร้างพื้นฐานเครือข่ายการสื่อสาร มี prerequisite อะไร",
+   "must": [
+    [
+     "06016413"
+    ]
+   ],
+   "expected": "06016413",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "VM16",
+   "level": "ปานกลาง",
+   "program": "IT",
+   "question": "โครงงาน 2 มี prerequisite อะไร",
+   "must": [
+    [
+     "06016406"
+    ]
+   ],
+   "expected": "06016406",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "VE15",
+   "level": "ง่าย",
+   "program": "AIT",
+   "question": "วิชาศึกษาทั่วไป เตรียมความพร้อมสำหรับวิศวกร กี่หน่วยกิต",
+   "must": [
+    [
+     "1(0-3-0)",
+     "1 (0-3-0)"
+    ]
+   ],
+   "expected": "1(0-3-0)",
+   "source": "teacher_gt/general_education_ground_truth.json"
+  },
+  {
+   "id": "VE16",
+   "level": "ง่าย",
+   "program": "BIT",
+   "question": "วิชาศึกษาทั่วไป การสื่อสารนวัตกรรม กี่หน่วยกิต",
+   "must": [
+    [
+     "4(4-0-8)",
+     "4 (4-0-8)"
+    ]
+   ],
+   "expected": "4(4-0-8)",
+   "source": "teacher_gt/general_education_ground_truth.json"
+  },
+  {
+   "id": "VE17",
+   "level": "ง่าย",
+   "program": "DSBA",
+   "question": "วิชาศึกษาทั่วไป การจัดการเชิงอุตสาหกรรม กี่หน่วยกิต",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/general_education_ground_truth.json"
+  },
+  {
+   "id": "VE18",
+   "level": "ง่าย",
+   "program": "IT",
+   "question": "วิชาศึกษาทั่วไป ภาษาอังกฤษเพื่อการสื่อสารในงานสถาปัตยกรรม กี่หน่วยกิต",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/general_education_ground_truth.json"
+  },
+  {
+   "id": "VE19",
+   "level": "ง่าย",
+   "program": "AIT",
+   "question": "วิชาศึกษาทั่วไป ศัลยกรรมชีวิต กี่หน่วยกิต",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/general_education_ground_truth.json"
+  },
+  {
+   "id": "VE20",
+   "level": "ง่าย",
+   "program": "BIT",
+   "question": "วิชาศึกษาทั่วไป การพัฒนาทักษะทางภาษาอังกฤษเพื่อการเรียนรู้ตลอดชีวิต กี่หน่วยกิต",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/general_education_ground_truth.json"
+  },
+  {
+   "id": "VE21",
+   "level": "ง่าย",
+   "program": "DSBA",
+   "question": "วิชาศึกษาทั่วไป สนุกกับปัญญาประดิษฐ์ กี่หน่วยกิต",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/general_education_ground_truth.json"
+  },
+  {
+   "id": "VE22",
+   "level": "ง่าย",
+   "program": "IT",
+   "question": "วิชาศึกษาทั่วไป เทคโนโลยีสีเขียวและพลังงานทดแทน กี่หน่วยกิต",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/general_education_ground_truth.json"
+  }
+ ]
+}

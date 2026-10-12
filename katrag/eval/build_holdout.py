@@ -108,7 +108,7 @@ def main() -> None:
     print(len(items), "ข้อ", dict(Counter(i["level"] for i in items)), "->", out)
 
 
-if __name__ == "__main__" and __import__("sys").argv[1:] != ["--round2"]:
+if __name__ == "__main__" and not __import__("sys").argv[1:]:
     main()
 
 
@@ -182,3 +182,102 @@ if __name__ == "__main__" and __import__("sys").argv[1:] == ["--round2"]:
                                ensure_ascii=False, indent=1), encoding="utf-8")
     from collections import Counter
     print(len(items2), "ข้อ", dict(Counter(i["level"] for i in items2)), "->", out2)
+
+
+#: วิชาศึกษาทั่วไปที่หน่วยกิตในเฉลยอาจารย์ไม่ตรงกับเล่ม (ตรวจกับภาพหน้าเล่มแล้ว)
+GENED_BOOK_DIFF = {
+    # รหัส 90642065 ในเฉลยไม่ปรากฏในเล่มใดเลย; เล่ม AIT 2566 หน้า 190 มีวิชาชื่อเดียวกันรหัส 90642176
+    "90642065": ("3(2-2-5)", "รหัส 90642065 ในเฉลยไม่มีในเล่มใด เล่ม AIT 2566 หน้า 190 มีรักบี้ฟุตบอล 90642176 = 3 (2-2-5)"),
+}
+
+
+def build_round3(seed_offset: int = 2000, prefix: str = "U", earlier: tuple = ()) -> list[dict]:
+    """ชุดที่ 3 (และ 4): seed ใหม่และสำนวนที่ยังไม่เคยใช้ (สลับลำดับปี/เทอม, ภาษาอังกฤษทั้งประโยค, ศึกษาทั่วไปชุดใหม่)."""
+    rng = random.Random(SEED + seed_offset)
+    seen = set()
+    for name in ("eval_bank.json", "eval_holdout.json", "eval_holdout2.json") + earlier:
+        seen |= {i["question"] for i in json.loads((ROOT / "docs" / name).read_text(encoding="utf-8"))["items"]}
+    items: list[dict] = []
+
+    def add(level, prog, question, must, expected, source):
+        if question in seen:
+            return
+        seen.add(question)
+        n = sum(1 for i in items if i["level"] == level) + 1
+        code = prefix + {"ง่าย": "E", "ปานกลาง": "M", "ยาก": "H", "ท้าทาย": "C"}[level]
+        items.append({"id": f"{code}{n}", "level": level, "program": prog, "question": question,
+                      "must": must, "expected": expected, "source": source})
+
+    for prog, rel in PLANS:
+        courses = json.loads((GT / rel).read_text(encoding="utf-8"))["courses"]
+        src = f"teacher_gt/{rel}"
+        named = [c for c in courses if _clean(c["name_th"]) and _codes(c["code"])
+                 and (prog, _codes(c["code"])[0]) not in GT_KNOWN_ERRORS]
+        slotted = [c for c in named if _fixed_slot(c)]
+        for c in rng.sample(named, 2):
+            add("ง่าย", prog, f"อยากทราบหน่วยกิตของวิชา{_clean(c['name_th'])}", [_credit_alts(c["credits"])],
+                _clean(c["credits"]), src)
+        for c in rng.sample(slotted, 2):
+            y, s = _fixed_slot(c)
+            add("ง่าย", prog, f"{_clean(c['name_th'])} เรียนปีอะไร",
+                [[f"ปีที่ {y}"]], f"ปี {y} ภาค {s}", src)
+        for c in rng.sample([c for c in named if _clean(c["name_en"])], 2):
+            add("ปานกลาง", prog, f"How many credits is {_clean(c['name_en']).title()}?", [_credit_alts(c["credits"])],
+                _clean(c["credits"]), src)
+        for c in rng.sample(slotted, 1):
+            y, s = _fixed_slot(c)
+            add("ปานกลาง", prog, f"Which year and semester is {_clean(c['name_en']).title()} taught?",
+                [[f"ปีที่ {y}"], [f"ภาคการศึกษาที่ {s}"]], f"ปี {y} ภาค {s}", src)
+        with_pre = [c for c in named if _codes(c.get("prerequisite"))]
+        for c in rng.sample(with_pre, min(2, len(with_pre))):
+            add("ปานกลาง", prog, f"{_clean(c['name_th'])} มี prerequisite อะไร",
+                [[p] for p in _codes(c["prerequisite"])], _clean(c["prerequisite"]), src)
+        slots: dict = {}
+        for c in slotted:
+            if c.get("type") == "บังคับ":
+                slots.setdefault(_fixed_slot(c), []).append(_codes(c["code"])[0])
+        for (y, s) in rng.sample(sorted(slots), 2):
+            add("ยาก", prog, f"เทอม {s} ปี {y} ต้องลงวิชาบังคับอะไรบ้าง", [[x] for x in slots[(y, s)]],
+                ", ".join(slots[(y, s)]), src)
+
+    gen = json.loads((GT / "general_education_ground_truth.json").read_text(encoding="utf-8"))["courses"]
+    gen = [c for c in gen if _clean(c["name_th"]) and _codes(c["code"])]
+    for i, c in enumerate(rng.sample(gen, 8)):
+        code = _codes(c["code"])[0]
+        credits, src = _clean(c["credits"]), "teacher_gt/general_education_ground_truth.json"
+        if code in GENED_BOOK_DIFF:  # เฉลยไม่ตรงกับเล่ม — ใช้ค่าตามเล่มและบันทึกเหตุผล
+            credits, note = GENED_BOOK_DIFF[code]
+            src = f"{note} (เฉลยอาจารย์เขียน {_clean(c['credits'])})"
+        add("ง่าย", PLANS[i % 4][0], f"วิชาศึกษาทั่วไป {_clean(c['name_th'])} กี่หน่วยกิต", [_credit_alts(credits)],
+            credits, src)
+
+    for prog, q, must, exp, src in [
+        ("IT", "ลงทะเบียนต่ำสุดเทอมละกี่หน่วยกิต", [["9"]], "9", "AIT 2566 ภาคผนวก หน้า 82"),
+        ("DSBA", "GPA เท่าไหร่ถึงจะจบได้", [["2.00"]], "2.00", "AIT 2566 ภาคผนวก หน้า 88"),
+        ("BIT", "อยากได้เกียรตินิยมอันดับ 1 ต้องได้เกรดเฉลี่ยอย่างน้อยเท่าไหร่", [["3.50"]], "3.50", "AIT 2566 ภาคผนวก หน้า 89"),
+        ("AIT", "เกรด B ได้กี่แต้ม", [["3.00"]], "3.00", "AIT 2566 ภาคผนวก หน้า 85"),
+        ("IT", "ปริญญาเอก IT 2566 แบบ 2.1 ต้องเรียนวิชาเลือกกี่หน่วยกิต", [["12"]], "12", "PhD IT 2566 หน้า 25"),
+        ("IT", "ปริญญาโท IT 2568 แผน 2 แบบวิชาชีพ ต้องทำการค้นคว้าอิสระกี่หน่วยกิต", [["6"]], "6", "M.IT 2568 หน้า 12"),
+        ("DSBA", "DSBA 2560 กับ 2565 หน่วยกิตรวมตลอดหลักสูตรต่างกันกี่หน่วยกิต", [["126"], ["132"]], "126 กับ 132", "DSBA2560 หน้า 17 / DSBA2565 หน้า 15"),
+        ("AIT", "อาจารย์ศุภมิตร จิตตะยโศธร จบปริญญาเอกที่ไหน ปีอะไร", [["Queensland"], ["2531"]], "The University of Queensland, 2531", "AIT 2566 หน้า 42"),
+    ]:
+        add("ท้าทาย", prog, q, must, exp, src)
+    return items
+
+
+if __name__ == "__main__" and __import__("sys").argv[1:] == ["--round3"]:
+    items3 = build_round3()
+    out3 = ROOT / "docs" / "eval_holdout3.json"
+    out3.write_text(json.dumps({"_meta": "ชุดที่ไม่เคยเห็น รอบ 3 (seed และสำนวนใหม่)", "items": items3},
+                               ensure_ascii=False, indent=1), encoding="utf-8")
+    from collections import Counter
+    print(len(items3), "ข้อ", dict(Counter(i["level"] for i in items3)), "->", out3)
+
+
+if __name__ == "__main__" and __import__("sys").argv[1:] == ["--round4"]:
+    items4 = [i for i in build_round3(3000, "V", ("eval_holdout3.json",)) if not i["id"].startswith("VC")]
+    out4 = ROOT / "docs" / "eval_holdout4.json"
+    out4.write_text(json.dumps({"_meta": "ชุดที่ไม่เคยเห็น รอบ 4 (seed ใหม่, วิชาสุ่มใหม่ทั้งหมด)", "items": items4},
+                               ensure_ascii=False, indent=1), encoding="utf-8")
+    from collections import Counter
+    print(len(items4), "ข้อ", dict(Counter(i["level"] for i in items4)), "->", out4)
