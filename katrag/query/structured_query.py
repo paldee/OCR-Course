@@ -209,17 +209,73 @@ def _match_course_by_name(conn: sqlite3.Connection, q: str, version_ids: list[in
         version_ids,
     ).fetchall()
     matched = []
+    q = _th_norm(q)
     for c in cands:
-        nth = (c["name_th"] or "").strip()
+        nth = _th_norm((c["name_th"] or "").strip())
         nen = (c["name_en"] or "").strip().lower()
-        if len(nth) >= 4 and nth in q:
+        if len(nth) >= 4 and nth in q and (len(nth) >= 8 or _on_word_boundaries(q, nth)):
             matched.append((len(nth), c))
         elif len(nen) >= 4 and nen in q.lower():
             matched.append((len(nen), c))
         elif any(sub in q.lower() for sub in ["data warehouse", "warehouse"]) and "warehous" in nen:
             matched.append((15, c))
+    if not matched:
+        matched = _fuzzy_name_matches(q, cands)
     matched.sort(key=lambda x: -x[0])
     return [matched[0][1]] if matched else []
+
+
+def _th_norm(s: str) -> str:
+    """ตัวอักษรไทยที่พิมพ์ได้สองแบบ: "ํา" (PDF แยกนิคหิต+สระอา) = "ำ", ฎ = ฏ (ปฎิบัติ/ปฏิบัติ)."""
+    return s.replace("ํา", "ำ").replace("ฎ", "ฏ")
+
+
+def _fuzzy_name_matches(q: str, cands) -> list:
+    """ชื่อไทยยาว (≥ 8 ตัว) ที่ต่างจากข้อความในคำถามเล็กน้อย เช่นพิมพ์ "เบื้อต้น" แทน "เบื้องต้น".
+
+    เทียบกับทุกช่วงของคำถามที่ยาวใกล้เคียงชื่อ รับเมื่อความคล้าย ≥ 0.9 และเลือกตัวที่คล้ายที่สุด
+    """
+    from difflib import SequenceMatcher
+
+    best: list = []
+    best_score = 0.0
+    q_grams = {q[i:i + 3] for i in range(len(q) - 2)}
+    for c in cands:
+        nth = _th_norm((c["name_th"] or "").strip())
+        n = len(nth)
+        if n < 10 or n > len(q) + 6:
+            continue
+        grams = [nth[i:i + 3] for i in range(n - 2)]
+        if sum(g in q_grams for g in grams) < 0.7 * len(grams):
+            continue  # กรองหยาบก่อน (ถูก) แล้วค่อยเทียบละเอียดเฉพาะชื่อที่ใกล้เคียง
+        # ชื่อสั้นต่างกันตัวเดียวก็เป็นคนละวิชาได้ ("การประมวลผลภาพ"/"การประมวลผลภาษา…") จึงเข้มกว่า
+        need = 0.95 if n < 16 else 0.9
+        for size in range(max(1, n - 2), n + 7):  # รองรับคำเกิน/ขาดสองสามตัว
+            for i in range(0, max(1, len(q) - size + 1)):
+                r = SequenceMatcher(None, nth, q[i:i + size]).ratio()
+                if r >= need and r * n > best_score:  # คล้ายพอ แล้วเลือกที่ชื่อยาวและคล้ายสุด
+                    best_score, best = r * n, [(n, c)]
+    return best
+
+
+def _on_word_boundaries(question: str, name: str) -> bool:
+    """ชื่อไทยสั้นต้องเริ่มและจบตรงขอบคำของคำถาม (ตัดคำด้วย pythainlp).
+
+    ตาราง course มีชื่อวิชาศึกษาทั่วไปที่ถูกตัดสั้นจากหน้าสแกน เช่น "ภาษาอัง", "การตล"
+    ซึ่งเป็นเศษของ "ภาษาอังกฤษ" / "การตลาด" ในคำถาม — ถ้าไม่เช็กขอบคำจะตอบด้วยแถวขยะ
+    ส่วนชื่อสั้นจริง ("กอล์ฟ", "ยูโด") ยังจับได้เพราะเป็นคำเต็มในคำถาม
+    """
+    i = question.find(name)
+    if i < 0:
+        return False
+    if not _HAS_TOK:
+        return True
+    bounds = {0}
+    pos = 0
+    for tok in _thai_tok(question, engine="newmm"):
+        pos += len(tok)
+        bounds.add(pos)
+    return i in bounds and (i + len(name)) in bounds
 
 
 #: คำอังกฤษที่ไม่ใช่ส่วนของชื่อวิชา
@@ -1373,7 +1429,20 @@ def detect_rule_intent(question: str) -> str | None:
     # สำนวนสั้น เช่น "ต้องเรียนกี่หน่วยกิตจึงจะจบ", "รวม 116 หน่วยกิต จบได้ไหม"
     if "หน่วยกิต" in question and _GRAD_SHORT_RE.search(question):
         return "graduation"
+    # ถามหน่วยกิตรวมของทั้งหลักสูตรโดยไม่พูดว่า "จบ" เช่น "DSBA 2565 ต้องเรียนกี่หน่วยกิต",
+    # "หลักสูตรนี้มีหน่วยกิตรวมตลอดหลักสูตรเท่าไร" — ไม่นับเมื่อระบุวิชา หรือระบุปี/ภาค
+    raw = re.sub(r"^\s*หลักสูตร\s+[A-Za-z_]+\s*[:：]\s*", "", question)
+    if (
+        "หน่วยกิต" in raw and _GRAD_TOTAL_RE.search(raw)
+        and "วิชา" not in raw and detect_year(raw) is None and "เทอม" not in raw and "ภาค" not in raw
+    ):
+        return "graduation"
     return None
+
+
+_GRAD_TOTAL_RE = re.compile(
+    r"ตลอดหลักสูตร|ทั้งหลักสูตร|หน่วยกิตรวม|รวมทั้งหมด|ต้องเรียน(?:ครบ|ทั้งหมด|ให้ครบ)?\s*กี่หน่วยกิต"
+)
 
 
 _GRAD_SHORT_RE = re.compile(r"(?:จึงจะ|ถึงจะ|เพื่อ|ถึง|ให้)\s*จบ|จบ\s*(?:ได้|การ|หลักสูตร)")

@@ -225,10 +225,38 @@ def resolve_program(question: str, selected: str) -> tuple[str, str]:
     แล้ว fallback เป็นคณะ IT) ซึ่งเดาผิดเงียบ ๆ ได้ — ตัดออกเพราะตอนนี้
     ผู้ใช้ต้องเลือกหลักสูตรก่อนถามอยู่แล้ว
     """
-    explicit = detect_program(question)
+    explicit = detect_program_named(question)
     if explicit:
         return explicit, "question"
     return selected.strip().upper(), "selected"
+
+
+#: ชื่อหลักสูตรภาษาไทย — ยาวก่อนสั้น ("เทคโนโลยีสารสนเทศทางธุรกิจ" ต้องเป็น BIT ไม่ใช่ IT)
+_PROGRAM_TH_NAMES = (
+    ("ปัญญาประดิษฐ์เพื่อการวิเคราะห์ธุรกิจ", "AITBA"),
+    ("เทคโนโลยีสารสนเทศทางธุรกิจ", "BIT"),
+    ("วิทยาการข้อมูลและการวิเคราะห์เชิงธุรกิจ", "DSBA"),
+    ("วิทยาการข้อมูล", "DSBA"),
+    ("เทคโนโลยีปัญญาประดิษฐ์", "AIT"),
+    ("ปัญญาประดิษฐ์", "AIT"),
+    ("เทคโนโลยีสารสนเทศ", "IT"),
+)
+
+
+def detect_program_named(question: str) -> str | None:
+    """หลักสูตรที่คำถามระบุชัด: รหัส (IT/DSBA/...) หรือชื่อไทยที่มีคำว่า หลักสูตร/สาขา/ปริญญา นำหน้า.
+
+    ไม่นับชื่อไทยลอย ๆ เพราะเป็นส่วนของชื่อวิชาได้ เช่น "คณิตศาสตร์สำหรับเทคโนโลยีสารสนเทศ"
+    (วิชาของ DSBA/AIT/BIT) หรือ "ปัญญาประดิษฐ์เบื้องต้น" — เดิมทำให้หลักสูตรที่ผู้ใช้เลือกถูกเปลี่ยนเงียบ ๆ
+    """
+    upper = question.upper()
+    for code in ("AITBA", "DSBA", "AIT", "BIT", "IT"):
+        if re.search(rf"(?<![A-Z]){code}(?![A-Z])", upper):
+            return code
+    for th, prog in _PROGRAM_TH_NAMES:
+        if re.search(rf"(?:หลักสูตร|สาขาวิชา|สาขา|ปริญญา(?:ตรี|โท|เอก)?)\s*(?:วิทยาศาสตรบัณฑิต\s*)?{th}", question):
+            return prog
+    return None
 
 
 # คำเทียบเคียง (synonym) ในเอกสารหลักสูตร — คำที่ผู้ใช้ถามอาจไม่ตรงกับคำในเล่ม

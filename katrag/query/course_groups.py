@@ -298,13 +298,24 @@ def try_course_lookup(conn: sqlite3.Connection, question: str):
     if not rows:
         # วิชาศึกษาทั่วไปใช้ร่วมกันทุกหลักสูตร แต่บางเล่มไม่ได้ลงรายชื่อครบ
         # (เช่น โรงเรียนสร้างเสน่ห์ ไม่อยู่ในตารางของ AIT) → หาจากเล่มปริญญาตรีฉบับปัจจุบันเล่มอื่น
+        # ลำดับ: ฉบับอื่นของหลักสูตรเดียวกัน (เช่นวิชาที่มีแต่ในเล่มเก่า) → เล่มปริญญาตรีฉบับปัจจุบันของหลักสูตรอื่น
+        same_prog = [
+            r[0] for r in conn.execute(
+                "SELECT version_id FROM curriculum_version WHERE program = ? ORDER BY curriculum_year DESC", (program,)
+            ).fetchall() if r[0] not in version_ids
+        ]
         others = [
             r[0] for r in conn.execute(
                 "SELECT DISTINCT cv.version_id FROM curriculum_version cv JOIN document d ON d.version_id = cv.version_id "
                 "WHERE cv.edition_status = 'current' AND d.degree_level = 'bachelor'"
-            ).fetchall() if r[0] not in version_ids
+            ).fetchall() if r[0] not in version_ids and r[0] not in same_prog
         ]
-        rows = [r for r in _match_course_by_name(conn, q, others) if str(r["code"]).startswith("9")]
+        rows = _match_course_by_name(conn, q, same_prog) or [
+            # ข้ามหลักสูตรเฉพาะวิชาศึกษาทั่วไป หรือชื่อที่ยาวพอจะเจาะจง — ชื่อสั้นทั่วไปอย่าง "โครงงาน 1"
+            # มีในหลายหลักสูตร (DSBA มีโครงงานของตัวเองที่ชื่อยาวกว่า) ห้ามไปหยิบของหลักสูตรอื่นมาตอบ
+            r for r in _match_course_by_name(conn, q, others)
+            if str(r["code"]).startswith("9") or len((r["name_th"] or "").strip()) >= 12
+        ]
         shared_from_other = bool(rows)
     if not rows:
         return none
@@ -318,8 +329,13 @@ def try_course_lookup(conn: sqlite3.Connection, question: str):
     en = f" ({full['name_en']})" if full["name_en"] else ""
     lines = [f"วิชา {code} {full['name_th']}{en} — {full['credits_raw']} หน่วยกิต · หลักสูตร {label}"]
     if shared_from_other:
-        lines.append("(วิชาศึกษาทั่วไปที่ใช้ร่วมกันทุกหลักสูตร — ข้อมูลจากเล่มหลักสูตรข้างต้น "
-                     "เพราะเล่มของหลักสูตรที่เลือกไม่ได้ลงรายละเอียดวิชานี้)")
+        selected = _versions_label(conn, version_ids)
+        if str(code).startswith("9"):
+            lines.append(f"(วิชาศึกษาทั่วไปที่ใช้ร่วมกันทุกหลักสูตร — เล่ม {selected} ไม่ได้ลงรายละเอียดวิชานี้ "
+                         f"จึงใช้ข้อมูลจากเล่ม {label})")
+        else:
+            lines.append(f"(ไม่พบวิชานี้ในเล่ม {selected} — ข้อมูลด้านล่างมาจากเล่ม {label} "
+                         "ปี/ภาคที่เรียนอาจต่างกันในแต่ละหลักสูตร)")
     groups = course_groups(conn, vid).get(code, [])
     for g in groups:
         parent = f" (ส่วนของ{g.parent})" if g.parent else ""
