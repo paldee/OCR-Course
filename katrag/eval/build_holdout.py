@@ -281,3 +281,165 @@ if __name__ == "__main__" and __import__("sys").argv[1:] == ["--round4"]:
                                ensure_ascii=False, indent=1), encoding="utf-8")
     from collections import Counter
     print(len(items4), "ข้อ", dict(Counter(i["level"] for i in items4)), "->", out4)
+
+
+def _year_alts(y: int, s: int | None = None) -> list[list[str]]:
+    """ปี/ภาค เขียนได้หลายแบบ (ตอบจากตาราง "ปีที่ 3 ภาคการศึกษาที่ 1" หรือ LLM "ปี 3 เทอม 1")."""
+    out = [[f"ปีที่ {y}", f"ปี {y}"]]
+    if s is not None:
+        out.append([f"ภาคการศึกษาที่ {s}", f"เทอม {s}", f"ภาค {s}", f"ภาคเรียนที่ {s}"])
+    return out
+
+
+def build_round5(seed_offset: int = 4000, ids: tuple[str, str] = ("WH", "WC"), alt: bool = False) -> list[dict]:
+    """ชุดที่ 5: ข้อยากและท้าทายล้วน (หลายขั้น, เงื่อนไข, เทียบข้ามแผน/หลักสูตร, สถานการณ์ตามระเบียบ).
+
+    ค่าเฉลยคำนวณจากไฟล์เฉลยอาจารย์ (แผนการเรียนและกฎระเบียบ) ไม่ได้อ่านจากระบบ
+    """
+    rng = random.Random(SEED + seed_offset)
+
+    def ph(a: str, b: str) -> str:  # สำนวนชุดที่สอง (รอบ 6) ใช้ b
+        return b if alt else a
+    seen = set()
+    for name in ("eval_bank.json", "eval_holdout.json", "eval_holdout2.json", "eval_holdout3.json",
+                 "eval_holdout4.json") + (("eval_holdout5.json",) if alt else ()):
+        p = ROOT / "docs" / name
+        if p.exists():
+            seen |= {i["question"] for i in json.loads(p.read_text(encoding="utf-8"))["items"]}
+    items: list[dict] = []
+
+    def add(level, prog, question, must, expected, source):
+        if question in seen:
+            return
+        seen.add(question)
+        n = sum(1 for i in items if i["level"] == level) + 1
+        items.append({"id": f"{ids[0] if level == 'ยาก' else ids[1]}{n}", "level": level, "program": prog,
+                      "question": question, "must": must, "expected": expected, "source": source})
+
+    plan_courses: dict[str, dict[str, dict]] = {}
+    for prog, rel in PLANS:
+        courses = json.loads((GT / rel).read_text(encoding="utf-8"))["courses"]
+        src = f"teacher_gt/{rel}"
+        named = [c for c in courses if _clean(c["name_th"]) and _codes(c["code"])
+                 and (prog, _codes(c["code"])[0]) not in GT_KNOWN_ERRORS]
+        by_code = {_codes(c["code"])[0]: c for c in named}
+        plan_courses[prog] = by_code
+        slotted = [c for c in named if _fixed_slot(c)]
+        pre = {_codes(c["code"])[0]: [p for p in _codes(c.get("prerequisite")) if p in by_code] for c in named}
+
+        # ยาก 1: วิชาบังคับก่อนสองชั้น (C <- B <- A)
+        chains = [(c, b, a) for c in named for b in pre[_codes(c["code"])[0]] for a in pre.get(b, [])]
+        for c, b, a in rng.sample(chains, min(1, len(chains))):
+            add("ยาก", prog, ph(f"ถ้าจะเรียนวิชา{_clean(c['name_th'])} ต้องผ่านวิชาอะไรมาก่อนบ้าง นับรวมวิชาที่เป็นพื้นฐานของวิชานั้นด้วย",
+               f"อยากเรียน{_clean(c['name_th'])} ต้องเรียนอะไรให้ผ่านก่อนทั้งหมด รวมถึงวิชาที่ต้องผ่านก่อนวิชาเหล่านั้นด้วย"),
+                [[b], [a]], f"{b} และก่อนหน้านั้น {a}", src)
+        # ยาก 2: ลงก่อนปีในแผนได้ไหม — ต้องบอกปีตามแผนและวิชาบังคับก่อน
+        early = [c for c in slotted if _fixed_slot(c)[0] >= 2 and pre[_codes(c["code"])[0]]]
+        for c in rng.sample(early, min(1, len(early))):
+            y, s = _fixed_slot(c)
+            p = pre[_codes(c["code"])[0]][0]
+            add("ยาก", prog, ph(f"ขอลงวิชา{_clean(c['name_th'])}ตั้งแต่ปี {y - 1} ได้หรือเปล่า",
+               f"ตอนอยู่ปี {y - 1} จะลงเรียน{_clean(c['name_th'])}เลยได้มั้ย"),
+                [[p]] + _year_alts(y), f"ตามแผนเรียนปี {y} ภาค {s} ต้องผ่าน {p} ก่อน", src)
+        # ยาก 3: ตกวิชาพื้นฐานแล้วกระทบวิชาไหน และวิชานั้นอยู่ปีไหน
+        deps: dict[str, list[str]] = {}
+        for code, ps in pre.items():
+            for p in ps:
+                if _fixed_slot(by_code[code]):
+                    deps.setdefault(p, []).append(code)
+        for p in rng.sample(sorted(deps), min(1, len(deps))):
+            d = deps[p][0]
+            y, s = _fixed_slot(by_code[d])
+            add("ยาก", prog, ph(f"ถ้าสอบตกวิชา{_clean(by_code[p]['name_th'])} จะกระทบวิชาไหนบ้าง และวิชาเหล่านั้นเรียนปีไหน",
+               f"ได้ F วิชา{_clean(by_code[p]['name_th'])} แล้ววิชาไหนจะลงต่อไม่ได้ วิชาพวกนั้นอยู่ปีไหน"),
+                [[x] for x in deps[p]] + _year_alts(y), ", ".join(deps[p]) + f" ({d} ปี {y} ภาค {s})", src)
+        # ยาก 4: สองวิชาเรียนปีเดียวกันไหม
+        a, b = rng.sample(slotted, 2)
+        (ya, sa), (yb, sb) = _fixed_slot(a), _fixed_slot(b)
+        add("ยาก", prog, ph(f"วิชา{_clean(a['name_th'])}กับวิชา{_clean(b['name_th'])} เรียนปีเดียวกันไหม",
+               f"{_clean(a['name_th'])} กับ {_clean(b['name_th'])} วิชาไหนเรียนก่อน"),
+            _year_alts(ya) + _year_alts(yb),
+            f"{_codes(a['code'])[0]} ปี {ya} ภาค {sa}, {_codes(b['code'])[0]} ปี {yb} ภาค {sb}", src)
+
+    # ยาก 5: แผนสหกิจกับแผนปกติต่างกันตรงไหน (ภาคสุดท้ายที่ต่าง)
+    def slots(cs):
+        out: dict[tuple[int, int], set[str]] = {}
+        for c in cs:
+            if _fixed_slot(c) and _codes(c["code"]):
+                out.setdefault(_fixed_slot(c), set()).add(_codes(c["code"])[0])
+        return out
+
+    for prog, rel in COOP_PLANS:
+        normal_rel = dict(PLANS)[prog]
+        sc = slots(json.loads((GT / rel).read_text(encoding="utf-8"))["courses"])
+        sn = slots(json.loads((GT / normal_rel).read_text(encoding="utf-8"))["courses"])
+        diff = [k for k in sorted(set(sc) | set(sn)) if sc.get(k, set()) != sn.get(k, set())]
+        if diff:
+            y, s = diff[-1]
+            only = sorted(sc.get((y, s), set()) ^ sn.get((y, s), set()))[:4]
+            add("ยาก", prog, ph(f"ปี {y} เทอม {s} ถ้าเลือกแผนสหกิจ จะเรียนต่างจากแผนปกติอย่างไร",
+               f"เลือกทำสหกิจศึกษาแล้ว ปี {y} ภาค {s} เรียนไม่เหมือนแผนปกติตรงไหน"),
+                [[x] for x in only], ", ".join(only), f"teacher_gt/{rel} เทียบ {normal_rel}")
+
+    # ท้าทาย: สถานการณ์ตามเกณฑ์ (ค่าจาก rules_ground_truth.json)
+    rules = json.loads((GT / "rules_ground_truth.json").read_text(encoding="utf-8"))["programs"]
+    total = {p: next(v["value"] for c in cats if c["category"] == "เกณฑ์การสำเร็จการศึกษา"
+                     for v in c["values"] if "หน่วยกิต" in v["label"]) for p, cats in rules.items()}
+    rsrc = "teacher_gt/rules_ground_truth.json"
+    for p in ("IT", "DSBA", "AIT"):
+        t = int(total[p])
+        add("ท้าทาย", p, ph(f"นักศึกษา {p} เก็บได้ {t - 6} หน่วยกิต เกรดเฉลี่ยสะสม 2.45 จบได้หรือยัง ถ้ายังต้องเก็บเพิ่มอีกกี่หน่วยกิต",
+               f"ตอนนี้มี {t - 6} หน่วยกิต GPA 2.45 อยู่หลักสูตร {p} ขาดอีกเท่าไหร่ถึงจะจบ"),
+            [[str(t)], ["6 หน่วยกิต", "อีก 6", "ขาด 6"]], f"ยังไม่จบ ต้องครบ {t} ขาด 6", rsrc)
+        add("ท้าทาย", p, ph(f"ถ้าเกรดเฉลี่ยสะสม 1.95 แต่เรียนครบ {t} หน่วยกิตแล้ว จะจบการศึกษาได้ไหม",
+               f"เรียนครบ {t} หน่วยกิตแล้วแต่ GPA 1.95 สำเร็จการศึกษาได้หรือเปล่า"),
+            [["2.00"]], "ไม่ได้ ต้องได้ไม่ต่ำกว่า 2.00", rsrc)
+    for p1, p2 in (("IT", "DSBA"), ("AIT", "IT"), ("DSBA", "AIT")):
+        add("ท้าทาย", p1, ph(f"หลักสูตร {p1} กับ {p2} ต้องเรียนหน่วยกิตรวมต่างกันกี่หน่วยกิต",
+               f"{p1} หรือ {p2} หลักสูตรไหนต้องเรียนหน่วยกิตมากกว่ากัน"),
+            [[total[p1]], [total[p2]]], f"{p1} {total[p1]}, {p2} {total[p2]}", rsrc)
+    for p, q, must, exp in ([
+        ("AIT", "GPA ตอนจบ 3.55 ได้เกียรตินิยมไหม อันดับเท่าไร", [["อันดับ 1", "อันดับหนึ่ง"], ["3.50"]], "อันดับ 1 (>= 3.50)"),
+        ("IT", "เกรดเฉลี่ย 3.40 จะได้เกียรตินิยมอันดับสองหรือเปล่า", [["อันดับ 2", "อันดับสอง"], ["3.25"]], "อันดับ 2 (>= 3.25)"),
+        ("DSBA", "ภาคเรียนปกติลง 8 หน่วยกิตได้ไหม", [["9"]], "ไม่ได้ ขั้นต่ำ 9"),
+        ("AIT", "ซัมเมอร์ลงได้มากสุดกี่หน่วยกิต ถ้าลงฝึกงานด้วยจะลงวิชาอื่นได้ไหม", [["9"]], "ไม่เกิน 9 ฝึกงานแล้วลงวิชาอื่นไม่ได้"),
+    ] if alt else [
+        ("IT", "จบด้วยเกรดเฉลี่ย 3.60 จะได้เกียรตินิยมอันดับไหน", [["อันดับ 1", "อันดับหนึ่ง"], ["3.50"]], "อันดับ 1 (>= 3.50)"),
+        ("DSBA", "เกรดเฉลี่ยตอนจบ 3.30 ได้เกียรตินิยมไหม", [["อันดับ 2", "อันดับสอง"], ["3.25"]], "อันดับ 2 (>= 3.25)"),
+        ("AIT", "เทอมหน้าอยากลง 25 หน่วยกิตในภาคปกติ ทำได้ไหม", [["22"]], "ไม่ได้ ภาคปกติสูงสุด 22"),
+        ("IT", "ภาคปกติต้องลงทะเบียนอย่างน้อยกี่หน่วยกิต และมากสุดได้เท่าไร", [["9"], ["22"]], "9-22"),
+    ]):
+        add("ท้าทาย", p, q, must, exp, rsrc)
+
+    # ท้าทาย: วิชาเดียวกัน ต่างหลักสูตร เรียนต่างปี/ภาค
+    shared = [(code, p1, p2) for p1 in plan_courses for p2 in plan_courses if p1 < p2
+              and {p1, p2} != {"AIT", "BIT"}
+              for code in plan_courses[p1] if code in plan_courses[p2]
+              and _fixed_slot(plan_courses[p1][code]) and _fixed_slot(plan_courses[p2][code])
+              and _fixed_slot(plan_courses[p1][code]) != _fixed_slot(plan_courses[p2][code])]
+    for code, p1, p2 in rng.sample(shared, min(3, len(shared))):
+        c1, c2 = plan_courses[p1][code], plan_courses[p2][code]
+        (y1, s1), (y2, s2) = _fixed_slot(c1), _fixed_slot(c2)
+        add("ท้าทาย", p1, ph(f"วิชา{_clean(c1['name_th'])} ของหลักสูตร {p1} กับ {p2} เรียนปีและเทอมเดียวกันหรือไม่",
+               f"{_clean(c1['name_th'])} ใน {p1} และ {p2} อยู่ปีไหนเทอมไหนบ้าง"),
+            [[p1], [p2]] + _year_alts(y1) + _year_alts(y2),
+            f"{p1} ปี {y1} ภาค {s1}, {p2} ปี {y2} ภาค {s2}", "teacher_gt (แผนของทั้งสองหลักสูตร)")
+    return items
+
+
+if __name__ == "__main__" and __import__("sys").argv[1:] == ["--round5"]:
+    items5 = build_round5()
+    out5 = ROOT / "docs" / "eval_holdout5.json"
+    out5.write_text(json.dumps({"_meta": "ชุดที่ไม่เคยเห็น รอบ 5 (ข้อยากและท้าทายล้วน)", "items": items5},
+                               ensure_ascii=False, indent=1), encoding="utf-8")
+    from collections import Counter
+    print(len(items5), "ข้อ", dict(Counter(i["level"] for i in items5)), "->", out5)
+
+
+if __name__ == "__main__" and __import__("sys").argv[1:] == ["--round6"]:
+    items6 = build_round5(5000, ("ZH", "ZC"), alt=True)
+    out6 = ROOT / "docs" / "eval_holdout6.json"
+    out6.write_text(json.dumps({"_meta": "ชุดที่ไม่เคยเห็น รอบ 6 (ข้อยากและท้าทาย seed ใหม่ สำนวนใหม่)", "items": items6},
+                               ensure_ascii=False, indent=1), encoding="utf-8")
+    from collections import Counter
+    print(len(items6), "ข้อ", dict(Counter(i["level"] for i in items6)), "->", out6)

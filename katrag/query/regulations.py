@@ -94,6 +94,7 @@ _RULES: list[tuple[str, tuple[str, ...], tuple[str, ...]]] = [
     ("cheating", ("ทุจริต", "โกงสอบ", "ลอกข้อสอบ"), ()),
     ("registration", ("ลงทะเบียน", "ลงเรียน"), ("หน่วยกิต", "กี่ตัว", "กี่วิชา")),
     ("registration", ("ภาคฤดูร้อน", "ซัมเมอร์", "summer", "ภาคการศึกษาพิเศษ", "ภาคพิเศษ"), ("หน่วยกิต",)),
+    ("registration", ("ภาคปกติ", "ภาคเรียนปกติ", "ภาคการศึกษาปกติ", "เทอมปกติ"), ("หน่วยกิต",)),
     ("grading", ("ระบบเกรด", "ค่าระดับคะแนน", "เกรด a", "เกรด b", "เกรด c", "เกรด d", "เกรด f", "ได้กี่แต้ม", "กี่แต้ม", "เกรด i", "เกรด s", "เกรด u"), ()),
     ("graduation", ("เกรดเฉลี่ย", "gpa", "gpax", "เกรด"), ("จบ", "สำเร็จการศึกษา")),
 ]
@@ -116,6 +117,9 @@ def detect_regulation_topic(question: str) -> str | None:
     asks_effect = not any(w in q for w in ("จบ", "สำเร็จการศึกษา", "เกียรตินิยม", "ภาคทัณฑ์", "พ้นสภาพ", "รีไทร์"))
     if low and gpa and asks_effect:
         return "low_gpa"
+    # "ลง 25 หน่วยกิตได้ไหม" — ระบุจำนวนหน่วยกิตที่จะลงในภาคเดียว (ไม่ได้ระบุปี/เทอมของแผน)
+    if re.search(r"ลง\s*(?:ทะเบียน|เรียน)?\s*\d{1,2}\s*หน่วยกิต", raw) and not names_term:
+        return "registration"
     for key, must, also in _RULES:
         if any(w in q for w in must) and (not also or any(w in q for w in also)):
             if key == "registration" and names_term:

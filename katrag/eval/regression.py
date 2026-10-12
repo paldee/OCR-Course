@@ -86,7 +86,7 @@ def _bank_items() -> list[dict]:
 
 def _holdout_items() -> list[dict]:
     out = []
-    for name, set_name in (("eval_holdout.json", "holdout"), ("eval_holdout2.json", "holdout2"), ("eval_holdout3.json", "holdout3"), ("eval_holdout4.json", "holdout4")):
+    for name, set_name in (("eval_holdout.json", "holdout"), ("eval_holdout2.json", "holdout2"), ("eval_holdout3.json", "holdout3"), ("eval_holdout4.json", "holdout4"), ("eval_holdout5.json", "holdout5"), ("eval_holdout6.json", "holdout6")):
         path = ROOT / "docs" / name
         if path.exists():
             out += _holdout_file(path, set_name)

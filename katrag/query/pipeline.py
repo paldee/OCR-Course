@@ -79,6 +79,7 @@ from katrag.query.plan_variants import detect_plan_variant_intent, try_plan_vari
 from katrag.query.grad_plans import try_grad_plans
 from katrag.query.faculty import try_person_education
 from katrag.query.regulations import try_regulation
+from katrag.query.multi_hop import try_multi_hop
 from katrag.query.topic_semantic import (
     answer_topic,
     detect_program_code,
@@ -106,11 +107,13 @@ DIRECT_INTENTS = frozenset({
     "course_code", "doc_relation", "grad_audit", "credit_compare",
     "dependents", "semester_load", "category_credits", "plan_variant",
     "course_lookup", "track", "regulation", "grad_plans", "person_education",
+    "can_take", "course_compare", "cross_program_course", "prereq_chain", "grad_check", "program_compare",
 })
 
 ALWAYS_DIRECT_INTENTS = frozenset({
     "course_code", "doc_relation", "grad_audit", "prerequisite", "dependents",
     "category_credits", "plan_variant", "course_lookup", "track",
+    "can_take", "course_compare", "cross_program_course", "prereq_chain", "grad_check", "program_compare",
 })
 
 #: คำที่บ่งชี้ว่าเป็นคำถามเชิงวิเคราะห์ (ต้องให้ LLM ให้เหตุผล ไม่ใช่ list ข้อมูล)
@@ -364,6 +367,12 @@ def _dispatch_intent(conn: sqlite3.Connection, question: str):
         sr = try_course_code(conn, question)
         if sr.matched:
             return sr
+
+    # 0.5 คำถามหลายขั้นที่คำนวณคำตอบได้จากตาราง (ลงก่อนแผนได้ไหม, สองวิชาเรียนปีเดียวกันไหม,
+    # วิชาเดียวกันข้ามหลักสูตร, วิชาบังคับก่อนหลายชั้น, เก็บได้ N หน่วยกิต/เกรด G จบได้ไหม, หน่วยกิตรวมข้ามหลักสูตร)
+    sr = try_multi_hop(conn, question)
+    if sr.matched:
+        return sr
 
     # 1. ตรวจสอบไฟล์เอกสารซ้ำ/เล่มเดียวกัน (Document Relation / Deduplication)
     if detect_document_relation_intent(question):

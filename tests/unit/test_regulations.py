@@ -20,6 +20,8 @@ _TH = str.maketrans("๐๑๒๓๔๕๖๗๘๙", "0123456789")
     ("เกรดต่ำกว่าเท่าไรถึงโดนภาคทัณฑ์", "probation"),
     ("B+ ได้กี่แต้ม", "grading"),
     ("หลักสูตร IT: ภาคฤดูร้อนลงได้กี่หน่วยกิต", "registration"),
+    ("หลักสูตร DSBA: ภาคเรียนปกติลง 8 หน่วยกิตได้ไหม", "registration"),
+    ("เทอมหน้าอยากลง 25 หน่วยกิต ทำได้ไหม", "registration"),
 ])
 def test_detects_regulation_questions(q, topic):
     assert detect_regulation_topic(q) == topic
