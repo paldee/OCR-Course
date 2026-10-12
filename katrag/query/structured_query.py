@@ -833,7 +833,12 @@ _DEPENDENT_KW = (
 
 
 def detect_dependents_intent(question: str) -> bool:
-    return any(k in question for k in _DEPENDENT_KW)
+    if any(k in question for k in _DEPENDENT_KW):
+        return True
+    # "ถ้าสอบไม่ผ่านวิชา X จะลงวิชาไหนต่อไม่ได้", "ติด F วิชา X ลงอะไรไม่ได้บ้าง"
+    failed = any(k in question for k in ("ไม่ผ่าน", "ติด f", "ติด F", "ได้ f", "ได้ F", "เกรด F"))
+    blocked = any(k in question for k in ("ไม่ได้", "ลงต่อ", "เรียนต่อ"))
+    return failed and blocked
 
 
 def try_dependents(conn: sqlite3.Connection, question: str) -> StructuredResult:
@@ -1772,11 +1777,17 @@ def try_course_code(conn: sqlite3.Connection, question: str) -> StructuredResult
     if not rows:
         return StructuredResult(False, "", "", "none")
 
-    r = rows[0]
+    # แถวของหลักสูตรที่ผู้ใช้เลือกก่อน — รหัสวิชากลางคณะ (0606xxxx) อยู่หลายหลักสูตรและปี/ภาคต่างกัน
+    # (เช่น 06066101 อยู่ปี 1 ภาค 1 ของ DSBA แต่ปี 1 ภาค 2 ของ IT)
+    scope = _course_scope_versions(conn, question, program) if program else []
+    current = {v for (v,) in conn.execute("SELECT version_id FROM curriculum_version WHERE edition_status='current'")}
+    r = (next((x for x in rows if x["version_id"] in scope), None)
+         or next((x for x in rows if x["version_id"] in current), None) or rows[0])
     en = f" ({r['name_en']})" if r["name_en"] else ""
     plan_info = f" | แผนการเรียน: ปีที่ {r['year']} ภาคการศึกษาที่ {r['semester']}" if r["year"] and r["semester"] else ""
 
-    ans = f"รหัสวิชา {r['code']} คือวิชา:\n- {r['name_th']}{en}\n- จำนวนหน่วยกิต: {r['credits_raw']}{plan_info}"
+    ans = (f"รหัสวิชา {r['code']} คือวิชา (หลักสูตร {_versions_label(conn, [r['version_id']])}):\n"
+           f"- {r['name_th']}{en}\n- จำนวนหน่วยกิต: {r['credits_raw']}{plan_info}")
     return StructuredResult(
         True, ans, program or "", "course_code",
         codes=[r["code"]], version_id=r["version_id"]

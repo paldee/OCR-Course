@@ -2865,6 +2865,1157 @@
    "source": "teacher_gt/rules_ground_truth.json"
   },
   {
+   "id": "G-AIT-en_credit-1",
+   "program": "AIT",
+   "question": "Artificial Intelligience Ethics กี่หน่วยกิต",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "G-AIT-en_credit-2",
+   "program": "AIT",
+   "question": "Project In Artificial Intelligence Technology 1 กี่หน่วยกิต",
+   "must": [
+    [
+     "3(0-9-0)",
+     "3 (0-9-0)"
+    ]
+   ],
+   "expected": "3(0-9-0)",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "G-AIT-en_credit-3",
+   "program": "AIT",
+   "question": "Database System Concepts กี่หน่วยกิต",
+   "must": [
+    [
+     "3(2-2-5)",
+     "3 (2-2-5)"
+    ]
+   ],
+   "expected": "3(2-2-5)",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "G-AIT-en_credit-4",
+   "program": "AIT",
+   "question": "Reinforcement Learning กี่หน่วยกิต",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "G-AIT-credit_para-1",
+   "program": "AIT",
+   "question": "หน่วยกิตของวิชาหัวข้อคัดสรรด้านปัญญาประดิษฐ์ 3เท่าไหร่",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "G-AIT-credit_para-2",
+   "program": "AIT",
+   "question": "หน่วยกิตของวิชาการประมวลผลภาษาธรรมชาติเบื้องต้นเท่าไหร่",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "G-AIT-credit_para-3",
+   "program": "AIT",
+   "question": "หน่วยกิตของวิชาโครงงานกลุ่ม 3เท่าไหร่",
+   "must": [
+    [
+     "1(0-2-1)",
+     "1 (0-2-1)"
+    ]
+   ],
+   "expected": "1(0-2-1)",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "G-AIT-credit_para-4",
+   "program": "AIT",
+   "question": "หน่วยกิตของวิชาแคลคูลัส 2เท่าไหร่",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "G-AIT-code_ys-1",
+   "program": "AIT",
+   "question": "วิชา 06046414 เรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "ปีที่ 3"
+    ],
+    [
+     "ภาคการศึกษาที่ 1"
+    ]
+   ],
+   "expected": "ปี 3 ภาค 1",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "G-AIT-code_ys-2",
+   "program": "AIT",
+   "question": "วิชา 06066001 เรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "ปีที่ 1"
+    ],
+    [
+     "ภาคการศึกษาที่ 1"
+    ]
+   ],
+   "expected": "ปี 1 ภาค 1",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "G-AIT-code_ys-3",
+   "program": "AIT",
+   "question": "วิชา 06046409 เรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "ปีที่ 2"
+    ],
+    [
+     "ภาคการศึกษาที่ 1"
+    ]
+   ],
+   "expected": "ปี 2 ภาค 1",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "G-AIT-code_ys-4",
+   "program": "AIT",
+   "question": "วิชา 06066303 เรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "ปีที่ 1"
+    ],
+    [
+     "ภาคการศึกษาที่ 1"
+    ]
+   ],
+   "expected": "ปี 1 ภาค 1",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "G-AIT-typo_ys-1",
+   "program": "AIT",
+   "question": "วิชาพีชคณตเชิงเส้นเรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "ปีที่ 1"
+    ],
+    [
+     "ภาคการศึกษาที่ 1"
+    ]
+   ],
+   "expected": "พีชคณิตเชิงเส้น: ปี 1 ภาค 1",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "G-AIT-typo_ys-2",
+   "program": "AIT",
+   "question": "วิชาพื้นฐานของรบบสมองกลฝังตัวเรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "ปีที่ 1"
+    ],
+    [
+     "ภาคการศึกษาที่ 2"
+    ]
+   ],
+   "expected": "พื้นฐานของระบบสมองกลฝังตัว: ปี 1 ภาค 2",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "G-AIT-typo_ys-3",
+   "program": "AIT",
+   "question": "วิชาการประมวลผลสัญาณเรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "ปีที่ 3"
+    ],
+    [
+     "ภาคการศึกษาที่ 1"
+    ]
+   ],
+   "expected": "การประมวลผลสัญญาณ: ปี 3 ภาค 1",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "G-AIT-dependents-1",
+   "program": "AIT",
+   "question": "ถ้าสอบไม่ผ่านวิชาแคลคูลัส 2 จะลงวิชาไหนต่อไม่ได้",
+   "must": [
+    [
+     "06046406"
+    ]
+   ],
+   "expected": "06046406",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "G-AIT-dependents-2",
+   "program": "AIT",
+   "question": "ถ้าสอบไม่ผ่านวิชาแคลคูลัส 1 จะลงวิชาไหนต่อไม่ได้",
+   "must": [
+    [
+     "06046401"
+    ]
+   ],
+   "expected": "06046401",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "G-AIT-dependents-3",
+   "program": "AIT",
+   "question": "ถ้าสอบไม่ผ่านวิชาความน่าจะเป็นและสถิติ จะลงวิชาไหนต่อไม่ได้",
+   "must": [
+    [
+     "06046405"
+    ]
+   ],
+   "expected": "06046405",
+   "source": "teacher_gt/AIT/AIT_academic_plan.json"
+  },
+  {
+   "id": "G-BIT-en_credit-1",
+   "program": "BIT",
+   "question": "Project In Business Information Technology 1 กี่หน่วยกิต",
+   "must": [
+    [
+     "3(0-9-0)",
+     "3 (0-9-0)"
+    ]
+   ],
+   "expected": "3(0-9-0)",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-BIT-en_credit-2",
+   "program": "BIT",
+   "question": "Robotic Process Automation Forbusiness กี่หน่วยกิต",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-BIT-en_credit-3",
+   "program": "BIT",
+   "question": "Programming Fundamentals กี่หน่วยกิต",
+   "must": [
+    [
+     "3(2-2-5)",
+     "3 (2-2-5)"
+    ]
+   ],
+   "expected": "3(2-2-5)",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-BIT-en_credit-4",
+   "program": "BIT",
+   "question": "Problem Solving In Information Technology กี่หน่วยกิต",
+   "must": [
+    [
+     "3(2-2-5)",
+     "3 (2-2-5)"
+    ]
+   ],
+   "expected": "3(2-2-5)",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-BIT-credit_para-1",
+   "program": "BIT",
+   "question": "หน่วยกิตของวิชากระบวนการและโมเดลทางธุรกิจเท่าไหร่",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-BIT-credit_para-2",
+   "program": "BIT",
+   "question": "หน่วยกิตของวิชาหัวข้อพิเศษทางด้านเทคโนโลยีสารสนเทศทางธุรกิจ 2เท่าไหร่",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-BIT-credit_para-3",
+   "program": "BIT",
+   "question": "หน่วยกิตของวิชาองค์กรและการจัดการเท่าไหร่",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-BIT-credit_para-4",
+   "program": "BIT",
+   "question": "หน่วยกิตของวิชาความฉลาดทางดิจิทัลเท่าไหร่",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-BIT-code_ys-1",
+   "program": "BIT",
+   "question": "วิชา 06036111 เรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "ปีที่ 2"
+    ],
+    [
+     "ภาคการศึกษาที่ 2"
+    ]
+   ],
+   "expected": "ปี 2 ภาค 2",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-BIT-code_ys-2",
+   "program": "BIT",
+   "question": "วิชา 06036110 เรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "ปีที่ 3"
+    ],
+    [
+     "ภาคการศึกษาที่ 1"
+    ]
+   ],
+   "expected": "ปี 3 ภาค 1",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-BIT-code_ys-3",
+   "program": "BIT",
+   "question": "วิชา 06036114 เรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "ปีที่ 3"
+    ],
+    [
+     "ภาคการศึกษาที่ 1"
+    ]
+   ],
+   "expected": "ปี 3 ภาค 1",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-BIT-code_ys-4",
+   "program": "BIT",
+   "question": "วิชา 06036112 เรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "ปีที่ 2"
+    ],
+    [
+     "ภาคการศึกษาที่ 2"
+    ]
+   ],
+   "expected": "ปี 2 ภาค 2",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-BIT-typo_ys-1",
+   "program": "BIT",
+   "question": "วิชาการตลาดเชิงิจิทัลเรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "ปีที่ 3"
+    ],
+    [
+     "ภาคการศึกษาที่ 2"
+    ]
+   ],
+   "expected": "การตลาดเชิงดิจิทัล: ปี 3 ภาค 2",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-BIT-typo_ys-2",
+   "program": "BIT",
+   "question": "วิชากฎหมายสำหรับคนรุ่นหม่เรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "ปีที่ 4"
+    ],
+    [
+     "ภาคการศึกษาที่ 1"
+    ]
+   ],
+   "expected": "กฎหมายสำหรับคนรุ่นใหม่: ปี 4 ภาค 1",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-BIT-typo_ys-3",
+   "program": "BIT",
+   "question": "วิชาการวิเคราะห์และออกแบบระบบสารสเทศทางธุรกิจเรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "ปีที่ 3"
+    ],
+    [
+     "ภาคการศึกษาที่ 1"
+    ]
+   ],
+   "expected": "การวิเคราะห์และออกแบบระบบสารสนเทศทางธุรกิจ: ปี 3 ภาค 1",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-BIT-dependents-1",
+   "program": "BIT",
+   "question": "ถ้าสอบไม่ผ่านวิชาพื้นฐานการเขียนโปรแกรม จะลงวิชาไหนต่อไม่ได้",
+   "must": [
+    [
+     "06036114"
+    ]
+   ],
+   "expected": "06036114",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-BIT-dependents-2",
+   "program": "BIT",
+   "question": "ถ้าสอบไม่ผ่านวิชาการสื่อสารด้วยภาพสำหรับธุรกิจ จะลงวิชาไหนต่อไม่ได้",
+   "must": [
+    [
+     "06036114"
+    ]
+   ],
+   "expected": "06036114",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-BIT-dependents-3",
+   "program": "BIT",
+   "question": "ถ้าสอบไม่ผ่านวิชาโครงงานทางด้านเทคโนโลยีสารสนเทศเชิงธุรกิจ 1 จะลงวิชาไหนต่อไม่ได้",
+   "must": [
+    [
+     "06036146"
+    ]
+   ],
+   "expected": "06036146",
+   "source": "teacher_gt/BIT/BIT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-DSBA-en_credit-1",
+   "program": "DSBA",
+   "question": "Linear Algebra กี่หน่วยกิต",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-DSBA-en_credit-2",
+   "program": "DSBA",
+   "question": "Information System Analysis And Design กี่หน่วยกิต",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-DSBA-en_credit-3",
+   "program": "DSBA",
+   "question": "Special Topics In Statistical Analytics 1 กี่หน่วยกิต",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-DSBA-en_credit-4",
+   "program": "DSBA",
+   "question": "Project In Data Science And Business Analytics 1 กี่หน่วยกิต",
+   "must": [
+    [
+     "3(0-9-0)",
+     "3 (0-9-0)"
+    ]
+   ],
+   "expected": "3(0-9-0)",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-DSBA-credit_para-1",
+   "program": "DSBA",
+   "question": "หน่วยกิตของวิชาภาษาอังกฤษพื้นฐาน 2เท่าไหร่",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-DSBA-credit_para-2",
+   "program": "DSBA",
+   "question": "หน่วยกิตของวิชาสหกิจศึกษาทางวิทยาการข้อมูลและการวิเคราะห์เชิงธุรกิจเท่าไหร่",
+   "must": [
+    [
+     "6(0-35-0)",
+     "6 (0-35-0)"
+    ]
+   ],
+   "expected": "6(0-35-0)",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-DSBA-credit_para-3",
+   "program": "DSBA",
+   "question": "หน่วยกิตของวิชากีฬาและนันทนาการเท่าไหร่",
+   "must": [
+    [
+     "1(0-3-2)",
+     "1 (0-3-2)"
+    ]
+   ],
+   "expected": "1(0-3-2)",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-DSBA-credit_para-4",
+   "program": "DSBA",
+   "question": "หน่วยกิตของวิชาสถิาปัตยกรรมข้อมูลแบบไปป์ไลน์เท่าไหร่",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-DSBA-code_ys-1",
+   "program": "DSBA",
+   "question": "วิชา 90641001 เรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "ปีที่ 1"
+    ],
+    [
+     "ภาคการศึกษาที่ 1"
+    ]
+   ],
+   "expected": "ปี 1 ภาค 1",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-DSBA-code_ys-2",
+   "program": "DSBA",
+   "question": "วิชา 06026214 เรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "ปีที่ 3"
+    ],
+    [
+     "ภาคการศึกษาที่ 2"
+    ]
+   ],
+   "expected": "ปี 3 ภาค 2",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-DSBA-code_ys-3",
+   "program": "DSBA",
+   "question": "วิชา 90644042 เรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "ปีที่ 3"
+    ],
+    [
+     "ภาคการศึกษาที่ 1"
+    ]
+   ],
+   "expected": "ปี 3 ภาค 1",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-DSBA-code_ys-4",
+   "program": "DSBA",
+   "question": "วิชา 06026205 เรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "ปีที่ 1"
+    ],
+    [
+     "ภาคการศึกษาที่ 2"
+    ]
+   ],
+   "expected": "ปี 1 ภาค 2",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-DSBA-typo_ys-1",
+   "program": "DSBA",
+   "question": "วิชาพื้นฐานทางธุรกิจสหรับเทคโนโลยีสารสนเทศเรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "ปีที่ 1"
+    ],
+    [
+     "ภาคการศึกษาที่ 1"
+    ]
+   ],
+   "expected": "พื้นฐานทางธุรกิจสำหรับเทคโนโลยีสารสนเทศ: ปี 1 ภาค 1",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-DSBA-typo_ys-2",
+   "program": "DSBA",
+   "question": "วิชาระบบข้มูลมหัตเรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "ปีที่ 3"
+    ],
+    [
+     "ภาคการศึกษาที่ 2"
+    ]
+   ],
+   "expected": "ระบบข้อมูลมหัต: ปี 3 ภาค 2",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-DSBA-typo_ys-3",
+   "program": "DSBA",
+   "question": "วิชาการสื่อสารละการนำเสนออย่างมืออาชีพเรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "ปีที่ 3"
+    ],
+    [
+     "ภาคการศึกษาที่ 1"
+    ]
+   ],
+   "expected": "การสื่อสารและการนำเสนออย่างมืออาชีพ: ปี 3 ภาค 1",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-DSBA-dependents-1",
+   "program": "DSBA",
+   "question": "ถ้าสอบไม่ผ่านวิชาโครงงานวิทยาการข้อมูลและการวิเคราะห์เชิงธุรกิจ 1 จะลงวิชาไหนต่อไม่ได้",
+   "must": [
+    [
+     "06026215"
+    ]
+   ],
+   "expected": "06026215",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-DSBA-dependents-2",
+   "program": "DSBA",
+   "question": "ถ้าสอบไม่ผ่านวิชาแคลคูลัส 1 จะลงวิชาไหนต่อไม่ได้",
+   "must": [
+    [
+     "06026201"
+    ]
+   ],
+   "expected": "06026201",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-DSBA-dependents-3",
+   "program": "DSBA",
+   "question": "ถ้าสอบไม่ผ่านวิชาแนวคิดระบบฐานข้อมูล จะลงวิชาไหนต่อไม่ได้",
+   "must": [
+    [
+     "06026212"
+    ],
+    [
+     "06026213"
+    ]
+   ],
+   "expected": "06026212, 06026213",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-IT-en_credit-1",
+   "program": "IT",
+   "question": "Business Fundamentals For Information Technology กี่หน่วยกิต",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-IT-en_credit-2",
+   "program": "IT",
+   "question": "Computer Graphics And Animation กี่หน่วยกิต",
+   "must": [
+    [
+     "3(2-2-5)",
+     "3 (2-2-5)"
+    ]
+   ],
+   "expected": "3(2-2-5)",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-IT-en_credit-3",
+   "program": "IT",
+   "question": "Special Topics In Information Technology 2 กี่หน่วยกิต",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-IT-en_credit-4",
+   "program": "IT",
+   "question": "Sports And Recreational Activities กี่หน่วยกิต",
+   "must": [
+    [
+     "1(0-3-2)",
+     "1 (0-3-2)"
+    ]
+   ],
+   "expected": "1(0-3-2)",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-IT-credit_para-1",
+   "program": "IT",
+   "question": "หน่วยกิตของวิชาการออกแบบส่วนต่อประสานกับมนุษย์เท่าไหร่",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-IT-credit_para-2",
+   "program": "IT",
+   "question": "หน่วยกิตของวิชาคอมพิวเตอร์กราฟิกส์และแอนิเมชันเท่าไหร่",
+   "must": [
+    [
+     "3(2-2-5)",
+     "3 (2-2-5)"
+    ]
+   ],
+   "expected": "3(2-2-5)",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-IT-credit_para-3",
+   "program": "IT",
+   "question": "หน่วยกิตของวิชาพื้นฐานความมั่นคงปลอดภัยไซเบอร์เท่าไหร่",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-IT-credit_para-4",
+   "program": "IT",
+   "question": "หน่วยกิตของวิชาการออกแบบเกมเท่าไหร่",
+   "must": [
+    [
+     "3(3-0-6)",
+     "3 (3-0-6)"
+    ]
+   ],
+   "expected": "3(3-0-6)",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-IT-code_ys-1",
+   "program": "IT",
+   "question": "วิชา 06016404 เรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "ปีที่ 3"
+    ],
+    [
+     "ภาคการศึกษาที่ 1"
+    ]
+   ],
+   "expected": "ปี 3 ภาค 1",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-IT-code_ys-2",
+   "program": "IT",
+   "question": "วิชา 06066101 เรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "ปีที่ 1"
+    ],
+    [
+     "ภาคการศึกษาที่ 2"
+    ]
+   ],
+   "expected": "ปี 1 ภาค 2",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-IT-code_ys-3",
+   "program": "IT",
+   "question": "วิชา 06016422 เรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "ปีที่ 3"
+    ],
+    [
+     "ภาคการศึกษาที่ 1"
+    ]
+   ],
+   "expected": "ปี 3 ภาค 1",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-IT-code_ys-4",
+   "program": "IT",
+   "question": "วิชา 06016414 เรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "ปีที่ 2"
+    ],
+    [
+     "ภาคการศึกษาที่ 2"
+    ]
+   ],
+   "expected": "ปี 2 ภาค 2",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-IT-typo_ys-1",
+   "program": "IT",
+   "question": "วิชาโครงสรางพื้นฐานเครือข่ายการสื่อสารเรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "ปีที่ 2"
+    ],
+    [
+     "ภาคการศึกษาที่ 2"
+    ]
+   ],
+   "expected": "โครงสร้างพื้นฐานเครือข่ายการสื่อสาร: ปี 2 ภาค 2",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-IT-typo_ys-2",
+   "program": "IT",
+   "question": "วิชาพื้นานทางธุรกิจสำหรับเทคโนโลยีสารสนเทศเรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "ปีที่ 1"
+    ],
+    [
+     "ภาคการศึกษาที่ 2"
+    ]
+   ],
+   "expected": "พื้นฐานทางธุรกิจสำหรับเทคโนโลยีสารสนเทศ: ปี 1 ภาค 2",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-IT-typo_ys-3",
+   "program": "IT",
+   "question": "วิชากฎหมายสำหรับคนร่นใหม่เรียนปีไหนเทอมไหน",
+   "must": [
+    [
+     "ปีที่ 3"
+    ],
+    [
+     "ภาคการศึกษาที่ 2"
+    ]
+   ],
+   "expected": "กฎหมายสำหรับคนรุ่นใหม่: ปี 3 ภาค 2",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-IT-dependents-1",
+   "program": "IT",
+   "question": "ถ้าสอบไม่ผ่านวิชาการเขียนโปรแกรมเว็บพื้นฐาน จะลงวิชาไหนต่อไม่ได้",
+   "must": [
+    [
+     "06016429"
+    ],
+    [
+     "06016444"
+    ]
+   ],
+   "expected": "06016429, 06016444",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-IT-dependents-2",
+   "program": "IT",
+   "question": "ถ้าสอบไม่ผ่านวิชาแนวคิดระบบฐานข้อมูล จะลงวิชาไหนต่อไม่ได้",
+   "must": [
+    [
+     "06016457"
+    ],
+    [
+     "06016458"
+    ]
+   ],
+   "expected": "06016457, 06016458",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-IT-dependents-3",
+   "program": "IT",
+   "question": "ถ้าสอบไม่ผ่านวิชาโครงงาน 1 จะลงวิชาไหนต่อไม่ได้",
+   "must": [
+    [
+     "06016407"
+    ]
+   ],
+   "expected": "06016407",
+   "source": "teacher_gt/IT/IT_academic_plan_no_coop.json"
+  },
+  {
+   "id": "G-BIT-coop-1",
+   "program": "BIT",
+   "question": "แผนสหกิจศึกษาต้องไปสหกิจปีไหน เทอมไหน และกี่หน่วยกิต",
+   "must": [
+    [
+     "ปีที่ 4"
+    ],
+    [
+     "ภาคการศึกษาที่ 2"
+    ],
+    [
+     "6"
+    ]
+   ],
+   "expected": "ปี 4 ภาค 2 6(0-35-0)",
+   "source": "teacher_gt/BIT/BIT_academic_plan_coop.json"
+  },
+  {
+   "id": "G-DSBA-coop-1",
+   "program": "DSBA",
+   "question": "แผนสหกิจศึกษาต้องไปสหกิจปีไหน เทอมไหน และกี่หน่วยกิต",
+   "must": [
+    [
+     "ปีที่ 4"
+    ],
+    [
+     "ภาคการศึกษาที่ 2"
+    ],
+    [
+     "6"
+    ]
+   ],
+   "expected": "ปี 4 ภาค 2 6(0-35-0)",
+   "source": "teacher_gt/DSBA/DSBA_academic_plan_coop.json"
+  },
+  {
+   "id": "G-IT-coop-1",
+   "program": "IT",
+   "question": "แผนสหกิจศึกษาต้องไปสหกิจปีไหน เทอมไหน และกี่หน่วยกิต",
+   "must": [
+    [
+     "ปีที่ 3"
+    ],
+    [
+     "ภาคการศึกษาที่ 2"
+    ],
+    [
+     "6"
+    ]
+   ],
+   "expected": "ปี 3 ภาค 2 6(0-36-0)",
+   "source": "teacher_gt/IT/IT_academic_plan_coop.json"
+  },
+  {
+   "id": "G-IT-reg2-1",
+   "program": "IT",
+   "question": "ลงเรียนได้สูงสุดเทอมละกี่หน่วยกิต",
+   "must": [
+    [
+     "22"
+    ]
+   ],
+   "expected": "22",
+   "source": "มคอ.2 AIT 2566 ภาคผนวก ข้อบังคับปริญญาตรี"
+  },
+  {
+   "id": "G-DSBA-reg2-1",
+   "program": "DSBA",
+   "question": "ภาคฤดูร้อนลงทะเบียนได้กี่หน่วยกิต",
+   "must": [
+    [
+     "9"
+    ]
+   ],
+   "expected": "9",
+   "source": "มคอ.2 AIT 2566 ภาคผนวก ข้อบังคับปริญญาตรี"
+  },
+  {
+   "id": "G-BIT-reg2-1",
+   "program": "BIT",
+   "question": "ปีสุดท้ายลงทะเบียนเกิน 22 หน่วยกิตได้ไหม ได้สูงสุดเท่าไร",
+   "must": [
+    [
+     "27"
+    ]
+   ],
+   "expected": "27",
+   "source": "มคอ.2 AIT 2566 ภาคผนวก ข้อบังคับปริญญาตรี"
+  },
+  {
+   "id": "G-AIT-reg2-1",
+   "program": "AIT",
+   "question": "เกรดเฉลี่ยต่ำกว่าเท่าไหร่ถึงโดนรีไทร์",
+   "must": [
+    [
+     "1.00"
+    ]
+   ],
+   "expected": "1.00",
+   "source": "มคอ.2 AIT 2566 ภาคผนวก ข้อบังคับปริญญาตรี"
+  },
+  {
+   "id": "G-IT-reg2-2",
+   "program": "IT",
+   "question": "เกรดเฉลี่ยสะสมต่ำกว่า 2.00 จะเป็นอย่างไร",
+   "must": [
+    [
+     "ภาคทัณฑ์"
+    ]
+   ],
+   "expected": "ภาคทัณฑ์",
+   "source": "มคอ.2 AIT 2566 ภาคผนวก ข้อบังคับปริญญาตรี"
+  },
+  {
+   "id": "G-DSBA-reg2-2",
+   "program": "DSBA",
+   "question": "เกียรตินิยมอันดับสองต้องได้เกรดเท่าไหร่",
+   "must": [
+    [
+     "3.25"
+    ]
+   ],
+   "expected": "3.25",
+   "source": "มคอ.2 AIT 2566 ภาคผนวก ข้อบังคับปริญญาตรี"
+  },
+  {
+   "id": "G-BIT-reg2-2",
+   "program": "BIT",
+   "question": "ถ้าเคยได้ F จะได้เกียรตินิยมไหม",
+   "must": [
+    [
+     "F"
+    ]
+   ],
+   "expected": "F",
+   "source": "มคอ.2 AIT 2566 ภาคผนวก ข้อบังคับปริญญาตรี"
+  },
+  {
+   "id": "G-AIT-reg2-2",
+   "program": "AIT",
+   "question": "เกรด C+ ได้กี่แต้ม",
+   "must": [
+    [
+     "2.50"
+    ]
+   ],
+   "expected": "2.50",
+   "source": "มคอ.2 AIT 2566 ภาคผนวก ข้อบังคับปริญญาตรี"
+  },
+  {
+   "id": "G-IT-reg2-3",
+   "program": "IT",
+   "question": "ถ้าทุจริตในการสอบจะโดนอะไร",
+   "must": [
+    [
+     "พักการเรียน"
+    ]
+   ],
+   "expected": "พักการเรียน",
+   "source": "มคอ.2 AIT 2566 ภาคผนวก ข้อบังคับปริญญาตรี"
+  },
+  {
    "id": "G-AIT-gened-1",
    "program": "AIT",
    "question": "วิชาโรงเรียนสร้างเสน่ห์มีกี่หน่วยกิต",
