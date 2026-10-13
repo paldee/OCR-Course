@@ -84,3 +84,6 @@ artifacts/*.sqlite3.bak
 
 # cache ของ preflight (มี path เฉพาะเครื่อง สร้างใหม่ได้)
 artifacts/preflight_cache.json
+
+# ชุดทดสอบ held-out (เก็บในเครื่อง ไม่ขึ้น repo; ผลสรุปอยู่ใน docs/tester.xlsx)
+docs/eval_holdout*.json
