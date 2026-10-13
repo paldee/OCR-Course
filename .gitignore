@@ -81,3 +81,6 @@ artifacts/regression_*.json
 
 # สำรองฐานข้อมูลเดิมตอนแตกไฟล์ใหม่ (setup_db.py)
 artifacts/*.sqlite3.bak
+
+# cache ของ preflight (มี path เฉพาะเครื่อง สร้างใหม่ได้)
+artifacts/preflight_cache.json
